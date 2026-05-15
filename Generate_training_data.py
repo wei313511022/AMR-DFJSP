@@ -37,7 +37,16 @@ def generate_fjssp_instance():
             
             job.append(operation)
             
-        jobs_list.append(job)
+        # Assign a material to the job
+        material = random.choice(['A', 'B', 'C'])
+        
+        # Create job dictionary
+        job_dict = {
+            "operations": job,
+            "material": material
+        }
+        
+        jobs_list.append(job_dict)
         
     # Construct the final dictionary for this instance
     instance = {
