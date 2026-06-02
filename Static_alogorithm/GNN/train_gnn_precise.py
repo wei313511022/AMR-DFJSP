@@ -5,12 +5,15 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-# Import from the GNN script
-from GNN import (
+# Import from the precise GNN script
+from GNN_precise import (
     SchedulerGNN, solve_with_gnn, extract_state_gnn,
-    AMR_KEYS, STATIONS, SUPPLY_LOCATIONS, TYPE_DURATION, heuristic, AMR_STARTS
+    AMR_KEYS, STATIONS, SUPPLY_LOCATIONS, TYPE_DURATION, AMR_STARTS
 )
-from GA.GA import make_jobs, describe_solution, local_improve, routing_iters, collision_routing_iters
+from GA.GA import (
+    make_jobs, describe_solution, local_improve, routing_iters,
+    collision_routing_iters, find_dynamic_path, MAX_DEPTH
+)
 import torch.nn.functional as F
 
 
@@ -27,6 +30,8 @@ def evaluate_actions_multi_ppo(jobs, model, job_action_seq, machine_action_seq, 
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
         amr_inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_KEYS}
+        amr_states = {amr: (amr_positions[amr], amr_availabilities[amr]) for amr in AMR_KEYS}
+        reservations = {}
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
@@ -35,6 +40,8 @@ def evaluate_actions_multi_ppo(jobs, model, job_action_seq, machine_action_seq, 
         amr_inventory["AMR1"]["A"] = 3
         amr_inventory["AMR2"]["B"] = 3
         amr_inventory["AMR3"]["C"] = 3
+        amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_KEYS}
+        reservations = {}
 
     assigned_jobs_set = set()
     amr_assignment_map = {}
@@ -91,27 +98,66 @@ def evaluate_actions_multi_ppo(jobs, model, job_action_seq, machine_action_seq, 
         amr_assignment_map[chosen_job.idx] = chosen_amr
         assigned_jobs_set.add(chosen_job.idx)
 
-        # Fast heuristic state update
+        # Precise state update
         material = chosen_job.type_
-        curr_pos = amr_positions[chosen_amr]
-        avail = amr_availabilities[chosen_amr]
+        start_time = amr_availabilities[chosen_amr]
 
         if amr_inventory[chosen_amr][material] == 0:
             supply_location = SUPPLY_LOCATIONS[material]
-            avail += heuristic(curr_pos, supply_location)
-            curr_pos = supply_location
+            supply_path = find_dynamic_path(amr_positions[chosen_amr], supply_location, start_time, reservations, amr_states, chosen_amr)
+            supply_time = int(len(supply_path) - 1)
+            supply_end = start_time + supply_time + TYPE_DURATION[material]
+            if supply_time == 0 and amr_positions[chosen_amr] != supply_location:
+                supply_time = MAX_DEPTH
+                supply_end = start_time + supply_time
+
+            for t_offset, pt in enumerate(supply_path):
+                reservations[(pt, int(start_time) + t_offset)] = chosen_amr
+            for t_refill in range(int(start_time) + supply_time, int(supply_end) + 1):
+                reservations[(supply_location, t_refill)] = chosen_amr
+
+            amr_states[chosen_amr] = (supply_location, supply_end)
+            amr_availabilities[chosen_amr] = supply_end
+            amr_positions[chosen_amr] = supply_location
+            start_time = supply_end
             amr_inventory[chosen_amr][material] = 3
 
-        target_station = STATIONS[chosen_job.station]
-        avail += heuristic(curr_pos, target_station)
+        travel_start = amr_availabilities[chosen_amr]
+        travel_path = find_dynamic_path(amr_positions[chosen_amr], STATIONS[chosen_job.station], travel_start, reservations, amr_states, chosen_amr)
+        travel_time = int(len(travel_path) - 1)
+        if travel_time == 0 and amr_positions[chosen_amr] != STATIONS[chosen_job.station]:
+            travel_time = MAX_DEPTH
+        travel_end = travel_start + travel_time
 
-        process_start = max(avail, station_availabilities[chosen_job.station])
+        for t_offset, pt in enumerate(travel_path):
+            reservations[(pt, int(travel_start) + t_offset)] = chosen_amr
+
+        amr_availabilities[chosen_amr] = travel_end
+        amr_positions[chosen_amr] = STATIONS[chosen_job.station]
+
+        earliest_start = max(travel_end, station_availabilities[chosen_job.station])
+        process_start = earliest_start
         process_end = process_start + chosen_job.duration
+
+        for t_process in range(int(travel_end), int(process_end) + 1):
+            reservations[(STATIONS[chosen_job.station], t_process)] = chosen_amr
+
+        amr_states[chosen_amr] = (STATIONS[chosen_job.station], process_end)
         amr_inventory[chosen_amr][material] -= 1
         station_availabilities[chosen_job.station] = process_end
 
+        return_start = process_end
         next_dest = AMR_STARTS[chosen_amr]
-        return_end = process_end + heuristic(target_station, next_dest)
+        return_path = find_dynamic_path(STATIONS[chosen_job.station], next_dest, return_start, reservations, amr_states, chosen_amr)
+        return_time = int(len(return_path) - 1)
+        if return_time == 0 and STATIONS[chosen_job.station] != next_dest:
+            return_time = MAX_DEPTH
+        return_end = return_start + return_time
+
+        for t_offset, pt in enumerate(return_path):
+            reservations[(pt, int(return_start) + t_offset)] = chosen_amr
+
+        amr_states[chosen_amr] = (next_dest, return_end)
         amr_availabilities[chosen_amr] = return_end
         amr_positions[chosen_amr] = next_dest
 
@@ -164,7 +210,7 @@ def train(args):
     optimizer_actor = optim.Adam(actor_params, lr=lr_actor)
     optimizer_critic = optim.Adam(critic_params, lr=lr_critic)
 
-    print("Starting Multi-PPO training with Joint Critic...")
+    print("Starting Precise Multi-PPO training with Joint Critic...")
 
     best_makespan = float('inf')
     losses_job = []
@@ -301,7 +347,7 @@ def train(args):
         # Save best model
         if avg_batch_makespan < best_makespan:
             best_makespan = avg_batch_makespan
-            torch.save(gnn_model.state_dict(), "gnn_mpn_scheduler_best.pth")
+            torch.save(gnn_model.state_dict(), "gnn_precise_mpn_scheduler_best.pth")
             print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
 
         # Save training metrics periodically
@@ -340,7 +386,7 @@ def train(args):
 
             import os
             SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-            chart_path = os.path.join(SCRIPT_DIR, "gnn_training_metrics.png")
+            chart_path = os.path.join(SCRIPT_DIR, "gnn_precise_training_metrics.png")
             plt.savefig(chart_path, dpi=300, bbox_inches='tight')
             plt.close()
             print(f"   -> Saved updated training chart to {chart_path}")

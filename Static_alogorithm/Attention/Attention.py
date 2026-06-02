@@ -24,9 +24,9 @@ from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
-    JOB_COUNT, MAX_DEPTH, routing_iters, collision_routing_iters,
+    JOB_COUNT, routing_iters, collision_routing_iters,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
-    heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
+    heuristic, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
 )
@@ -353,17 +353,19 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
         target_station = STATIONS[chosen_job.station]
         avail += heuristic(curr_pos, target_station)
         
-        # Wait for station
-        avail = max(avail, station_availabilities[chosen_job.station])
-        
-        # Process
-        avail += chosen_job.duration
+        # Wait for station and process
+        process_start = max(avail, station_availabilities[chosen_job.station])
+        process_end = process_start + chosen_job.duration
         amr_inventory[chosen_amr][mat] -= 1
         
-        # Update state dicts
-        station_availabilities[chosen_job.station] = avail
-        amr_availabilities[chosen_amr] = avail
-        amr_positions[chosen_amr] = target_station
+        # Update station availability before returning home.
+        station_availabilities[chosen_job.station] = process_end
+        
+        # Return home after each job to clear the station in the fast rollout.
+        home_pos = AMR_STARTS[chosen_amr]
+        return_end = process_end + heuristic(target_station, home_pos)
+        amr_availabilities[chosen_amr] = return_end
+        amr_positions[chosen_amr] = home_pos
             
     # Finalize Individual (Order amr_assignment list by job_idx)
     final_assignment = []

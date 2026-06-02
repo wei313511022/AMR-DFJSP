@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # Import from the Attention script
 from Attention import (
     SchedulerAttention, solve_with_attention, extract_state,
-    AMR_KEYS, STATIONS, SUPPLY_LOCATIONS, TYPE_DURATION, shortest_path, heuristic, AMR_STARTS
+    AMR_KEYS, STATIONS, SUPPLY_LOCATIONS, TYPE_DURATION, heuristic, AMR_STARTS
 )
 from GA.GA import make_jobs, describe_solution, local_improve, routing_iters, collision_routing_iters
 import torch.nn.functional as F
@@ -80,13 +80,16 @@ def evaluate_actions(jobs, model, action_seq, init_state: dict = None):
             
         target_station = STATIONS[chosen_job.station]
         avail += heuristic(curr_pos, target_station)
-        avail = max(avail, station_availabilities[chosen_job.station])
-        avail += chosen_job.duration
+        process_start = max(avail, station_availabilities[chosen_job.station])
+        process_end = process_start + chosen_job.duration
         amr_inventory[chosen_amr][mat] -= 1
         
-        station_availabilities[chosen_job.station] = avail
-        amr_availabilities[chosen_amr] = avail
-        amr_positions[chosen_amr] = target_station
+        station_availabilities[chosen_job.station] = process_end
+        
+        home_pos = AMR_STARTS[chosen_amr]
+        return_end = process_end + heuristic(target_station, home_pos)
+        amr_availabilities[chosen_amr] = return_end
+        amr_positions[chosen_amr] = home_pos
         
     return torch.stack(log_probs).sum()
 

@@ -24,9 +24,9 @@ from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
-    JOB_COUNT, routing_iters, collision_routing_iters,
+    JOB_COUNT, MAX_DEPTH, routing_iters, collision_routing_iters,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
-    heuristic, _extend_path_log, grid_distance,
+    heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
 )
@@ -342,7 +342,7 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
       2. MLP encodes machine features -> AMR embeddings
       3. Job Actor selects job j*
       4. Machine Actor selects AMR m* for j*
-      5. State is updated with fast heuristic travel and return-home time
+      5. State is updated with precise pathfinding & reservations
 
     Returns: Individual, (total_job_log_prob, total_machine_log_prob), solve_duration
     """
@@ -354,6 +354,8 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
         amr_inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_KEYS}
+        amr_states = {amr: (amr_positions[amr], amr_availabilities[amr]) for amr in AMR_KEYS}
+        reservations = {}
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
@@ -362,6 +364,8 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         amr_inventory["AMR1"]["A"] = 3
         amr_inventory["AMR2"]["B"] = 3
         amr_inventory["AMR3"]["C"] = 3
+        amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_KEYS}
+        reservations = {}
 
     assigned_jobs_set = set()
     order_seq = []
@@ -428,31 +432,70 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         amr_assignment_map[chosen_job.idx] = chosen_amr
         assigned_jobs_set.add(chosen_job.idx)
 
-        # 6. Update Internal State (Fast Heuristic Travel + Return Home)
+        # 6. Update Internal State (Precise Dynamic Pathfinding & Reservations)
         material = chosen_job.type_
-        curr_pos = amr_positions[chosen_amr]
-        avail = amr_availabilities[chosen_amr]
+        start_time = amr_availabilities[chosen_amr]
 
         # Supply refill if needed
         if amr_inventory[chosen_amr][material] == 0:
             supply_location = SUPPLY_LOCATIONS[material]
-            avail += heuristic(curr_pos, supply_location)
-            curr_pos = supply_location
+            supply_path = find_dynamic_path(amr_positions[chosen_amr], supply_location, start_time, reservations, amr_states, chosen_amr)
+            supply_time = int(len(supply_path) - 1)
+            supply_end = start_time + supply_time + TYPE_DURATION[material]
+            if supply_time == 0 and amr_positions[chosen_amr] != supply_location:
+                supply_time = MAX_DEPTH
+                supply_end = start_time + supply_time
+
+            for t_offset, pt in enumerate(supply_path):
+                reservations[(pt, int(start_time) + t_offset)] = chosen_amr
+            for t_refill in range(int(start_time) + supply_time, int(supply_end) + 1):
+                reservations[(supply_location, t_refill)] = chosen_amr
+
+            amr_states[chosen_amr] = (supply_location, supply_end)
+            amr_availabilities[chosen_amr] = supply_end
+            amr_positions[chosen_amr] = supply_location
+            start_time = supply_end
             amr_inventory[chosen_amr][material] = 3
 
         # Travel to station
-        target_station = STATIONS[chosen_job.station]
-        avail += heuristic(curr_pos, target_station)
+        travel_start = amr_availabilities[chosen_amr]
+        travel_path = find_dynamic_path(amr_positions[chosen_amr], STATIONS[chosen_job.station], travel_start, reservations, amr_states, chosen_amr)
+        travel_time = int(len(travel_path) - 1)
+        if travel_time == 0 and amr_positions[chosen_amr] != STATIONS[chosen_job.station]:
+            travel_time = MAX_DEPTH
+        travel_end = travel_start + travel_time
+
+        for t_offset, pt in enumerate(travel_path):
+            reservations[(pt, int(travel_start) + t_offset)] = chosen_amr
+
+        amr_availabilities[chosen_amr] = travel_end
+        amr_positions[chosen_amr] = STATIONS[chosen_job.station]
 
         # Wait for station and process
-        process_start = max(avail, station_availabilities[chosen_job.station])
+        earliest_start = max(travel_end, station_availabilities[chosen_job.station])
+        process_start = earliest_start
         process_end = process_start + chosen_job.duration
+
+        for t_process in range(int(travel_end), int(process_end) + 1):
+            reservations[(STATIONS[chosen_job.station], t_process)] = chosen_amr
+
+        amr_states[chosen_amr] = (STATIONS[chosen_job.station], process_end)
         amr_inventory[chosen_amr][material] -= 1
         station_availabilities[chosen_job.station] = process_end
 
-        # Return home after each job to match the fast non-precise rollout scenario.
+        # Return to home base
+        return_start = process_end
         next_dest = AMR_STARTS[chosen_amr]
-        return_end = process_end + heuristic(target_station, next_dest)
+        return_path = find_dynamic_path(STATIONS[chosen_job.station], next_dest, return_start, reservations, amr_states, chosen_amr)
+        return_time = int(len(return_path) - 1)
+        if return_time == 0 and STATIONS[chosen_job.station] != next_dest:
+            return_time = MAX_DEPTH
+        return_end = return_start + return_time
+
+        for t_offset, pt in enumerate(return_path):
+            reservations[(pt, int(return_start) + t_offset)] = chosen_amr
+
+        amr_states[chosen_amr] = (next_dest, return_end)
         amr_availabilities[chosen_amr] = return_end
         amr_positions[chosen_amr] = next_dest
 
@@ -476,7 +519,7 @@ if __name__ == "__main__":
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
     parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file")
     parser.add_argument("--collision_iters", type=int, default=collision_routing_iters, help="Number of collision routing iterations")
-    parser.add_argument("--output_csv", type=str, default="gnn_summary_results.csv", help="Output CSV filename")
+    parser.add_argument("--output_csv", type=str, default="gnn_precise_summary_results.csv", help="Output CSV filename")
     args = parser.parse_args()
 
     # 1. Setup
@@ -487,11 +530,15 @@ if __name__ == "__main__":
     # 2. Create Model
     gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3)
 
-    weights_path = Path("gnn_mpn_scheduler_best.pth")
+    weights_path = Path("gnn_precise_mpn_scheduler_best.pth")
     if not weights_path.exists():
-        old_weights = Path("gnn_scheduler_best.pth")
+        old_weights = Path("gnn_mpn_scheduler_best.pth")
         if old_weights.exists():
             weights_path = old_weights
+        else:
+            old_weights = Path("gnn_scheduler_best.pth")
+            if old_weights.exists():
+                weights_path = old_weights
 
     if weights_path.exists():
         print(f"Loading trained weights from {weights_path}...")
@@ -512,7 +559,7 @@ if __name__ == "__main__":
     output_filename = args.output_csv
     results_data = []
 
-    print("=== Using GNN Fast Heuristic (Multi-Pointer Network) Logic ===")
+    print("=== Using GNN Precise (Dynamic Pathfinding + Reservations) Logic ===")
 
     if dispatch_events:
         if target_index is not None:
