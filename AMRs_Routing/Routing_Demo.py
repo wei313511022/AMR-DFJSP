@@ -48,10 +48,7 @@ MAT_POS: Dict[str, Tuple[int, int]] = {
 }
 
 # Static obstacles
-OBSTACLES: Set[Tuple[int, int]] = {
-    (5, 1),(5, 2),(6, 1),(6, 2),(4, 5),(3, 5),(3,8),
-    (6, 4),(6, 5),(6, 8),(6, 9),(4,6),(3,1), (2, 3)
-}
+OBSTACLES: Set[Tuple[int, int]] = set()
 
 # ---------- Config ----------
 UPDATE_INTERVAL_MS = 200   # poll rate in ms
@@ -125,7 +122,7 @@ def draw_static(ax):
             )
         )
         ax.text(
-            mx - 0.4, my + 0.15, f"M{jt}",
+            mx - 0.45, my + 0.15, f"Dock {jt}",
             fontsize=9, color="tab:blue", weight="bold", zorder=3,
         )
 
@@ -305,9 +302,9 @@ def main():
             )
             phase_str = vis.phase if vis.phase else "-"
             job_str = f"Job{vis.job_idx}" if vis.job_idx is not None else "-"
-            if vis.mode == "processing":
+            if vis.mode in ("processing", "loading_dock"):
                 status_str = (
-                    f"AMR{k}: processing ({vis.proc_ticks}s left), "
+                    f"AMR{k}: {vis.mode} ({vis.proc_ticks}s left), "
                     f"{job_str}, {inv_str}, "
                     f"(x:{vis.x:.0f} y:{vis.y:.0f})"
                 )

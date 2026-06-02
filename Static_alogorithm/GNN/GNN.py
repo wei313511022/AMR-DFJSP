@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
-from functools import lru_cache 
+from functools import lru_cache
 
 import torch
 import torch.nn as nn
@@ -31,6 +31,9 @@ from GA.GA import (
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
 )
 
+NUM_AMRS = len(AMR_KEYS)
+STATION_KEYS = list(STATIONS.keys())
+
 # Overwrite describe_solution locally to pass save_img
 def describe_solution_gnn(individual: Individual, jobs: List[Job], solve_time: float = None, show_gantt: bool = False, save_img: str = None) -> Tuple[float, float]:
     availability, decoded_timeline, queue_infos, path_logs, invalid_count = decode_schedule_tick_by_tick(individual, jobs, need_log=True, check_collision=True)
@@ -40,386 +43,553 @@ def describe_solution_gnn(individual: Individual, jobs: List[Job], solve_time: f
     if solve_time is not None:
         print(f"Computation Time: {solve_time:.4f}s")
     if show_gantt or save_img:
-        # Generate plot
         plot_gantt(decoded_timeline, queue_infos, jobs, solve_time=solve_time, invalid_count=invalid_count, show_gantt=show_gantt, save_img=save_img)
-            
     return makespan, solve_time
 
-# ===== GNN Architecture =====
-class SchedulerGNN(nn.Module):
-    def __init__(self, amr_in_dim=8, job_in_dim=10, hidden_dim=128, gnn_layers=2):
+
+# ===== GIN Convolutional Layer =====
+class GINConv(nn.Module):
+    """
+    Graph Isomorphism Network convolutional layer.
+    h_v^(l+1) = MLP^(l)( (1 + eps) * h_v^(l) + sum_{u in N(v)} h_u^(l) )
+    """
+    def __init__(self, hidden_dim, eps_init=0.0):
         super().__init__()
-        self.amr_emb = nn.Linear(amr_in_dim, hidden_dim)
-        self.job_emb = nn.Linear(job_in_dim, hidden_dim)
-
-        self.gnn_layers = gnn_layers
-        # Simplified interaction using multihead attention where AMRs and Jobs attend to each other
-        self.attn_layers = nn.ModuleList([
-            nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=4, batch_first=True)
-            for _ in range(gnn_layers)
-        ])
-        
-        self.fc_layers = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(hidden_dim, hidden_dim * 2),
-                nn.ReLU(),
-                nn.Linear(hidden_dim * 2, hidden_dim)
-            ) for _ in range(gnn_layers)
-        ])
-
-        # Policy Head: Takes concatenated (AMR, Job) embeddings and outputs logit
-        self.policy_head = nn.Sequential(
-            nn.Linear(hidden_dim * 2, hidden_dim),
+        self.eps = nn.Parameter(torch.tensor(eps_init))
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 2),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
+            nn.Linear(hidden_dim * 2, hidden_dim),
+        )
+        self.norm = nn.LayerNorm(hidden_dim)
+
+    def forward(self, x, adj):
+        """
+        x:   (batch, num_nodes, hidden_dim)
+        adj: (batch, num_nodes, num_nodes) adjacency matrix (float, 0/1)
+        """
+        # Aggregate neighbor features via adjacency matrix multiplication
+        agg = torch.bmm(adj, x)  # (batch, num_nodes, hidden_dim)
+        out = (1.0 + self.eps) * x + agg
+        out = self.mlp(out)
+        out = self.norm(out)
+        return out
+
+
+# ===== Multi-Pointer GNN Scheduler =====
+class SchedulerGNN(nn.Module):
+    """
+    Multi-Pointer Network for FJSP scheduling:
+    - Job Encoder: GIN operating on the disjunctive graph of jobs
+    - Machine Encoder: MLP for AMR/machine features
+    - Job Actor: MLP decoder selecting the next job operation
+    - Machine Actor: MLP decoder selecting the AMR/machine for the chosen job
+    - Joint Critic: Shared value network estimating V(s_t)
+    """
+    def __init__(self, job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+
+        # --- Encoders ---
+        self.job_emb = nn.Linear(job_in_dim, hidden_dim)
+        self.amr_emb = nn.Linear(amr_in_dim, hidden_dim)
+
+        # GIN layers for the job disjunctive graph
+        self.gin_layers = nn.ModuleList([
+            GINConv(hidden_dim) for _ in range(gin_layers)
+        ])
+
+        # --- Job Actor Decoder ---
+        self.job_actor = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
         )
 
-    def forward(self, amr_features, job_features, job_mask):
+        # --- Machine Actor Decoder ---
+        # Takes concatenation of [selected_job_emb, amr_emb] -> score
+        self.machine_actor = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+        )
+
+        # --- Joint Critic ---
+        # Takes pooled job + pooled amr representations
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def encode_jobs(self, job_features, adj):
+        """
+        job_features: (batch, num_jobs, job_in_dim)
+        adj: (batch, num_jobs, num_jobs) adjacency matrix
+        Returns: (batch, num_jobs, hidden_dim)
+        """
+        x = self.job_emb(job_features)
+        for gin in self.gin_layers:
+            x = x + gin(x, adj)  # Residual connections
+        return x
+
+    def encode_amrs(self, amr_features):
         """
         amr_features: (batch, num_amrs, amr_in_dim)
-        job_features: (batch, num_jobs, job_in_dim)
-        job_mask: (batch, num_jobs) - True if job is ALREADY ASSIGNED (should be ignored)
-        
-        Returns logits for each valid (amr, job) pair
-        Output shape: (batch, num_amrs, num_jobs)
+        Returns: (batch, num_amrs, hidden_dim)
         """
-        # 1. Embeddings
-        x_amr = self.amr_emb(amr_features) # (batch, num_amrs, hidden)
-        x_job = self.job_emb(job_features) # (batch, num_jobs, hidden)
+        return self.amr_emb(amr_features)
 
-        # 2. Message Passing (treat as bipartite graph interaction)
-        # AMRs and Jobs exchange information. We concatenate them into a single graph node list for global attention.
-        num_amrs = x_amr.size(1)
-        num_jobs = x_job.size(1)
-        
-        # Combine nodes for self-attention across the whole statespace
-        # x_nodes: (batch, num_amrs + num_jobs, hidden)
-        x_nodes = torch.cat([x_amr, x_job], dim=1)
-        
-        # Create a padding mask for self attention to prevent attention to assigned jobs
-        # Attention mask: True means DO NOT attend.
-        # amr nodes are never masked (False). jobs are masked if job_mask is True.
-        batch_size = x_nodes.size(0)
-        amr_mask = torch.zeros((batch_size, num_amrs), dtype=torch.bool, device=x_nodes.device)
-        attn_key_padding_mask = torch.cat([amr_mask, job_mask], dim=1) # (batch, num_amrs + num_jobs)
-        
-        # If all jobs are masked (which shouldn't happen during active stepping, but just in case), 
-        # prevent NaN in attention by unmasking everything temporarily
-        if attn_key_padding_mask.all():
-            attn_key_padding_mask = None
-
-        for attn, fc in zip(self.attn_layers, self.fc_layers):
-            # Self-attention over all valid AMRs and Jobs
-            x_nodes_attn, _ = attn(x_nodes, x_nodes, x_nodes, key_padding_mask=attn_key_padding_mask)
-            x_nodes = x_nodes + x_nodes_attn
-            x_nodes = x_nodes + fc(x_nodes)
-            
-        # Split back
-        x_amr = x_nodes[:, :num_amrs, :]
-        x_job = x_nodes[:, num_amrs:, :]
-
-        # 3. Policy Head (Pairwise comparisons)
-        # We need an output for every combination of AMR and Job
-        # x_amr_expand: (batch, num_amrs, num_jobs, hidden)
-        x_amr_expand = x_amr.unsqueeze(2).expand(-1, -1, num_jobs, -1)
-        # x_job_expand: (batch, num_amrs, num_jobs, hidden)
-        x_job_expand = x_job.unsqueeze(1).expand(-1, num_amrs, -1, -1)
-        
-        # pairs: (batch, num_amrs, num_jobs, hidden * 2)
-        pairs = torch.cat([x_amr_expand, x_job_expand], dim=-1)
-        
-        # logits: (batch, num_amrs, num_jobs)
-        logits = self.policy_head(pairs).squeeze(-1)
-        
-        # Mask out assigned jobs by setting their logits to -inf
-        # job_mask_expand: (batch, 1, num_jobs)
-        job_mask_expand = job_mask.unsqueeze(1)
-        logits = logits.masked_fill(job_mask_expand, float('-inf'))
-        
+    def forward_job_actor(self, job_embeddings, job_mask):
+        """
+        job_embeddings: (batch, num_jobs, hidden_dim)
+        job_mask: (batch, num_jobs) - True if job ALREADY ASSIGNED
+        Returns: job_logits (batch, num_jobs)
+        """
+        logits = self.job_actor(job_embeddings).squeeze(-1)  # (batch, num_jobs)
+        logits = logits.masked_fill(job_mask, float('-inf'))
         return logits
 
+    def forward_machine_actor(self, selected_job_emb, amr_embeddings):
+        """
+        selected_job_emb: (batch, hidden_dim)
+        amr_embeddings: (batch, num_amrs, hidden_dim)
+        Returns: machine_logits (batch, num_amrs)
+        """
+        num_amrs = amr_embeddings.size(1)
+        # Expand selected job embedding to pair with each AMR
+        job_expand = selected_job_emb.unsqueeze(1).expand(-1, num_amrs, -1)  # (batch, num_amrs, hidden_dim)
+        pairs = torch.cat([job_expand, amr_embeddings], dim=-1)  # (batch, num_amrs, hidden_dim*2)
+        logits = self.machine_actor(pairs).squeeze(-1)  # (batch, num_amrs)
+        return logits
 
-def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory):
+    def forward_critic(self, job_embeddings, amr_embeddings, job_mask):
+        """
+        Returns scalar state value V(s_t).
+        job_embeddings: (batch, num_jobs, hidden_dim)
+        amr_embeddings: (batch, num_amrs, hidden_dim)
+        job_mask: (batch, num_jobs)
+        """
+        # Mean-pool job embeddings (only over unassigned jobs)
+        mask_float = (~job_mask).float().unsqueeze(-1)  # (batch, num_jobs, 1)
+        num_unmasked = mask_float.sum(dim=1, keepdim=True).clamp(min=1.0)
+        job_pool = (job_embeddings * mask_float).sum(dim=1) / num_unmasked.squeeze(-1)  # (batch, hidden_dim)
+
+        # Mean-pool AMR embeddings
+        amr_pool = amr_embeddings.mean(dim=1)  # (batch, hidden_dim)
+
+        combined = torch.cat([job_pool, amr_pool], dim=-1)  # (batch, hidden_dim*2)
+        value = self.critic(combined).squeeze(-1)  # (batch,)
+        return value
+
+
+# ===== State Extraction =====
+def extract_state_gnn(jobs, assigned_jobs_set, amr_positions, amr_availabilities,
+                      amr_inventory, amr_assignment_map, station_availabilities,
+                      order_seq):
     """
-    Constructs the tensor inputs for the GNN.
-    Returns amr_features, job_features, job_mask defined as:
-    
+    Constructs the tensor inputs for the GNN model.
+    Returns: amr_features, job_features, job_mask, adj_matrix
+
+    Job Features (12):
+     0:  exist_flag (1.0)
+     1:  duration / 25.0
+     2:  wait_time (0.0)
+     3:  dest_pos_x / 10.0
+     4:  dest_pos_y / 10.0
+     5:  supply_pos_x / 10.0
+     6:  supply_pos_y / 10.0
+     7:  type A flag
+     8:  type B flag
+     9:  type C flag
+     10: job_status (1.0 if assigned)
+     11: completion_time_lower_bound / 500.0
+
     AMR Features (8):
-     0: x / max_x
-     1: y / max_y
-     2: available_time (normalized roughly to max plausible time, eg 1000)
-     3: inventory A
-     4: inventory B
-     5: inventory C
-     6: idle flag (1 if available_time is min among AMRs)
-     7: identity proxy (integer id for AMR / 3.0)
-     
-    Job Features (10):
-     0: x / max_x (station location)
-     1: y / max_y
-     2: duration / 30.0
-     3: type A flag (1 or 0)
-     4: type B flag (1 or 0)
-     5: type C flag (1 or 0)
-     6: identity index / limit
-     7: 0.0 (placeholder for future metrics)
-     8: 0.0
-     9: 0.0
-     
-    Job Mask: boolean array of size len(jobs), True if job inside assigned_jobs
+     0: status_val
+     1: (avail - min_avail) / 50.0
+     2: inventory A ratio
+     3: inventory B ratio
+     4: inventory C ratio
+     5: pos_x / 10.0
+     6: pos_y / 10.0
+     7: queue_depth / 10.0
+
+    Adjacency Matrix (num_jobs x num_jobs):
+     - "Adding arc scheme": directed edges added when jobs are scheduled
+       on the same AMR or same workstation in sequence.
     """
-    
-    # AMR Features
+    num_jobs = len(jobs)
+
+    # --- AMR Features ---
     amr_feat = []
     min_avail = min(amr_availabilities.values())
-    
-    for idx, amr in enumerate(AMR_KEYS):
+
+    for amr in AMR_KEYS:
         pos = amr_positions[amr]
         avail = amr_availabilities[amr]
         inv = amr_inventory[amr]
-        
+
+        status_val = 1.0 if avail > min_avail else 0.0
+        rem = avail - min_avail
+
+        queue_depth = sum(1 for j_idx, a in amr_assignment_map.items() if a == amr) / 10.0
+
         feat = [
-            pos[0] / max(GRID_MAX_X, 1),
-            pos[1] / max(GRID_MAX_Y, 1),
-            avail / 1000.0,
+            status_val,
+            rem / 50.0,
             inv.get("A", 0) / 3.0,
             inv.get("B", 0) / 3.0,
             inv.get("C", 0) / 3.0,
-            1.0 if avail == min_avail else 0.0,
-            idx / len(AMR_KEYS)
+            pos[0] / 10.0,
+            pos[1] / 10.0,
+            queue_depth,
         ]
         amr_feat.append(feat)
-        
-    # Job Features
+
+    # --- Job Features ---
     job_feat = []
     job_mask = []
+
+    # Compute simple completion time lower bounds for each job
     for job in jobs:
         pos = STATIONS[job.station]
-        
+        supply_pos = SUPPLY_LOCATIONS[job.type_]
+
+        is_assigned = job.idx in assigned_jobs_set
+        job_status = 1.0 if is_assigned else 0.0
+
+        # LB: minimum travel from closest idle AMR + processing time
+        if not is_assigned:
+            lb_candidates = []
+            for amr in AMR_KEYS:
+                travel_est = heuristic(amr_positions[amr], pos)
+                supply_est = 0.0
+                if amr_inventory[amr].get(job.type_, 0) == 0:
+                    supply_est = heuristic(amr_positions[amr], supply_pos) + TYPE_DURATION[job.type_]
+                    travel_est = heuristic(supply_pos, pos)
+                lb = max(amr_availabilities[amr] + supply_est + travel_est,
+                         station_availabilities.get(job.station, 0.0)) + job.duration
+                lb_candidates.append(lb)
+            lb_val = min(lb_candidates) if lb_candidates else 0.0
+        else:
+            lb_val = 0.0
+
         feat = [
-            pos[0] / max(GRID_MAX_X, 1),
-            pos[1] / max(GRID_MAX_Y, 1),
-            job.duration / 30.0,
+            1.0,
+            job.duration / 25.0,
+            0.0,
+            pos[0] / 10.0,
+            pos[1] / 10.0,
+            supply_pos[0] / 10.0,
+            supply_pos[1] / 10.0,
             1.0 if job.type_ == "A" else 0.0,
             1.0 if job.type_ == "B" else 0.0,
             1.0 if job.type_ == "C" else 0.0,
-            job.idx / JOB_COUNT,
-            0.0, 0.0, 0.0
+            job_status,
+            lb_val / 500.0,
         ]
         job_feat.append(feat)
-        job_mask.append(job.idx in assigned_jobs_set)
-        
+        job_mask.append(is_assigned)
+
+    # --- Adjacency Matrix (Adding Arc Scheme) ---
+    # Build from the currently committed order_seq and amr_assignment_map
+    adj = [[0.0] * num_jobs for _ in range(num_jobs)]
+
+    # Build index maps: job.idx -> position in jobs list
+    job_idx_to_list_pos = {job.idx: i for i, job in enumerate(jobs)}
+
+    # Track last job scheduled per AMR and per station
+    last_job_per_amr = {}   # amr -> last job list index
+    last_job_per_station = {}  # station -> last job list index
+
+    job_map = {job.idx: job for job in jobs}
+
+    for scheduled_job_idx in order_seq:
+        list_pos = job_idx_to_list_pos[scheduled_job_idx]
+        amr = amr_assignment_map.get(scheduled_job_idx)
+        job_obj = job_map[scheduled_job_idx]
+        station = job_obj.station
+
+        # AMR sequential arc: previous job on same AMR -> this job
+        if amr is not None and amr in last_job_per_amr:
+            prev_pos = last_job_per_amr[amr]
+            adj[prev_pos][list_pos] = 1.0
+
+        # Station sequential arc: previous job on same station -> this job
+        if station in last_job_per_station:
+            prev_pos = last_job_per_station[station]
+            adj[prev_pos][list_pos] = 1.0
+
+        if amr is not None:
+            last_job_per_amr[amr] = list_pos
+        last_job_per_station[station] = list_pos
+
     return (
-        torch.tensor([amr_feat], dtype=torch.float32), 
+        torch.tensor([amr_feat], dtype=torch.float32),
         torch.tensor([job_feat], dtype=torch.float32),
-        torch.tensor([job_mask], dtype=torch.bool)
+        torch.tensor([job_mask], dtype=torch.bool),
+        torch.tensor([adj], dtype=torch.float32),
     )
 
-# ===== GNN Scheduling Heuristic Loop =====
+
+# ===== Autoregressive Scheduling Loop =====
 def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
     """
-    Uses the GNN to autoregressively build a schedule.
-    Returns: The final Individual, the total log probabilities of the sequence, and the total execution time of the building process.
+    Uses the Multi-Pointer GNN model to autoregressively build a schedule.
+    At each step:
+      1. GIN encodes job graph -> job embeddings
+      2. MLP encodes machine features -> AMR embeddings
+      3. Job Actor selects job j*
+      4. Machine Actor selects AMR m* for j*
+      5. State is updated with precise pathfinding & reservations
+
+    Returns: Individual, (total_job_log_prob, total_machine_log_prob), solve_duration
     """
-    start_time = time.perf_counter()
-    
-    # Internal Simulator State (Tracking rough time/inventory during sequence building)
-    # We use Manhattan distance here for speed. The exact simulation happens later in `decode_schedule`.
+    perf_start_time = time.perf_counter()
+
+    # --- Initialize simulator state ---
     if init_state:
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
         amr_inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_KEYS}
+        amr_states = {amr: (amr_positions[amr], amr_availabilities[amr]) for amr in AMR_KEYS}
+        reservations = {}
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        
         amr_inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
         amr_inventory["AMR1"]["A"] = 3
         amr_inventory["AMR2"]["B"] = 3
         amr_inventory["AMR3"]["C"] = 3
-    
+        amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_KEYS}
+        reservations = {}
+
     assigned_jobs_set = set()
-    
-    # Outputs to build the Individual
     order_seq = []
-    amr_assignment_map = {} # job_idx -> amr
-    
-    total_log_prob = 0.0
-    
-    # Model evaluation mode depends on deterministic flag
+    amr_assignment_map = {}
+
+    total_job_log_prob = 0.0
+    total_machine_log_prob = 0.0
+
     if deterministic:
         model.eval()
     else:
         model.train()
-        
+
+    device = next(model.parameters()).device
+
     for step in range(len(jobs)):
         # 1. State Extraction
-        amr_feat, job_feat, job_mask = extract_state(
-            jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory
+        amr_feat, job_feat, job_mask, adj = extract_state_gnn(
+            jobs, assigned_jobs_set, amr_positions, amr_availabilities,
+            amr_inventory, amr_assignment_map, station_availabilities, order_seq
         )
-        
-        # Move tensors to the model's device
-        device = next(model.parameters()).device
         amr_feat = amr_feat.to(device)
         job_feat = job_feat.to(device)
         job_mask = job_mask.to(device)
-        
-        # 2. GNN Forward Pass
-        logits = model(amr_feat, job_feat, job_mask) # shape: (1, 3, num_jobs)
-        
-        # 3. Action Selection
-        # Flatten to 1D to pick joint (AMR, Job) action
-        flat_logits = logits.view(-1)
-        
+        adj = adj.to(device)
+
+        # 2. Encode
+        job_embeddings = model.encode_jobs(job_feat, adj)     # (1, num_jobs, hidden)
+        amr_embeddings = model.encode_amrs(amr_feat)          # (1, num_amrs, hidden)
+
+        # 3. Job Actor: select job
+        job_logits = model.forward_job_actor(job_embeddings, job_mask)  # (1, num_jobs)
+        job_logits_flat = job_logits.view(-1)
+
         if deterministic:
-            best_action = torch.argmax(flat_logits).item()
+            chosen_job_list_idx = torch.argmax(job_logits_flat).item()
         else:
-            # Stochastic sampling (e.g. for REINFORCE training)
-            # Use log_softmax for numerically stable log probabilities
-            log_probs = F.log_softmax(flat_logits, dim=0)
-            probs = torch.exp(log_probs)
-            
-            # Create categorical distribution to sample from
-            dist = torch.distributions.Categorical(probs)
-            action_tensor = dist.sample()
-            best_action = action_tensor.item()
-            
-            # Accumulate log probability of chosen action
-            total_log_prob += log_probs[best_action]
-            
-        # Decode action: amr_index and job_index
-        num_jobs = len(jobs)
-        amr_idx = best_action // num_jobs
-        job_list_idx = best_action % num_jobs
-        
-        chosen_amr = AMR_KEYS[amr_idx]
-        chosen_job = jobs[job_list_idx]
-        
-        # Record choice
+            job_log_probs = F.log_softmax(job_logits_flat, dim=0)
+            job_probs = torch.exp(job_log_probs)
+            job_dist = torch.distributions.Categorical(job_probs)
+            chosen_job_list_idx = job_dist.sample().item()
+            total_job_log_prob += job_log_probs[chosen_job_list_idx]
+
+        chosen_job = jobs[chosen_job_list_idx]
+        selected_job_emb = job_embeddings[:, chosen_job_list_idx, :]  # (1, hidden)
+
+        # 4. Machine Actor: select AMR
+        machine_logits = model.forward_machine_actor(selected_job_emb, amr_embeddings)  # (1, num_amrs)
+        machine_logits_flat = machine_logits.view(-1)
+
+        if deterministic:
+            chosen_amr_idx = torch.argmax(machine_logits_flat).item()
+        else:
+            machine_log_probs = F.log_softmax(machine_logits_flat, dim=0)
+            machine_probs = torch.exp(machine_log_probs)
+            machine_dist = torch.distributions.Categorical(machine_probs)
+            chosen_amr_idx = machine_dist.sample().item()
+            total_machine_log_prob += machine_log_probs[chosen_amr_idx]
+
+        chosen_amr = AMR_KEYS[chosen_amr_idx]
+
+        # 5. Record choice
         order_seq.append(chosen_job.idx)
         amr_assignment_map[chosen_job.idx] = chosen_amr
         assigned_jobs_set.add(chosen_job.idx)
-        
-        # 4. Update Internal State (Fast Approximation for the next step of GNN inference)
-        mat = chosen_job.type_
-        curr_pos = amr_positions[chosen_amr]
-        avail = amr_availabilities[chosen_amr]
-        
-        # Check supply
-        if amr_inventory[chosen_amr][mat] == 0:
-            supply_loc = SUPPLY_LOCATIONS[mat]
-            avail += heuristic(curr_pos, supply_loc)
-            curr_pos = supply_loc
-            amr_inventory[chosen_amr][mat] = 3
-            
+
+        # 6. Update Internal State (Precise Dynamic Pathfinding & Reservations)
+        material = chosen_job.type_
+        start_time = amr_availabilities[chosen_amr]
+
+        # Supply refill if needed
+        if amr_inventory[chosen_amr][material] == 0:
+            supply_location = SUPPLY_LOCATIONS[material]
+            supply_path = find_dynamic_path(amr_positions[chosen_amr], supply_location, start_time, reservations, amr_states, chosen_amr)
+            supply_time = int(len(supply_path) - 1)
+            supply_end = start_time + supply_time + TYPE_DURATION[material]
+            if supply_time == 0 and amr_positions[chosen_amr] != supply_location:
+                supply_time = MAX_DEPTH
+                supply_end = start_time + supply_time
+
+            for t_offset, pt in enumerate(supply_path):
+                reservations[(pt, int(start_time) + t_offset)] = chosen_amr
+            for t_refill in range(int(start_time) + supply_time, int(supply_end) + 1):
+                reservations[(supply_location, t_refill)] = chosen_amr
+
+            amr_states[chosen_amr] = (supply_location, supply_end)
+            amr_availabilities[chosen_amr] = supply_end
+            amr_positions[chosen_amr] = supply_location
+            start_time = supply_end
+            amr_inventory[chosen_amr][material] = 3
+
         # Travel to station
-        target_station = STATIONS[chosen_job.station]
-        avail += heuristic(curr_pos, target_station)
-        
-        # Wait for station
-        avail = max(avail, station_availabilities[chosen_job.station])
-        
-        # Process
-        avail += chosen_job.duration
-        amr_inventory[chosen_amr][mat] -= 1
-        
-        # Update state dicts
-        station_availabilities[chosen_job.station] = avail
-        amr_availabilities[chosen_amr] = avail
-        amr_positions[chosen_amr] = target_station
-            
-    # Finalize Individual (Order amr_assignment list by job_idx)
+        travel_start = amr_availabilities[chosen_amr]
+        travel_path = find_dynamic_path(amr_positions[chosen_amr], STATIONS[chosen_job.station], travel_start, reservations, amr_states, chosen_amr)
+        travel_time = int(len(travel_path) - 1)
+        if travel_time == 0 and amr_positions[chosen_amr] != STATIONS[chosen_job.station]:
+            travel_time = MAX_DEPTH
+        travel_end = travel_start + travel_time
+
+        for t_offset, pt in enumerate(travel_path):
+            reservations[(pt, int(travel_start) + t_offset)] = chosen_amr
+
+        amr_availabilities[chosen_amr] = travel_end
+        amr_positions[chosen_amr] = STATIONS[chosen_job.station]
+
+        # Wait for station and process
+        earliest_start = max(travel_end, station_availabilities[chosen_job.station])
+        process_start = earliest_start
+        process_end = process_start + chosen_job.duration
+
+        for t_process in range(int(travel_end), int(process_end) + 1):
+            reservations[(STATIONS[chosen_job.station], t_process)] = chosen_amr
+
+        amr_states[chosen_amr] = (STATIONS[chosen_job.station], process_end)
+        amr_inventory[chosen_amr][material] -= 1
+        station_availabilities[chosen_job.station] = process_end
+
+        # Return to home base
+        return_start = process_end
+        next_dest = AMR_STARTS[chosen_amr]
+        return_path = find_dynamic_path(STATIONS[chosen_job.station], next_dest, return_start, reservations, amr_states, chosen_amr)
+        return_time = int(len(return_path) - 1)
+        if return_time == 0 and STATIONS[chosen_job.station] != next_dest:
+            return_time = MAX_DEPTH
+        return_end = return_start + return_time
+
+        for t_offset, pt in enumerate(return_path):
+            reservations[(pt, int(return_start) + t_offset)] = chosen_amr
+
+        amr_states[chosen_amr] = (next_dest, return_end)
+        amr_availabilities[chosen_amr] = return_end
+        amr_positions[chosen_amr] = next_dest
+
+    # Finalize Individual
     final_assignment = []
-    # Make sure we use the ID sequence mapped to assignments
     for i in range(len(jobs)):
-        # job.idx may not perfectly sequential in all domains, but here make_jobs uses idx 0..N-1
-        # Re-map so amr_assignment aligns with job_idx 0->N-1
         final_assignment.append(amr_assignment_map[i])
-        
+
     ind = Individual(order=order_seq, amr_assignment=final_assignment)
-    
-    solve_dur = time.perf_counter() - start_time
-    return ind, total_log_prob, solve_dur
+
+    solve_dur = time.perf_counter() - perf_start_time
+    return ind, (total_job_log_prob, total_machine_log_prob), solve_dur
 
 
 if __name__ == "__main__":
-    import numpy as np # Local import for seeds
+    import numpy as np
     import argparse
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--gantt", action="store_true", help="Plot Gantt Chart")
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
-    parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file (e.g., schedule.png)")
+    parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file")
     parser.add_argument("--collision_iters", type=int, default=collision_routing_iters, help="Number of collision routing iterations")
-    parser.add_argument("--output_csv", type=str, default="GNN_summary_results.csv", help="Output CSV filename")
+    parser.add_argument("--output_csv", type=str, default="gnn_summary_results.csv", help="Output CSV filename")
     args = parser.parse_args()
-    
-    # 1. Setup environment and seed 
+
+    # 1. Setup
     random.seed(42)
     torch.manual_seed(42)
     np.random.seed(42)
-    
+
     # 2. Create Model
-    gnn = SchedulerGNN(amr_in_dim=8, job_in_dim=10, hidden_dim=128, gnn_layers=2)
-    
-    weights_path = Path("gnn_scheduler_best.pth")
+    gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3)
+
+    weights_path = Path("gnn_mpn_scheduler_best.pth")
+    if not weights_path.exists():
+        old_weights = Path("gnn_scheduler_best.pth")
+        if old_weights.exists():
+            weights_path = old_weights
+
     if weights_path.exists():
         print(f"Loading trained weights from {weights_path}...")
-        gnn.load_state_dict(torch.load(weights_path, map_location='cpu'))
-    
+        try:
+            state_dict = torch.load(weights_path, map_location='cpu')
+            gnn_model.load_state_dict(state_dict)
+        except Exception as e:
+            print(f"WARNING: Could not load weights from {weights_path}: {e}")
+            print("Proceeding with randomly initialized weights.")
+
     # 3. Load Jobs
     if args.inbox:
         dispatch_events = load_dispatch_events(Path(args.inbox))
     else:
         dispatch_events = load_dispatch_events()
     target_index = os.environ.get(DISPATCH_EVENT_INDEX_ENV)
-    
+
     output_filename = args.output_csv
     results_data = []
 
-    print("=== Using GNN Logic ===")
+    print("=== Using GNN (Multi-Pointer Network) Logic ===")
 
     if dispatch_events:
         if target_index is not None:
-             dispatch_events = [e for e in dispatch_events if str(e["index"]) == str(target_index)]
-        
+            dispatch_events = [e for e in dispatch_events if str(e["index"]) == str(target_index)]
+
         for event in dispatch_events:
             print(f"\n=== Processing Dispatch Event {event['index']} (Jobs: {len(event['jobs'])}) ===")
-            
-            # a. Run GNN Inference
-            best_ind, _, solve_dur_ns = solve_with_gnn(event["jobs"], gnn)
-            
-            # b. Apply Local Improve for routing/collision adjustment exactly identically to GA.py
+
+            best_ind, _, solve_dur_ns = solve_with_gnn(event["jobs"], gnn_model)
+
             improve_start = time.perf_counter()
             best_ind = local_improve(best_ind, event["jobs"], max_iters=routing_iters)
             if args.collision_iters > 0:
                 best_ind = local_improve(best_ind, event["jobs"], max_iters=args.collision_iters, check_collision=True)
             solve_dur_ns += (time.perf_counter() - improve_start)
-            
-            # c. Evaluate with Exact GA routing logic
+
             img_path = f"{args.save_img.split('.')[0]}_{event['index']}.png" if args.save_img else None
             makespan, computation_time = describe_solution_gnn(best_ind, event["jobs"], solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=img_path)
-            
+
             results_data.append([event['index'], f"{makespan:.2f}", f"{computation_time:.4f}"])
     else:
         print("No dispatch file found. Generating random jobs...")
         jobs = make_jobs()
-        
-        # a. Run GNN Inference
-        best_ind, _, solve_dur_ns = solve_with_gnn(jobs, gnn)
-        
-        # b. Apply Local Improve for routing/collision adjustment exactly identically to GA.py
+
+        best_ind, _, solve_dur_ns = solve_with_gnn(jobs, gnn_model)
+
         improve_start = time.perf_counter()
         best_ind = local_improve(best_ind, jobs, max_iters=routing_iters)
         if args.collision_iters > 0:
             best_ind = local_improve(best_ind, jobs, max_iters=args.collision_iters, check_collision=True)
         solve_dur_ns += (time.perf_counter() - improve_start)
-        
-        # c. Evaluate with Exact GA routing logic
+
         makespan, computation_time = describe_solution_gnn(best_ind, jobs, solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=args.save_img)
-        
+
         results_data.append(["random", f"{makespan:.2f}", f"{computation_time:.4f}"])
 
     # 4. Save metrics
@@ -429,4 +599,3 @@ if __name__ == "__main__":
             writer.writerow(["Event_Index", "Makespan", "Computation_Time"])
             writer.writerows(results_data)
         print(f"\nSummary results saved to {output_filename}")
-

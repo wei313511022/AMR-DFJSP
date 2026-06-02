@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
-from GNN_DDQN_V7 import GridEnv, CONFIG
+from Attention_DDQN_V7 import GridEnv, CONFIG
 
 GLOBAL_SEED = 42
 

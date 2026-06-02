@@ -77,7 +77,7 @@ def get_local_queues(env):
 
 def safe_job_mask_from_state(state, device):
     """
-    Build job_mask for GNN padding / ghost job.
+    Build job_mask for Attention padding / ghost job.
     Your state[1] is job features list.
     If it contains the 'ghost job' [0,0,0,...], mask them as 0.
     """
@@ -343,9 +343,9 @@ def run_test(model_path, output_csv):
   
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run performance test with a specific model.")
-    parser.add_argument("--model", type=str, default="../models_pth/gnn_ddqn_model_v7_demo/gnn_ddqn_model_v7_ep800.pth", help="Path to the model file")
-    parser.add_argument("--output", type=str, default="../models_pth/gnn_ddqn_model_v7_demo/benchmark_results.csv", help="Path to the output CSV file")
-    parser.add_argument("--module", type=str, default="models.GNN_DDQN_V7", help="Module to import GridEnv and SchedulerAgent from")
+    parser.add_argument("--model", type=str, default="../models_pth/attention_ddqn_model_v7_demo/attention_ddqn_model_v7_ep800.pth", help="Path to the model file")
+    parser.add_argument("--output", type=str, default="../models_pth/attention_ddqn_model_v7_demo/benchmark_results.csv", help="Path to the output CSV file")
+    parser.add_argument("--module", type=str, default="models.Attention_DDQN_V7", help="Module to import GridEnv and SchedulerAgent from")
     args = parser.parse_args()
 
     # Ensure parent directory is in sys.path so we can import dynamically

@@ -7,7 +7,7 @@ Architecture:
   BG THREAD    — GA computation runs asynchronously; result is picked up
                  by the main thread on the next timer tick
 
-This avoids the "display freeze" that occurs when GNN+GA blocks the
+This avoids the "display freeze" that occurs when Attention+GA blocks the
 matplotlib event loop for 2-4 seconds.
 """
 
@@ -27,7 +27,7 @@ import torch
 import numpy as np
 
 # Import AI components
-from GNN_DDQN_V7 import (
+from Attention_DDQN_V7 import (
     GridEnv, SchedulerAgent, CONFIG, STATIONS, JOB_PROPS,
 )
 
@@ -46,7 +46,7 @@ set_seed(42)
 SCHEDULE_OUTBOX = "schedule_outbox.jsonl"
 DATASET_PATH = CONFIG['DATASET_PATH']
 AMR_STATE_FILE = "dynamic_amr_state.json"
-MODEL_PATH = CONFIG['SAVE_PATH'] + '/gnn_ddqn_model_v7_ep800.pth'
+MODEL_PATH = CONFIG['SAVE_PATH'] + '/attention_ddqn_model_v7_ep800.pth'
 
 # Reset outbox each run
 open(SCHEDULE_OUTBOX, "w").close()
@@ -140,28 +140,28 @@ def get_process_executor():
         _process_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1, mp_context=ctx)
     return _process_executor
 
-def _mp_bg_worker(ga_jobs, init_state, job_map, gnn_state_dict, device, routing_iters, collision_iters):
+def _mp_bg_worker(ga_jobs, init_state, job_map, attention_state_dict, device, routing_iters, collision_iters):
     import sys, os
     STATIC_ALGO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__) if '__file__' in globals() else '.', '../../Static_alogorithm'))
     if STATIC_ALGO_PATH not in sys.path:
         sys.path.append(STATIC_ALGO_PATH)
         
     try:
-        from GNN.GNN import solve_with_gnn, SchedulerGNN
+        from Attention.Attention import solve_with_attention, SchedulerAttention
         from GA.GA import local_improve
         import time as _time
         import torch
 
         start = _time.perf_counter()
         
-        heuristic_gnn = SchedulerGNN(amr_in_dim=8, job_in_dim=10, hidden_dim=128, gnn_layers=2)
-        if gnn_state_dict:
-            heuristic_gnn.load_state_dict(gnn_state_dict)
-        heuristic_gnn.to(device)
-        heuristic_gnn.eval()
+        heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
+        if attention_state_dict:
+            heuristic_attention.load_state_dict(attention_state_dict)
+        heuristic_attention.to(device)
+        heuristic_attention.eval()
 
-        best_ind, _, _ = solve_with_gnn(
-            ga_jobs, heuristic_gnn, deterministic=True, init_state=init_state
+        best_ind, _, _ = solve_with_attention(
+            ga_jobs, heuristic_attention, deterministic=True, init_state=init_state
         )
         best_ind = local_improve(
             best_ind, ga_jobs,
@@ -326,11 +326,16 @@ def spawn_arrived_jobs(ax):
         raw = all_jobs_stream[next_job_idx]
         if raw["arrival_time"] > simulation_time:
             break
-        props = JOB_PROPS[raw["type"]]
+        # Randomly choose processing time from [5, 10, 15] deterministically using the job ID
+        jid = raw.get("id", raw.get("jid", 0))
+        if "proc_time" in raw:
+            duration = float(raw["proc_time"])
+        else:
+            duration = float(random.Random(jid).choice([5.0, 10.0, 15.0]))
         vj = VisualJob(
-            jid=raw["id"],
+            jid=jid,
             jtype=raw["type"],
-            proc_time=props["time"],
+            proc_time=duration,
             arrival_ts=raw["arrival_time"],
             station=raw["dest_station_id"],
         )
@@ -395,8 +400,8 @@ def start_background_ga():
             ai_env.sim.amr_queues[amr].append(active_job)
 
     # ----- Snapshot state for GA (immutable once captured) -----
-    init_state = ai_env.sim.get_gnn_init_state()
-    heuristic_gnn = ai_env.heuristic_gnn
+    init_state = ai_env.sim.get_attention_init_state()
+    heuristic_attention = ai_env.heuristic_attention
 
     is_computing = True
     last_action_str = "COMPUTING..."
@@ -404,9 +409,9 @@ def start_background_ga():
           f"{len(unstarted)} unstarted jobs")
 
     # ---- Snapshot PyTorch Weights Safely ----
-    gnn_state = None
-    if getattr(ai_env, 'heuristic_gnn', None) is not None:
-        gnn_state = {k: v.cpu() for k, v in ai_env.heuristic_gnn.state_dict().items()}
+    attention_state = None
+    if getattr(ai_env, 'heuristic_attention', None) is not None:
+        attention_state = {k: v.cpu() for k, v in ai_env.heuristic_attention.state_dict().items()}
     device_name = CONFIG.get('DEVICE', 'cpu')
     routing_iters = CONFIG.get('GA_ROUTING_ITERS', 1000)
     collision_iters = CONFIG.get('GA_COLLISION_ITERS', 2000)
@@ -417,7 +422,7 @@ def start_background_ga():
         ga_jobs, 
         init_state, 
         job_map, 
-        gnn_state, 
+        attention_state, 
         device_name, 
         routing_iters, 
         collision_iters

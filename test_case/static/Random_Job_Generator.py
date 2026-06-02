@@ -15,7 +15,7 @@ STATION_COUNT = 5
 JOB_TYPES = {
     "A": {"time": 5},
     "B": {"time": 10},
-    "C": {"time": 25},
+    "C": {"time": 15},
 }
 JOB_TYPE_KEYS = list(JOB_TYPES.keys())
 
@@ -26,7 +26,9 @@ def generate_data(num_batches, batch_size):
     Generates N batches of jobs instantly and writes to JSONL.
     Each batch contains 'batch_size' jobs.
     """
-    OUTPUT_FILE = f"dispatch_inbox_{batch_size}.jsonl"
+    import os
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    OUTPUT_FILE = os.path.join(SCRIPT_DIR, f"dispatch_inbox_{batch_size}.jsonl")
     # Clear the file first
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         pass
@@ -47,13 +49,13 @@ def generate_data(num_batches, batch_size):
                 simulated_time += interarrival
                 
                 jtype = random.choice(JOB_TYPE_KEYS)
-                proc_time = JOB_TYPES[jtype]["time"]
+                proc_time = float(JOB_TYPES[jtype]["time"])
                 station = random.randint(1, STATION_COUNT)
                 
                 job_data = {
                     "jid": current_job_id,
                     "type": jtype,
-                    "proc_time": float(proc_time),
+                    "proc_time": proc_time,
                     "station": station
                 }
                 batch_jobs.append(job_data)

@@ -26,13 +26,11 @@ STATIONS = {
     "station4": (9, 3),
     "station5": (9, 1),
 }
-OBSTACLES = {
-    (5, 1),(5, 2),(6, 1),(6, 2),(4, 5),(3, 5),(3,8),(6, 4),(6, 5),(6, 8),(6, 9),(4,6),(3,1), (2,3)
-}
+OBSTACLES = set()
 BASES = list(AMR_STARTS.values()) # Parking spots are at the bases
-TYPE_DURATION = {"A": 5, "B": 10, "C": 25}
+TYPE_DURATION = {"A": 5, "B": 10, "C": 15}
 SUPPLY_LOCATIONS = {"A": (0, 8), "B": (0, 5), "C": (0, 2)}
-_GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(OBSTACLES) + list(SUPPLY_LOCATIONS.values())
+_GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(SUPPLY_LOCATIONS.values())
 GRID_MIN_X = min(p[0] for p in _GRID_POINTS)
 GRID_MAX_X = max(p[0] for p in _GRID_POINTS)
 GRID_MIN_Y = min(p[1] for p in _GRID_POINTS)
@@ -375,9 +373,10 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             else:
                 supply_path = shortest_path(current_position[amr], supply_location)
             supply_time = int(len(supply_path) - 1)
-            supply_end = start_time + supply_time
+            supply_end = start_time + supply_time + TYPE_DURATION[material]
             if supply_time == 0 and current_position[amr] != supply_location:
                 supply_time = MAX_DEPTH
+                supply_end = start_time + supply_time
                 invalid_jobs_count += 1
                 if need_log and check_collision:
                     _diagnose_and_print_failure(amr, job.idx, "supply", current_position[amr], supply_location, start_time, reservations, amr_states)
@@ -385,10 +384,13 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
                 # Reserve path
                 for t_offset, pt in enumerate(supply_path):
                     reservations[(pt, int(start_time) + t_offset)] = amr
+                # Reserve supply location during loading
+                for t in range(int(start_time) + supply_time, int(supply_end) + 1):
+                    reservations[(supply_location, t)] = amr
                 amr_states[amr] = (supply_location, supply_end)
             
-            if need_log and supply_time > 0:
-                timelines.append((amr, start_time, supply_end, "supply", f"Replenish {material}"))
+            if need_log:
+                timelines.append((amr, start_time, supply_end, "supply", f"Dock {material}"))
             availability[amr] = supply_end
             current_position[amr] = supply_location
             start_time = supply_end
@@ -587,6 +589,16 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
                         if len(amr_queues[amr]) > 0:
                             queue_infos.append((amr_queues[amr][0].idx, t))
 
+            elif s['mode'] == 'loading_dock':
+                s['proc_ticks'] -= 1
+                if s['proc_ticks'] <= 0:
+                    mat = s['job'].type_
+                    inventory[amr][mat] = 3
+                    if need_log:
+                        timelines.append((amr, s.get('route_start', t), t, "supply", f"Dock {mat}"))
+                    s['mode'] = 'idle'
+                    s['goal'] = None
+
             elif s['mode'] == 'processing_old':
                 s['proc_ticks'] -= 1
                 if s['proc_ticks'] <= 0:
@@ -618,7 +630,7 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
         moves = {}
         def prio(amr):
             m = amr_states[amr]['mode']
-            if m == 'processing' or m == 'processing_old': return 100
+            if m in ['processing', 'processing_old', 'loading_dock']: return 100
             if m == 'idle': return 10
             if m == 'moving_station': return 50
             if m == 'moving_supply': return 40
@@ -644,7 +656,7 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
                 if p[0] == 2:
                     is_blocking_highway = True
             
-            if m == 'processing' or m == 'processing_old':
+            if m in ['processing', 'processing_old', 'loading_dock']:
                 moves[amr] = p
                 reserved.add(p)
             elif m == 'idle' and not is_blocking_station and not is_blocking_highway and p == amr_states[amr].get('goal', p):
@@ -728,10 +740,8 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
             
             if s['mode'] == 'moving_supply' and p == s['goal']:
                 mat = s['job'].type_
-                inventory[amr][mat] = 3
-                if need_log:
-                    timelines.append((amr, s.get('route_start', t), t, "supply", f"Replenish {mat}"))
-                s['mode'] = 'idle'
+                s['mode'] = 'loading_dock'
+                s['proc_ticks'] = TYPE_DURATION[mat]
                 
             elif s['mode'] == 'moving_station' and p == s['goal']:
                 if not station_occupied[s['job'].station]:
@@ -1053,8 +1063,8 @@ def plot_gantt(timeline: List[Tuple], queue_infos: List[Tuple[int, float]], jobs
             elif "Return" in label:
                 dur = label.split(" ")[-1].replace("s", "")
                 display_label = f"Ret\n({dur})"
-            elif "Replenish" in label:
-                display_label = "Supply"
+            elif "Replenish" in label or "Dock" in label:
+                display_label = label
         else:
             rect_kwargs["facecolor"] = WAIT_COLOR
             rect_kwargs["hatch"] = ".."
@@ -1119,9 +1129,22 @@ def load_dispatch_events(path: Path = DISPATCH_INBOX) -> List[Dict[str, object]]
         for job_idx, raw_job in enumerate(data.get("jobs", [])):
             station_key = station_key_from_value(raw_job.get("station"))
             if station_key is None: continue
-            type_ = str(raw_job.get("type", "")).upper()
-            if type_ not in TYPE_DURATION: type_ = "A"
-            jobs.append(Job(idx=job_idx, type_=type_, duration=float(raw_job.get("proc_time", TYPE_DURATION[type_])), station=station_key))
+            
+            if "proc_time" in raw_job:
+                duration = float(raw_job["proc_time"])
+            elif "duration" in raw_job:
+                duration = float(raw_job["duration"])
+            else:
+                jid = raw_job.get("id", raw_job.get("jid", job_idx))
+                duration = float(random.Random(jid).choice([5.0, 10.0, 15.0]))
+                
+            if duration == 5.0:
+                type_ = "A"
+            elif duration == 10.0:
+                type_ = "B"
+            else:
+                type_ = "C"
+            jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key))
         if jobs:
             events.append({"index": idx, "dispatch_time": float(data.get("dispatch_time", 0.0)), "jobs": jobs})
     return events
@@ -1129,9 +1152,15 @@ def make_jobs() -> List[Job]:
     stations = list(STATIONS.keys())
     jobs = []
     for idx in range(JOB_COUNT):
-        type_ = random.choice(list(TYPE_DURATION.keys()))
         station = random.choice(stations)
-        jobs.append(Job(idx=idx, type_=type_, duration=TYPE_DURATION[type_], station=station))
+        duration = float(random.Random(idx).choice([5.0, 10.0, 15.0]))
+        if duration == 5.0:
+            type_ = "A"
+        elif duration == 10.0:
+            type_ = "B"
+        else:
+            type_ = "C"
+        jobs.append(Job(idx=idx, type_=type_, duration=duration, station=station))
     return jobs
 def describe_solution(individual: Individual, jobs: List[Job], solve_time: float = None, show_gantt: bool = False, save_img: str = None, routing_output: str = "amr_routing.jsonl", schedule_output: str = "amr_schedule.jsonl") -> Tuple[float, float]:
     availability, decoded_timeline, queue_infos, path_logs, invalid_count, tick_records = decode_schedule_tick_by_tick(individual, jobs, need_log=True, check_collision=True)

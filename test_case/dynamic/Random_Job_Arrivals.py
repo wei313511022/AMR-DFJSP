@@ -32,13 +32,20 @@ def generate_episode(episode_id):
             break
 
         # 2. Random Attributes
-        j_type = random.choice(JOB_TYPES)
+        proc_time = float(random.choice([5, 10, 15]))
+        if proc_time == 5.0:
+            j_type = "A"
+        elif proc_time == 10.0:
+            j_type = "B"
+        else:
+            j_type = "C"
         dest_id = random.choice(DESTINATION_STATION_IDS)
 
         # 3. Create Job Record (Minimal Data)
         job = {
             "id": job_counter,
             "type": j_type,
+            "proc_time": proc_time,
             "arrival_time": round(current_time, 2),
             "dest_station_id": dest_id
         }
