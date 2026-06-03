@@ -24,10 +24,10 @@ from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
-    JOB_COUNT, MAX_DEPTH, routing_iters, collision_routing_iters,
+    JOB_COUNT, MAX_DEPTH,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
-    nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
+    nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness,
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
 )
 
@@ -97,6 +97,13 @@ class SchedulerAttention(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
+        # Critic Head: estimates state value V(s_t) from pooled AMR and job embeddings.
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
     def forward(self, amr_features, job_features, job_mask):
         """
         amr_features: (batch, num_amrs, amr_in_dim)
@@ -160,6 +167,42 @@ class SchedulerAttention(nn.Module):
         logits = logits.masked_fill(job_mask_expand, float('-inf'))
         
         return logits
+
+    def forward_critic(self, amr_features, job_features, job_mask):
+        """
+        Returns scalar state value V(s_t).
+        """
+        x_amr = self.amr_emb(amr_features)
+        x_job = self.job_emb(job_features)
+
+        if job_mask.all():
+            job_attn_mask = None
+        else:
+            job_attn_mask = job_mask
+
+        for i in range(self.attention_layers):
+            amr_self, _ = self.amr_self_attn[i](x_amr, x_amr, x_amr)
+            x_amr = x_amr + amr_self
+
+            job_self, _ = self.job_self_attn[i](x_job, x_job, x_job, key_padding_mask=job_attn_mask)
+            x_job = x_job + job_self
+
+            amr_cross, _ = self.amr_to_job_attn[i](x_amr, x_job, x_job, key_padding_mask=job_attn_mask)
+            job_cross, _ = self.job_to_amr_attn[i](x_job, x_amr, x_amr)
+
+            x_amr = x_amr + amr_cross
+            x_job = x_job + job_cross
+
+            x_amr = x_amr + self.fc_amr[i](x_amr)
+            x_job = x_job + self.fc_job[i](x_job)
+
+        mask_float = (~job_mask).float().unsqueeze(-1)
+        num_unmasked = mask_float.sum(dim=1, keepdim=True).clamp(min=1.0)
+        job_pool = (x_job * mask_float).sum(dim=1) / num_unmasked.squeeze(-1)
+        amr_pool = x_amr.mean(dim=1)
+
+        combined = torch.cat([job_pool, amr_pool], dim=-1)
+        return self.critic(combined).squeeze(-1)
 
 
 def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory, amr_assignment_map=None):
@@ -431,7 +474,6 @@ if __name__ == "__main__":
     parser.add_argument("--gantt", action="store_true", help="Plot Gantt Chart")
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
     parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file (e.g., schedule.png)")
-    parser.add_argument("--collision_iters", type=int, default=collision_routing_iters, help="Number of collision routing iterations")
     parser.add_argument("--output_csv", type=str, default="attention_precise_summary_results.csv", help="Output CSV filename")
     args = parser.parse_args()
     
@@ -463,7 +505,7 @@ if __name__ == "__main__":
             for k, v in state_dict.items():
                 new_key = k.replace("gnn_layers", "attention_layers")
                 new_state_dict[new_key] = v
-            attention_model.load_state_dict(new_state_dict)
+            attention_model.load_state_dict(new_state_dict, strict=False)
         except Exception as e:
             print(f"WARNING: Could not load weights from {weights_path} due to shape/feature mismatch: {e}")
             print("Proceeding with randomly initialized weights (recommend retraining with train.py).")
@@ -489,15 +531,8 @@ if __name__ == "__main__":
             
             # a. Run Attention Inference
             best_ind, _, solve_dur_ns = solve_with_attention(event["jobs"], attention_model)
-            
-            # b. Apply Local Improve for routing/collision adjustment exactly identically to GA.py
-            improve_start = time.perf_counter()
-            best_ind = local_improve(best_ind, event["jobs"], max_iters=routing_iters)
-            if args.collision_iters > 0:
-                best_ind = local_improve(best_ind, event["jobs"], max_iters=args.collision_iters, check_collision=True)
-            solve_dur_ns += (time.perf_counter() - improve_start)
-            
-            # c. Evaluate with Exact GA routing logic
+
+            # b. Evaluate with Exact GA routing logic. Precise rollout already uses dynamic pathfinding.
             img_path = f"{args.save_img.split('.')[0]}_{event['index']}.png" if args.save_img else None
             makespan, computation_time = describe_solution_attention(best_ind, event["jobs"], solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=img_path)
             
@@ -508,15 +543,8 @@ if __name__ == "__main__":
         
         # a. Run Attention Inference
         best_ind, _, solve_dur_ns = solve_with_attention(jobs, attention_model)
-        
-        # b. Apply Local Improve for routing/collision adjustment exactly identically to GA.py
-        improve_start = time.perf_counter()
-        best_ind = local_improve(best_ind, jobs, max_iters=routing_iters)
-        if args.collision_iters > 0:
-            best_ind = local_improve(best_ind, jobs, max_iters=args.collision_iters, check_collision=True)
-        solve_dur_ns += (time.perf_counter() - improve_start)
-        
-        # c. Evaluate with Exact GA routing logic
+
+        # b. Evaluate with Exact GA routing logic. Precise rollout already uses dynamic pathfinding.
         makespan, computation_time = describe_solution_attention(best_ind, jobs, solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=args.save_img)
         
         results_data.append(["random", f"{makespan:.2f}", f"{computation_time:.4f}"])

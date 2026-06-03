@@ -11,8 +11,7 @@ from GNN_precise import (
     AMR_KEYS, STATIONS, SUPPLY_LOCATIONS, TYPE_DURATION, AMR_STARTS
 )
 from GA.GA import (
-    make_jobs, describe_solution, local_improve, routing_iters,
-    collision_routing_iters, find_dynamic_path, MAX_DEPTH
+    make_jobs, describe_solution, find_dynamic_path, MAX_DEPTH
 )
 import torch.nn.functional as F
 
@@ -174,7 +173,7 @@ def train(args):
     print(f"Training on: {device}")
 
     # Hyperparameters
-    num_epochs = 10000
+    num_epochs = args.epochs
     batch_size = 16
     lr_actor = 1e-3
     lr_critic = 1e-3
@@ -210,7 +209,7 @@ def train(args):
     optimizer_actor = optim.Adam(actor_params, lr=lr_actor)
     optimizer_critic = optim.Adam(critic_params, lr=lr_critic)
 
-    print("Starting Precise Multi-PPO training with Joint Critic...")
+    print("Starting Precise Multi-PPO training with Critic-Based Advantage...")
 
     best_makespan = float('inf')
     losses_job = []
@@ -235,28 +234,8 @@ def train(args):
                 jobs, gnn_model, deterministic=False
             )
 
-            # Apply Local Improve
-            improve_start = time.perf_counter()
-            ind = local_improve(ind, jobs, max_iters=routing_iters)
-            if collision_routing_iters > 0:
-                ind = local_improve(ind, jobs, max_iters=collision_routing_iters, check_collision=True)
-            solve_dur += (time.perf_counter() - improve_start)
-
             stochastic_makespan, _ = describe_solution(ind, jobs, solve_time=solve_dur, show_gantt=False)
             batch_makespans.append(stochastic_makespan)
-
-            # Greedy Rollout (baseline)
-            with torch.no_grad():
-                greedy_ind, _, greedy_solve_dur = solve_with_gnn(jobs, gnn_model, deterministic=True)
-                greedy_improve_start = time.perf_counter()
-                greedy_ind = local_improve(greedy_ind, jobs, max_iters=routing_iters)
-                if collision_routing_iters > 0:
-                    greedy_ind = local_improve(greedy_ind, jobs, max_iters=collision_routing_iters, check_collision=True)
-                greedy_solve_dur += (time.perf_counter() - greedy_improve_start)
-                greedy_makespan, _ = describe_solution(greedy_ind, jobs, solve_time=greedy_solve_dur, show_gantt=False)
-
-            # Advantage = greedy_makespan - stochastic_makespan (positive is good)
-            advantage = greedy_makespan - stochastic_makespan
 
             # Reconstruct action indices
             job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
@@ -273,7 +252,7 @@ def train(args):
             trajectories.append((
                 jobs, job_action_seq, machine_action_seq,
                 old_job_lp.detach(), old_machine_lp.detach(),
-                advantage, value_target
+                value_target
             ))
 
         # ====== 2. Multi-PPO Optimization Phase ======
@@ -291,11 +270,14 @@ def train(args):
 
             for (jobs, job_action_seq, machine_action_seq,
                  old_job_lp, old_machine_lp,
-                 advantage, value_target) in trajectories:
+                 value_target) in trajectories:
 
                 new_job_lp, new_machine_lp, values = evaluate_actions_multi_ppo(
                     jobs, gnn_model, job_action_seq, machine_action_seq
                 )
+                value_target_tensor = torch.tensor(value_target, dtype=torch.float32, device=values.device)
+                value_targets = value_target_tensor.expand_as(values)
+                advantage = value_target_tensor - values.detach().mean()
 
                 # --- Job Actor Loss (L_CLIP) ---
                 job_ratio = torch.exp(new_job_lp - old_job_lp)
@@ -309,9 +291,6 @@ def train(args):
                 machine_surr2 = torch.clamp(machine_ratio, 1.0 - clip_eps, 1.0 + clip_eps) * advantage
                 machine_loss = -torch.min(machine_surr1, machine_surr2)
 
-                # --- Critic Loss (MSE against value target) ---
-                value_target_tensor = torch.tensor(value_target, dtype=torch.float32, device=values.device)
-                value_targets = value_target_tensor.expand_as(values)
                 critic_loss = F.mse_loss(values, value_targets)
 
                 # Combine and backprop
@@ -396,6 +375,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
+    parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
     args = parser.parse_args()
 
     train(args)

@@ -97,6 +97,13 @@ class SchedulerAttention(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
+        # Critic Head: estimates state value V(s_t) from pooled AMR and job embeddings.
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
     def forward(self, amr_features, job_features, job_mask):
         """
         amr_features: (batch, num_amrs, amr_in_dim)
@@ -160,6 +167,42 @@ class SchedulerAttention(nn.Module):
         logits = logits.masked_fill(job_mask_expand, float('-inf'))
         
         return logits
+
+    def forward_critic(self, amr_features, job_features, job_mask):
+        """
+        Returns scalar state value V(s_t).
+        """
+        x_amr = self.amr_emb(amr_features)
+        x_job = self.job_emb(job_features)
+
+        if job_mask.all():
+            job_attn_mask = None
+        else:
+            job_attn_mask = job_mask
+
+        for i in range(self.attention_layers):
+            amr_self, _ = self.amr_self_attn[i](x_amr, x_amr, x_amr)
+            x_amr = x_amr + amr_self
+
+            job_self, _ = self.job_self_attn[i](x_job, x_job, x_job, key_padding_mask=job_attn_mask)
+            x_job = x_job + job_self
+
+            amr_cross, _ = self.amr_to_job_attn[i](x_amr, x_job, x_job, key_padding_mask=job_attn_mask)
+            job_cross, _ = self.job_to_amr_attn[i](x_job, x_amr, x_amr)
+
+            x_amr = x_amr + amr_cross
+            x_job = x_job + job_cross
+
+            x_amr = x_amr + self.fc_amr[i](x_amr)
+            x_job = x_job + self.fc_job[i](x_job)
+
+        mask_float = (~job_mask).float().unsqueeze(-1)
+        num_unmasked = mask_float.sum(dim=1, keepdim=True).clamp(min=1.0)
+        job_pool = (x_job * mask_float).sum(dim=1) / num_unmasked.squeeze(-1)
+        amr_pool = x_amr.mean(dim=1)
+
+        combined = torch.cat([job_pool, amr_pool], dim=-1)
+        return self.critic(combined).squeeze(-1)
 
 
 def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory, amr_assignment_map=None):
@@ -414,7 +457,7 @@ if __name__ == "__main__":
             for k, v in state_dict.items():
                 new_key = k.replace("gnn_layers", "attention_layers")
                 new_state_dict[new_key] = v
-            attention_model.load_state_dict(new_state_dict)
+            attention_model.load_state_dict(new_state_dict, strict=False)
         except Exception as e:
             print(f"WARNING: Could not load weights from {weights_path} due to shape/feature mismatch: {e}")
             print("Proceeding with randomly initialized weights (recommend retraining with train.py).")

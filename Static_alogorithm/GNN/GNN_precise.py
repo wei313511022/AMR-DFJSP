@@ -24,10 +24,10 @@ from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
-    JOB_COUNT, MAX_DEPTH, routing_iters, collision_routing_iters,
+    JOB_COUNT, MAX_DEPTH,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
-    nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
+    nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness,
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
 )
 
@@ -518,7 +518,6 @@ if __name__ == "__main__":
     parser.add_argument("--gantt", action="store_true", help="Plot Gantt Chart")
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
     parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file")
-    parser.add_argument("--collision_iters", type=int, default=collision_routing_iters, help="Number of collision routing iterations")
     parser.add_argument("--output_csv", type=str, default="gnn_precise_summary_results.csv", help="Output CSV filename")
     args = parser.parse_args()
 
@@ -570,12 +569,7 @@ if __name__ == "__main__":
 
             best_ind, _, solve_dur_ns = solve_with_gnn(event["jobs"], gnn_model)
 
-            improve_start = time.perf_counter()
-            best_ind = local_improve(best_ind, event["jobs"], max_iters=routing_iters)
-            if args.collision_iters > 0:
-                best_ind = local_improve(best_ind, event["jobs"], max_iters=args.collision_iters, check_collision=True)
-            solve_dur_ns += (time.perf_counter() - improve_start)
-
+            # Precise rollout already uses dynamic pathfinding and reservations.
             img_path = f"{args.save_img.split('.')[0]}_{event['index']}.png" if args.save_img else None
             makespan, computation_time = describe_solution_gnn(best_ind, event["jobs"], solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=img_path)
 
@@ -586,12 +580,7 @@ if __name__ == "__main__":
 
         best_ind, _, solve_dur_ns = solve_with_gnn(jobs, gnn_model)
 
-        improve_start = time.perf_counter()
-        best_ind = local_improve(best_ind, jobs, max_iters=routing_iters)
-        if args.collision_iters > 0:
-            best_ind = local_improve(best_ind, jobs, max_iters=args.collision_iters, check_collision=True)
-        solve_dur_ns += (time.perf_counter() - improve_start)
-
+        # Precise rollout already uses dynamic pathfinding and reservations.
         makespan, computation_time = describe_solution_gnn(best_ind, jobs, solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=args.save_img)
 
         results_data.append(["random", f"{makespan:.2f}", f"{computation_time:.4f}"])

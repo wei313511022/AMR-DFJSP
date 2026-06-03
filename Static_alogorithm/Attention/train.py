@@ -36,6 +36,7 @@ def evaluate_actions(jobs, model, action_seq, init_state: dict = None):
     amr_assignment_map = {}
     
     log_probs = []
+    values = []
     
     # Must keep model in train mode to track gradients during backprop
     model.train()
@@ -50,6 +51,9 @@ def evaluate_actions(jobs, model, action_seq, init_state: dict = None):
         job_feat = job_feat.to(device)
         job_mask = job_mask.to(device)
         
+        value = model.forward_critic(amr_feat, job_feat, job_mask)
+        values.append(value.squeeze())
+
         logits = model(amr_feat, job_feat, job_mask) # (1, 3, num_jobs)
         flat_logits = logits.view(-1)
         
@@ -91,7 +95,7 @@ def evaluate_actions(jobs, model, action_seq, init_state: dict = None):
         amr_availabilities[chosen_amr] = return_end
         amr_positions[chosen_amr] = home_pos
         
-    return torch.stack(log_probs).sum()
+    return torch.stack(log_probs).sum(), torch.stack(values)
 
 def train(args):
     # Setup
@@ -99,13 +103,14 @@ def train(args):
     print(f"Training on: {device}")
     
     # Hyperparameters
-    num_epochs = 10000
+    num_epochs = args.epochs
     batch_size = 16 # Number of episodes (schedules) to sample before a weight update
     lr = 1e-3
     
     # PPO Hyperparameters
     ppo_epochs = 4
     clip_eps = 0.2
+    value_loss_coef = 0.5
     
     # Load test case if specified
     from GA.GA import load_dispatch_events
@@ -121,7 +126,7 @@ def train(args):
     attention_model = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2).to(device)
     optimizer = optim.Adam(attention_model.parameters(), lr=lr)
     
-    print("Starting PPO training with Self-Critical Baseline...")
+    print("Starting PPO training with Critic-Based Advantage...")
     
     best_makespan = float('inf')
     losses = []
@@ -142,6 +147,14 @@ def train(args):
             # Stochastic Rollout
             ind, old_log_prob, solve_dur = solve_with_attention(jobs, attention_model, deterministic=False)
             
+            # Reconstruct model-sampled action indices before local improvement mutates the schedule.
+            job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
+            action_seq = []
+            for job_id, amr in zip(ind.order, ind.amr_assignment):
+                job_idx = job_id_to_list_idx[job_id]
+                amr_idx = AMR_KEYS.index(amr)
+                action_seq.append(amr_idx * len(jobs) + job_idx)
+
             # Apply Local Improve
             improve_start = time.perf_counter()
             ind = local_improve(ind, jobs, max_iters=routing_iters)
@@ -151,50 +164,34 @@ def train(args):
             
             stochastic_makespan, _ = describe_solution(ind, jobs, solve_time=solve_dur, show_gantt=False)
             batch_makespans.append(stochastic_makespan)
-            
-            # Greedy Rollout
-            with torch.no_grad():
-                greedy_ind, _, greedy_solve_dur = solve_with_attention(jobs, attention_model, deterministic=True)
-                
-                greedy_improve_start = time.perf_counter()
-                greedy_ind = local_improve(greedy_ind, jobs, max_iters=routing_iters)
-                if collision_routing_iters > 0:
-                    greedy_ind = local_improve(greedy_ind, jobs, max_iters=collision_routing_iters, check_collision=True)
-                greedy_solve_dur += (time.perf_counter() - greedy_improve_start)
-                
-                greedy_makespan, _ = describe_solution(greedy_ind, jobs, solve_time=greedy_solve_dur, show_gantt=False)
-            
-            # Advantage computation
-            advantage = greedy_makespan - stochastic_makespan
-            
-            # Reconstruct action indices
-            job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
-            action_seq = []
-            for job_id, amr in zip(ind.order, ind.amr_assignment):
-                job_idx = job_id_to_list_idx[job_id]
-                amr_idx = AMR_KEYS.index(amr)
-                action_seq.append(amr_idx * len(jobs) + job_idx)
-                
-            trajectories.append((jobs, action_seq, old_log_prob.detach(), advantage))
+
+            value_target = -stochastic_makespan
+            trajectories.append((jobs, action_seq, old_log_prob.detach(), value_target))
             
         # 2. PPO Optimization Phase
         epoch_loss = 0.0
         for ppo_epoch in range(ppo_epochs):
             optimizer.zero_grad()
             batch_loss = 0.0
+            batch_critic_loss = 0.0
             
-            for jobs, action_seq, old_log_prob, advantage in trajectories:
-                new_log_prob = evaluate_actions(jobs, attention_model, action_seq)
+            for jobs, action_seq, old_log_prob, value_target in trajectories:
+                new_log_prob, values = evaluate_actions(jobs, attention_model, action_seq)
+                value_target_tensor = torch.tensor(value_target, dtype=torch.float32, device=values.device)
+                value_targets = value_target_tensor.expand_as(values)
+                advantage = value_target_tensor - values.detach().mean()
                 
                 ratio = torch.exp(new_log_prob - old_log_prob)
                 
                 surr1 = ratio * advantage
                 surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * advantage
                 
-                loss = -torch.min(surr1, surr2)
-                loss_scaled = loss / batch_size
-                loss_scaled.backward()
-                batch_loss += loss.item()
+                actor_loss = -torch.min(surr1, surr2)
+                critic_loss = F.mse_loss(values, value_targets)
+                total_loss = (actor_loss + value_loss_coef * critic_loss) / batch_size
+                total_loss.backward()
+                batch_loss += actor_loss.item()
+                batch_critic_loss += critic_loss.item()
                 
             optimizer.step()
             epoch_loss += batch_loss / batch_size
@@ -207,7 +204,7 @@ def train(args):
         
         # Logging
         if epoch % 1 == 0:
-            print(f"Epoch [{epoch}/{num_epochs}] | Avg Makespan: {avg_batch_makespan:.2f} | Total Loss: {epoch_loss:.4f}")
+            print(f"Epoch [{epoch}/{num_epochs}] | Avg Makespan: {avg_batch_makespan:.2f} | Actor Loss: {epoch_loss:.4f}")
             
         # Optional: Save best model
         if avg_batch_makespan < best_makespan:
@@ -248,6 +245,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file to train on (e.g., ../../test_case/dispatch_inbox_60.jsonl)")
+    parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
     args = parser.parse_args()
     
     train(args)

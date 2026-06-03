@@ -7,6 +7,7 @@ Run from the AMR-DFJSP root:
 
 Useful options:
     python train_all_models_parallel.py --inbox test_case/static/dispatch_inbox_60.jsonl
+    python train_all_models_parallel.py --epochs 2000
     python train_all_models_parallel.py --threads-per-process 2
     python train_all_models_parallel.py --models attention gnn_precise
 """
@@ -100,6 +101,12 @@ def parse_args() -> argparse.Namespace:
         help="Python executable used to launch child training processes.",
     )
     parser.add_argument(
+        "--epochs",
+        type=int,
+        default=2000,
+        help="Number of epochs passed to every selected training script.",
+    )
+    parser.add_argument(
         "--max-concurrent",
         type=int,
         default=default_parallelism,
@@ -169,7 +176,7 @@ def make_env(args: argparse.Namespace) -> dict[str, str]:
 
 
 def command_for(target: TrainTarget, args: argparse.Namespace) -> list[str]:
-    cmd = [args.python, str(target.script)]
+    cmd = [args.python, str(target.script), "--epochs", str(args.epochs)]
     if args.inbox is not None:
         cmd.extend(["--inbox", str(args.inbox)])
     return cmd
@@ -222,6 +229,8 @@ def main() -> int:
         raise SystemExit("--max-concurrent must be at least 1")
     if args.threads_per_process < 1:
         raise SystemExit("--threads-per-process must be at least 1")
+    if args.epochs < 1:
+        raise SystemExit("--epochs must be at least 1")
 
     missing = [target.script for target in targets if not target.script.exists()]
     if missing:
@@ -234,6 +243,7 @@ def main() -> int:
     print(f"CPU cores detected: {os.cpu_count() or 1}")
     print(f"Max concurrent jobs: {args.max_concurrent}")
     print(f"Threads per process: {args.threads_per_process}")
+    print(f"Epochs per model: {args.epochs}")
     print(f"Logs directory: {args.logs_dir}")
     print()
 
