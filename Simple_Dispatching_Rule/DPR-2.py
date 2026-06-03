@@ -3,20 +3,24 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import os
 import random
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import map as map_config
 import visualization
 from calcu_dist import make_calculate_distance
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = "../fjssp_training_dataset.jsonl"
+
+INSTANCE_INDEX = 0
+OUT_PATH = "../results/dpr-2_result.jsonl"
+FIG_OUT_PATH = "../results/dpr-2_result.png"
 
 _EPS = 1e-12
 
@@ -35,10 +39,11 @@ class MachineOption:
 class JobState:
     job_id: int
     operations: List[List[MachineOption]]
-    material: str
+    material: str = "A"
     next_op: int = 0
     ready_time: float = 0.0
-    current_node: int = 0
+    current_node: int = 10
+    is_exited: bool = False
 
     def remaining_ops(self) -> int:
         return len(self.operations) - self.next_op
@@ -52,6 +57,11 @@ class AmrState:
     amr_id: int
     ready_time: float
     current_node: int
+    inventory: Dict[str, int] = None
+
+    def __post_init__(self):
+        if self.inventory is None:
+            self.inventory = {"A": 0, "B": 0, "C": 0}
 
 
 @dataclass(frozen=True)
@@ -69,6 +79,7 @@ class RoutePlan:
     to_pick_travel: float
     transport: float
     machine_wait: float
+    replenished_material: bool = False
 
     @property
     def travel_time(self) -> float:
@@ -114,10 +125,6 @@ def parse_jobs(instance: dict) -> List[JobState]:
         if not isinstance(ops_raw, list) or not ops_raw:
             raise ValueError(f"job {j_idx} has no operations")
 
-        material = str(job.get("material", "A"))
-        if material not in map_config.TYPE_TO_MATERIAL_NODE:
-            raise ValueError(f"job {j_idx} has unknown material: {material}")
-
         operations: List[List[MachineOption]] = []
         for op_idx, op_raw in enumerate(ops_raw):
             if not isinstance(op_raw, list) or not op_raw:
@@ -133,8 +140,7 @@ def parse_jobs(instance: dict) -> List[JobState]:
             JobState(
                 job_id=j_idx,
                 operations=operations,
-                material=material,
-                current_node=int(map_config.TYPE_TO_MATERIAL_NODE[material]),
+                                current_node=10
             )
         )
     return jobs
@@ -176,13 +182,23 @@ def route_plan_for_option(
     machine_times: Dict[int, float],
     amrs: Dict[int, AmrState],
 ) -> RoutePlan:
-    pickup_node = int(job.current_node)
     delivery_node = machine_to_node(int(option.machine))
     machine_ready = float(machine_times.get(int(option.machine), 0.0))
 
     best: Optional[RoutePlan] = None
     tied: List[RoutePlan] = []
     for amr in amrs.values():
+        replenished = False
+        if job.next_op == 0:
+            mat = job.material
+            if amr.inventory[mat] > 0:
+                pickup_node = int(amr.current_node)
+            else:
+                pickup_node = int(map_config.TYPE_TO_MATERIAL_NODE[mat])
+                replenished = True
+        else:
+            pickup_node = int(job.current_node)
+
         to_pick = float(calculate_distance(int(amr.current_node), pickup_node))
         transport = float(calculate_distance(pickup_node, delivery_node))
 
@@ -206,6 +222,7 @@ def route_plan_for_option(
             to_pick_travel=float(to_pick),
             transport=float(transport),
             machine_wait=float(start - arrival),
+            replenished_material=replenished,
         )
 
         if best is None:
@@ -283,7 +300,6 @@ def _dispatch_instance(
     instance: dict,
     *,
     seed: Optional[int] = None,
-    rule_tag: str,
     select_next: SelectFunc,
 ) -> Tuple[List[dict], float]:
     if seed is not None:
@@ -293,46 +309,62 @@ def _dispatch_instance(
     machine_times = init_machine_times(instance, jobs)
     amrs = init_amrs()
 
-    total_ops = sum(len(job.operations) for job in jobs)
+    total_ops = sum(len(job.operations) for job in jobs) + len(jobs)
     schedule: List[dict] = []
     last_job: Optional[int] = None
     last_machine: Optional[int] = None
 
     while len(schedule) < total_ops:
+        jobs_to_exit = [job for job in jobs if job.remaining_ops() == 0 and not getattr(job, "is_exited", False)]
+        if jobs_to_exit:
+            job = jobs_to_exit[0]
+            option = MachineOption(machine=-1, processing=0.0)
+            pickup_node = int(job.current_node)
+            delivery_node = getattr(map_config, "EXIT_NODE", 138)
+            best_plan = None
+            for amr in amrs.values():
+                to_pick = float(calculate_distance(int(amr.current_node), pickup_node))
+                transport = float(calculate_distance(pickup_node, delivery_node))
+                depart = max(float(amr.ready_time), float(job.ready_time) - to_pick)
+                arrival = depart + to_pick + transport
+                plan = RoutePlan(option=option, amr_id=int(amr.amr_id), amr_ready=float(amr.ready_time), amr_prev_node=int(amr.current_node), pickup_node=pickup_node, delivery_node=delivery_node, depart=float(depart), arrival=float(arrival), start=float(arrival), end=float(arrival), to_pick_travel=float(to_pick), transport=float(transport), machine_wait=0.0, replenished_material=False)
+                if best_plan is None or plan.end < best_plan.end - _EPS:
+                    best_plan = plan
+            plan = best_plan
+            rec = {"job": int(job.job_id), "op_index": int(job.next_op), "machine": -1, "amr": int(plan.amr_id), "start": float(plan.start), "end": float(plan.end)}
+            schedule.append(rec)
+            job.ready_time = float(plan.end)
+            job.current_node = int(plan.delivery_node)
+            job.is_exited = True
+            amrs[int(plan.amr_id)].ready_time = float(plan.end)
+            amrs[int(plan.amr_id)].current_node = int(plan.delivery_node)
+            last_job = int(job.job_id)
+            last_machine = None
+            continue
+
         available = [job for job in jobs if job.remaining_ops() > 0]
         if not available:
             break
 
-        job, option = select_next(
-            available, machine_times, amrs, last_job, last_machine
-        )
+        job, option = select_next(available, machine_times, amrs, last_job, last_machine)
 
         if option.machine not in machine_times:
             machine_times[int(option.machine)] = 0.0
 
         plan = route_plan_for_option(job, option, machine_times, amrs)
+        amr_obj = amrs[int(plan.amr_id)]
+        if job.next_op == 0:
+            mat = job.material
+            if plan.replenished_material:
+                amr_obj.inventory[mat] += map_config.MATERIAL_PICK_QTY
+            amr_obj.inventory[mat] -= 1
         rec = {
             "job": int(job.job_id),
             "op_index": int(job.next_op),
             "machine": int(option.machine),
             "amr": int(plan.amr_id),
-            "material": job.material,
-            "processing": float(option.processing),
             "start": float(plan.start),
             "end": float(plan.end),
-            "rule": rule_tag,
-            "pickup_node": int(plan.pickup_node),
-            "delivery_node": int(plan.delivery_node),
-            "amr_prev_node": int(plan.amr_prev_node),
-            "amr_ready": float(plan.amr_ready),
-            "depart": float(plan.depart),
-            "arrival": float(plan.arrival),
-            "to_pick_travel": float(plan.to_pick_travel),
-            "transport": float(plan.transport),
-            "travel_time": float(plan.travel_time),
-            "machine_wait": float(plan.machine_wait),
-            "route_nodes": plan.route_nodes,
-            "route_legs": plan.route_legs,
         }
         schedule.append(rec)
 
@@ -362,97 +394,8 @@ def write_schedule(
     with open(out_path, "w", encoding="utf-8") as f:
         for rec in schedule:
             rec_out = dict(rec)
-            rec_out["instance_index"] = int(instance_index)
-            rec_out["makespan"] = float(makespan)
             f.write(json.dumps(rec_out) + "\n")
 
-
-def build_parser(rule_name: str, default_out: str, default_fig_out: str) -> argparse.ArgumentParser:
-    base_dir = Path(__file__).resolve().parent
-    default_data = str(base_dir.parent / "fjssp_training_dataset.jsonl")
-
-    parser = argparse.ArgumentParser(
-        description=f"Dispatch a FJSP instance using {rule_name}."
-    )
-    parser.add_argument(
-        "--data",
-        default=default_data,
-        help="Path to fjssp_training_dataset.jsonl",
-    )
-    parser.add_argument(
-        "--index",
-        type=int,
-        default=0,
-        help="0-based instance index in the JSONL file",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Random seed for tie-breaking",
-    )
-    parser.add_argument(
-        "--out",
-        default=str(base_dir / default_out),
-        help="Output JSONL schedule path",
-    )
-    parser.add_argument(
-        "--fig-out",
-        default=str(base_dir / default_fig_out),
-        help="Output PNG visualization path",
-    )
-    parser.add_argument(
-        "--no-fig",
-        action="store_true",
-        help="Skip PNG visualization output",
-    )
-    return parser
-
-
-def run_cli(
-    *,
-    rule_name: str,
-    rule_tag: str,
-    default_out: str,
-    default_fig_out: str,
-    select_next: SelectFunc,
-) -> None:
-    parser = build_parser(rule_name, default_out, default_fig_out)
-    args = parser.parse_args()
-
-    instance = load_instance(args.data, args.index)
-    schedule, makespan = _dispatch_instance(
-        instance,
-        seed=args.seed,
-        rule_tag=rule_tag,
-        select_next=select_next,
-    )
-    write_schedule(
-        args.out,
-        schedule,
-        instance_index=args.index,
-        makespan=makespan,
-    )
-
-    fig_msg = ""
-    if not args.no_fig:
-        visualization.save_dpr_schedule_image(
-            schedule,
-            args.fig_out,
-            rule_name=rule_name,
-            instance_index=args.index,
-            makespan=makespan,
-        )
-        fig_msg = f"; figure={args.fig_out}"
-
-    print(
-        f"{rule_name} scheduled {len(schedule)} operations; makespan={makespan:.2f}; "
-        f"output={args.out}{fig_msg}"
-    )
-RULE_NAME = "DPR-2"
-RULE_TAG = "dpr-2"
-DEFAULT_OUT = "dpr-2_schedule.jsonl"
-DEFAULT_FIG_OUT = "dpr-2_schedule.png"
 
 def _select_rule(jobs, machine_times, amrs, last_job, last_machine):
     best = None
@@ -471,21 +414,38 @@ def _select_rule(jobs, machine_times, amrs, last_job, last_machine):
 def dispatch_instance(instance, *, seed=None):
     return _dispatch_instance(
         instance,
-        seed=seed,
-        rule_tag=RULE_TAG,
+        seed=67,
         select_next=_select_rule,
     )
 
 
 def main() -> None:
-    run_cli(
-        rule_name=RULE_NAME,
-        rule_tag=RULE_TAG,
-        default_out=DEFAULT_OUT,
-        default_fig_out=DEFAULT_FIG_OUT,
+    instance = load_instance(DATA_PATH, INSTANCE_INDEX)
+    schedule, makespan = _dispatch_instance(
+        instance,
         select_next=_select_rule,
     )
+    write_schedule(
+        OUT_PATH,
+        schedule,
+        instance_index=INSTANCE_INDEX,
+        makespan=makespan,
+    )
 
+    fig_msg = ""
+
+    visualization.save_dpr_schedule_image(
+        schedule,
+        FIG_OUT_PATH,
+        instance_index=INSTANCE_INDEX,
+        makespan=makespan,
+    )
+    fig_msg = f"; figure={FIG_OUT_PATH}"
+
+    print(
+        f"DPR-2; makespan={makespan:.2f}; "
+        f"output={OUT_PATH}{fig_msg}"
+    )
 
 if __name__ == "__main__":
     main()
