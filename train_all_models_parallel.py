@@ -7,7 +7,9 @@ Run from the AMR-DFJSP root:
 
 Useful options:
     python train_all_models_parallel.py --inbox test_case/static/dispatch_inbox_60.jsonl
+    python train_all_models_parallel.py --inboxes test_case/static/dispatch_inbox_20.jsonl,test_case/static/dispatch_inbox_40.jsonl
     python train_all_models_parallel.py --epochs 2000
+    python train_all_models_parallel.py --rl_method reinforce --baseline_rule earliest_completion_job+earliest_completion
     python train_all_models_parallel.py --threads-per-process 2
     python train_all_models_parallel.py --models attention gnn_precise
 """
@@ -96,6 +98,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional dispatch JSONL passed to every training script.",
     )
     parser.add_argument(
+        "--inboxes",
+        type=str,
+        default="",
+        help="Comma-separated dispatch JSONL files passed to every training script.",
+    )
+    parser.add_argument(
         "--python",
         default=sys.executable,
         help="Python executable used to launch child training processes.",
@@ -105,6 +113,48 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=2000,
         help="Number of epochs passed to every selected training script.",
+    )
+    parser.add_argument(
+        "--rl_method",
+        "--rl-method",
+        choices=["reinforce", "ppo"],
+        default="reinforce",
+        help="Training method passed to every selected training script.",
+    )
+    parser.add_argument(
+        "--baseline_rule",
+        "--baseline-rule",
+        default="earliest_completion_job+earliest_completion",
+        help="Dispatching-rule baseline used by REINFORCE training.",
+    )
+    parser.add_argument(
+        "--baseline_mode",
+        "--baseline-mode",
+        choices=["stepwise", "episode"],
+        default="stepwise",
+        help="REINFORCE baseline comparison mode.",
+    )
+    parser.add_argument(
+        "--entropy_coef",
+        "--entropy-coef",
+        type=float,
+        default=0.01,
+        help="Entropy regularization coefficient passed to REINFORCE trainers.",
+    )
+    parser.add_argument(
+        "--batch_size",
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Optional batch size passed to every selected training script.",
+    )
+    parser.add_argument(
+        "--no_normalize_advantage",
+        "--no-normalize-advantage",
+        dest="normalize_advantage",
+        action="store_false",
+        default=True,
+        help="Disable batch advantage normalization in REINFORCE trainers.",
     )
     parser.add_argument(
         "--max-concurrent",
@@ -176,9 +226,28 @@ def make_env(args: argparse.Namespace) -> dict[str, str]:
 
 
 def command_for(target: TrainTarget, args: argparse.Namespace) -> list[str]:
-    cmd = [args.python, str(target.script), "--epochs", str(args.epochs)]
+    cmd = [
+        args.python,
+        str(target.script),
+        "--epochs",
+        str(args.epochs),
+        "--rl_method",
+        args.rl_method,
+        "--baseline_rule",
+        args.baseline_rule,
+        "--baseline_mode",
+        args.baseline_mode,
+        "--entropy_coef",
+        str(args.entropy_coef),
+    ]
     if args.inbox is not None:
         cmd.extend(["--inbox", str(args.inbox)])
+    if args.inboxes:
+        cmd.extend(["--inboxes", args.inboxes])
+    if args.batch_size is not None:
+        cmd.extend(["--batch_size", str(args.batch_size)])
+    if not args.normalize_advantage:
+        cmd.append("--no_normalize_advantage")
     return cmd
 
 
@@ -222,6 +291,17 @@ def main() -> int:
         args.logs_dir = ROOT / args.logs_dir
     if args.inbox is not None and not args.inbox.is_absolute():
         args.inbox = ROOT / args.inbox
+    if args.inboxes:
+        normalized_inboxes = []
+        for raw_path in args.inboxes.split(","):
+            raw_path = raw_path.strip()
+            if not raw_path:
+                continue
+            inbox_path = Path(raw_path)
+            if not inbox_path.is_absolute():
+                inbox_path = ROOT / inbox_path
+            normalized_inboxes.append(str(inbox_path))
+        args.inboxes = ",".join(normalized_inboxes)
 
     targets = normalize_models(args.models)
 
@@ -231,6 +311,8 @@ def main() -> int:
         raise SystemExit("--threads-per-process must be at least 1")
     if args.epochs < 1:
         raise SystemExit("--epochs must be at least 1")
+    if args.batch_size is not None and args.batch_size < 1:
+        raise SystemExit("--batch_size must be at least 1")
 
     missing = [target.script for target in targets if not target.script.exists()]
     if missing:
@@ -244,6 +326,9 @@ def main() -> int:
     print(f"Max concurrent jobs: {args.max_concurrent}")
     print(f"Threads per process: {args.threads_per_process}")
     print(f"Epochs per model: {args.epochs}")
+    print(f"RL method: {args.rl_method}")
+    print(f"Baseline rule: {args.baseline_rule}")
+    print(f"Baseline mode: {args.baseline_mode}")
     print(f"Logs directory: {args.logs_dir}")
     print()
 
