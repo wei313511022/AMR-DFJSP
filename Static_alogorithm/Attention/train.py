@@ -129,7 +129,9 @@ def train(args):
     print("Starting PPO training with Critic-Based Advantage...")
     
     best_makespan = float('inf')
-    losses = []
+    losses_actor = []
+    losses_critic = []
+    losses_total = []
     makespans = []
     
     for epoch in range(1, num_epochs + 1):
@@ -150,8 +152,9 @@ def train(args):
             # Reconstruct model-sampled action indices before local improvement mutates the schedule.
             job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
             action_seq = []
-            for job_id, amr in zip(ind.order, ind.amr_assignment):
+            for job_id in ind.order:
                 job_idx = job_id_to_list_idx[job_id]
+                amr = ind.amr_assignment[job_id]
                 amr_idx = AMR_KEYS.index(amr)
                 action_seq.append(amr_idx * len(jobs) + job_idx)
 
@@ -170,10 +173,13 @@ def train(args):
             
         # 2. PPO Optimization Phase
         epoch_loss = 0.0
+        epoch_critic_loss = 0.0
+        epoch_total_loss = 0.0
         for ppo_epoch in range(ppo_epochs):
             optimizer.zero_grad()
             batch_loss = 0.0
             batch_critic_loss = 0.0
+            batch_total_loss = 0.0
             
             for jobs, action_seq, old_log_prob, value_target in trajectories:
                 new_log_prob, values = evaluate_actions(jobs, attention_model, action_seq)
@@ -192,19 +198,28 @@ def train(args):
                 total_loss.backward()
                 batch_loss += actor_loss.item()
                 batch_critic_loss += critic_loss.item()
+                batch_total_loss += (actor_loss + value_loss_coef * critic_loss).item()
                 
             optimizer.step()
             epoch_loss += batch_loss / batch_size
+            epoch_critic_loss += batch_critic_loss / batch_size
+            epoch_total_loss += batch_total_loss / batch_size
             
         epoch_loss /= ppo_epochs
+        epoch_critic_loss /= ppo_epochs
+        epoch_total_loss /= ppo_epochs
         
         avg_batch_makespan = sum(batch_makespans) / batch_size
-        losses.append(epoch_loss)
+        losses_actor.append(epoch_loss)
+        losses_critic.append(epoch_critic_loss)
+        losses_total.append(epoch_total_loss)
         makespans.append(avg_batch_makespan)
         
         # Logging
         if epoch % 1 == 0:
-            print(f"Epoch [{epoch}/{num_epochs}] | Avg Makespan: {avg_batch_makespan:.2f} | Actor Loss: {epoch_loss:.4f}")
+            print(f"Epoch [{epoch}/{num_epochs}] | Avg Makespan: {avg_batch_makespan:.2f} "
+                  f"| Actor Loss: {epoch_loss:.4f} | Critic Loss: {epoch_critic_loss:.4f} "
+                  f"| Total Loss: {epoch_total_loss:.4f}")
             
         # Optional: Save best model
         if avg_batch_makespan < best_makespan:
@@ -214,29 +229,40 @@ def train(args):
             
         # Save training loss/makespan chart periodically
         if epoch == 1 or epoch % 100 == 0 or epoch == num_epochs:
-            plt.figure(figsize=(12, 5))
-            
-            # Panel 1: Loss
-            plt.subplot(1, 2, 1)
-            plt.plot(losses, color='#1f77b4', linewidth=1.5, label='Epoch Loss')
-            plt.title('Attention Policy Training Loss', fontsize=12, fontweight='bold', pad=10)
-            plt.xlabel('Epoch', fontsize=10)
-            plt.ylabel('Loss', fontsize=10)
-            plt.grid(True, linestyle='--', alpha=0.5)
-            plt.legend()
-            
-            # Panel 2: Average Makespan
-            plt.subplot(1, 2, 2)
-            plt.plot(makespans, color='#ff7f0e', linewidth=1.5, label='Avg Makespan (s)')
-            plt.title('Average Batch Makespan Trend', fontsize=12, fontweight='bold', pad=10)
-            plt.xlabel('Epoch', fontsize=10)
-            plt.ylabel('Makespan (s)', fontsize=10)
-            plt.grid(True, linestyle='--', alpha=0.5)
-            plt.legend()
+            fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+            axes[0, 0].plot(losses_actor, color='#e74c3c', linewidth=1.5, label='Actor Loss')
+            axes[0, 0].set_title('Attention Actor Loss', fontsize=12, fontweight='bold')
+            axes[0, 0].set_xlabel('Epoch')
+            axes[0, 0].set_ylabel('Loss')
+            axes[0, 0].grid(True, linestyle='--', alpha=0.5)
+            axes[0, 0].legend()
+
+            axes[0, 1].plot(losses_critic, color='#2ecc71', linewidth=1.5, label='Critic Loss')
+            axes[0, 1].set_title('Attention Critic Loss', fontsize=12, fontweight='bold')
+            axes[0, 1].set_xlabel('Epoch')
+            axes[0, 1].set_ylabel('Loss')
+            axes[0, 1].grid(True, linestyle='--', alpha=0.5)
+            axes[0, 1].legend()
+
+            axes[1, 0].plot(losses_total, color='#3498db', linewidth=1.5, label='Total PPO Loss')
+            axes[1, 0].set_title('Total PPO Loss', fontsize=12, fontweight='bold')
+            axes[1, 0].set_xlabel('Epoch')
+            axes[1, 0].set_ylabel('Loss')
+            axes[1, 0].grid(True, linestyle='--', alpha=0.5)
+            axes[1, 0].legend()
+
+            axes[1, 1].plot(makespans, color='#ff7f0e', linewidth=1.5, label='Avg Makespan (s)')
+            axes[1, 1].set_title('Average Batch Makespan Trend', fontsize=12, fontweight='bold')
+            axes[1, 1].set_xlabel('Epoch')
+            axes[1, 1].set_ylabel('Makespan (s)')
+            axes[1, 1].grid(True, linestyle='--', alpha=0.5)
+            axes[1, 1].legend()
             
             import os
             SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
             chart_path = os.path.join(SCRIPT_DIR, "attention_training_metrics.png")
+            plt.tight_layout()
             plt.savefig(chart_path, dpi=300, bbox_inches='tight')
             plt.close()
             print(f"   -> Saved updated training chart to {chart_path}")
