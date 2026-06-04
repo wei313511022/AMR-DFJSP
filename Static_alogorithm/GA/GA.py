@@ -51,7 +51,7 @@ GENERATIONS = 150
 MUTATION_RATE = 0.2     
 STAGNATION_LIMIT = 40   # number of convergence iterations 
 routing_iters = 1000
-collision_routing_iters = 1
+collision_routing_iters = 100
 
 # MAX_DEPTH limits the Space-Time A* search horizon (moves + waits).
 # It prevents infinite searches in highly congested scenarios.

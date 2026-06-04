@@ -298,7 +298,7 @@ def expand_algorithms(raw_algorithms: Sequence[str], dispatch_rule_names: Sequen
     for algorithm in raw_algorithms:
         if algorithm == "all":
             selected.extend(list(dispatch_rule_names))
-            selected.extend(["ga", "ga_precise", "attention", "attention_precise", "gnn", "gnn_precise"])
+            selected.extend(["ga", "attention", "attention_precise", "gnn", "gnn_precise"])
         elif algorithm == "dispatching_rules":
             selected.extend(list(dispatch_rule_names))
         else:
