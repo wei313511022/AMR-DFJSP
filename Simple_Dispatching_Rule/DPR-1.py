@@ -21,7 +21,7 @@ _EPS = 1e-12
 
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-1_result.jsonl"
-FIG_OUT_PATH = "../results/dpr-1_result.png"
+FIG_OUT_PATH = "../results/dpr-1_result.html"
 
 calculate_distance = make_calculate_distance(
     map_config.GRID_SIZE, map_config.BARRIER_NODES
@@ -429,11 +429,9 @@ def main() -> None:
 
     fig_msg = ""
 
-    visualization.save_dpr_schedule_image(
+    visualization.save_dpr_schedule_interactive(
         schedule,
         FIG_OUT_PATH,
-        instance_index=INSTANCE_INDEX,
-        makespan=makespan,
     )
     fig_msg = f"; figure={FIG_OUT_PATH}"
 

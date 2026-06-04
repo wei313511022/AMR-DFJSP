@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = "../fjssp_training_dataset.jsonl"
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-3_result.jsonl"
-FIG_OUT_PATH = "../results/dpr-3_result.png"
+FIG_OUT_PATH = "../results/dpr-3_result.html"
 
 
 

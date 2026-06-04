@@ -6,7 +6,7 @@ TIME_LIMIT = None
 # Grid
 GRID_SIZE: int = 12
 BARRIER_NODES: Set[int] = {39, 43, 47, 50, 51, 54, 55, 58, 59, 87, 91, 95, 98, 99, 102, 103, 106, 107}
-
+EXIT_NODE = 138
 
 # Material
 TYPE_TO_MATERIAL_NODE: Dict[str, int] = {"A": 10, "B": 6, "C": 2}
@@ -26,7 +26,7 @@ SCHEDULE_OUTBOX = "Random_Job_Arrivals/schedule_outbox.jsonl"
 
 
 def validate_fixed_nodes() -> None:
-    fixed_nodes_to_check = set(S_m.values()) | set(TYPE_TO_MATERIAL_NODE.values()) | set(
+    fixed_nodes_to_check = set(S_m.values()) | set(
         JSON_STATION_MAPPING.values()
     )
     bad_fixed = sorted(int(n) for n in fixed_nodes_to_check if int(n) in BARRIER_NODES)
@@ -37,3 +37,5 @@ def validate_fixed_nodes() -> None:
 
 
 validate_fixed_nodes()
+
+

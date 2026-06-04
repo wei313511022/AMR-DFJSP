@@ -19,7 +19,7 @@ from calcu_dist import make_calculate_distance
 DATA_PATH = "../fjssp_training_dataset.jsonl"
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-6_result.jsonl"
-FIG_OUT_PATH = "../results/dpr-6_result.png"
+FIG_OUT_PATH = "../results/dpr-6_result.html"
 
 _EPS = 1e-12
 

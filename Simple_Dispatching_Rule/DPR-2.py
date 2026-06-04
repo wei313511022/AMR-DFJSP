@@ -20,7 +20,7 @@ DATA_PATH = "../fjssp_training_dataset.jsonl"
 
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-2_result.jsonl"
-FIG_OUT_PATH = "../results/dpr-2_result.png"
+FIG_OUT_PATH = "../results/dpr-2_result.html"
 
 _EPS = 1e-12
 
