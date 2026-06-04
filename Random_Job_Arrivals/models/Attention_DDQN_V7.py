@@ -481,7 +481,7 @@ class GridEnv:
         self.heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
         weights_path = os.path.join(os.path.dirname(__file__), '../../Static_alogorithm/Attention/attention_scheduler_best.pth')
         if os.path.exists(weights_path):
-            self.heuristic_attention.load_state_dict(torch.load(weights_path, map_location=CONFIG['DEVICE']))
+            self.heuristic_attention.load_state_dict(torch.load(weights_path, map_location=CONFIG['DEVICE']), strict=False)
         self.heuristic_attention.to(CONFIG['DEVICE'])
 
     def reset(self):
@@ -650,7 +650,9 @@ class GridEnv:
                     start_cpu_time = time.perf_counter()
                     init_state = self.sim.get_attention_init_state()
                     best_ind, _, compute_time = solve_with_attention(ga_jobs, self.heuristic_attention, deterministic=True, init_state=init_state)
-                    best_ind = local_improve(best_ind, ga_jobs, max_iters=CONFIG.get('GA_ROUTING_ITERS', 1000), init_state=init_state)
+                    routing_iters_cfg = CONFIG.get('GA_ROUTING_ITERS', 1000)
+                    if routing_iters_cfg > 0:
+                        best_ind = local_improve(best_ind, ga_jobs, max_iters=routing_iters_cfg, init_state=init_state)
                     collision_iters = CONFIG.get('GA_COLLISION_ITERS', 2000)
                     if collision_iters > 0:
                         best_ind = local_improve(best_ind, ga_jobs, max_iters=collision_iters, check_collision=True, init_state=init_state)

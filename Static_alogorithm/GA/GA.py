@@ -8,8 +8,13 @@ import heapq
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch, Rectangle
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch, Rectangle
+except ImportError:
+    plt = None
+    Patch = None
+    Rectangle = None
 from functools import lru_cache 
 
 # Constants Setup
@@ -472,25 +477,9 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         inventory[amr][material] -= 1
         station_available[job.station] = process_end # Occupy station
         
-        # Look-ahead Return Logic: Decide what to do after the job is done.
-        next_job = get_next_job_for_amr(amr, pos, order, individual.amr_assignment, jobs, job_map=job_map)
-        
-        # If there is no next job, return home. 
-        # If there IS a next job, go directly to the next station (or supply if empty) 
-        # to clear the current workstation and avoid gridlocking.
-        
+        # Return home after each job to match the neural schedulers' scenario.
         return_start = process_end
-        
-        if next_job:
-            next_mat = next_job.type_
-            # If we need material for the next job, we can wait/route to the supply station
-            if inventory[amr][next_mat] == 0:
-                next_dest = SUPPLY_LOCATIONS[next_mat]
-            else:
-                next_dest = STATIONS[next_job.station]
-        else:
-            # Local queue is empty -> Return to this specific AMR's start location
-            next_dest = AMR_STARTS[amr]
+        next_dest = AMR_STARTS[amr]
 
         if check_collision:
             return_path = find_dynamic_path(STATIONS[job.station], next_dest, return_start, reservations, amr_states, amr)
@@ -510,7 +499,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             amr_states[amr] = (next_dest, return_end)
             
         if need_log:
-            label = f"Return Home {return_time}s" if not next_job else f"To Next {return_time}s"
+            label = f"Return Home {return_time}s"
             timelines.append((amr, return_start, return_end, "return", label))
         availability[amr] = return_end
         current_position[amr] = next_dest
@@ -527,7 +516,8 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
 
     job_map = {job.idx: job for job in jobs}
     amr_queues = {amr: deque() for amr in AMR_STARTS}
-    for job_idx, amr in zip(individual.order, individual.amr_assignment):
+    for job_idx in individual.order:
+        amr = individual.amr_assignment[job_idx]
         amr_queues[amr].append(job_map[job_idx])
         
     t = int(init_state["time"]) if init_state else 0
@@ -609,9 +599,13 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
                         timelines.append((amr, t - s['job'].duration, t, f"process_{mat}", f"Job{s['job'].idx} {mat}({int(s['job'].duration)}s)"))
                         
                     amr_queues[amr].popleft()
-                    s['mode'] = 'idle'
+                    if positions[amr] != AMR_STARTS[amr]:
+                        s['mode'] = 'moving_base'
+                        s['goal'] = AMR_STARTS[amr]
+                    else:
+                        s['mode'] = 'idle'
+                        s['goal'] = None
                     s['job'] = None
-                    s['goal'] = None
                     if need_log: 
                         s['route_start'] = t
                         # Actually wait, we should log the NEXT job entering the "Dispatching" phase
@@ -1034,6 +1028,9 @@ def evolve(jobs: List[Job], init_state: dict = None) -> Tuple[Individual, List[T
 
 
 def plot_gantt(timeline: List[Tuple], queue_infos: List[Tuple[int, float]], jobs: List[Job] = None, solve_time: float = None, invalid_count: int = 0, show_gantt: bool = True, save_img: str = None) -> None:
+    if plt is None or Patch is None or Rectangle is None:
+        raise RuntimeError("matplotlib is required to plot or save a Gantt chart.")
+
     AMR_COUNT = len(AMR_STARTS)
     AX_Y_MIN, AX_Y_MAX = 0.0, 2.0
     BOTTOM_MIN = 0.0
