@@ -155,6 +155,21 @@ def action_sequence_from_individual(individual, jobs):
     return action_seq
 
 
+def finite_log_probs_and_entropy(logits, context: str):
+    finite_mask = torch.isfinite(logits)
+    if not finite_mask.any():
+        raise RuntimeError(f"No finite policy logits in {context}; model parameters may contain NaN.")
+
+    valid_logits = logits[finite_mask]
+    valid_log_probs = F.log_softmax(valid_logits, dim=0)
+    valid_probs = torch.exp(valid_log_probs)
+    entropy = -(valid_probs * valid_log_probs).sum()
+
+    log_probs = torch.full_like(logits, float("-inf"))
+    log_probs[finite_mask] = valid_log_probs
+    return log_probs, entropy
+
+
 def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_values: bool = False):
     (
         amr_positions,
@@ -191,10 +206,11 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
 
         logits = model(amr_feat, job_feat, job_mask)
         flat_logits = logits.view(-1)
-        log_probs = F.log_softmax(flat_logits, dim=0)
-        probs = torch.exp(log_probs)
+        if not torch.isfinite(flat_logits[chosen_action]):
+            raise RuntimeError("Chosen Attention precise action has a non-finite logit during replay.")
+        log_probs, entropy = finite_log_probs_and_entropy(flat_logits, "Attention precise replay")
         step_log_probs.append(log_probs[chosen_action])
-        step_entropies.append(-(probs * log_probs).sum())
+        step_entropies.append(entropy)
 
         num_jobs = len(jobs)
         amr_idx = chosen_action // num_jobs
@@ -388,6 +404,8 @@ def train_reinforce(args):
             actor_loss = -(step_log_probs * advantage_tensor).sum()
             entropy_bonus = step_entropies.sum()
             loss = (actor_loss - args.entropy_coef * entropy_bonus) / args.batch_size
+            if not torch.isfinite(loss).item():
+                raise RuntimeError("Non-finite Attention precise REINFORCE loss before backward.")
             loss.backward()
             epoch_actor_loss += actor_loss.item()
             epoch_entropy += step_entropies.mean().item()

@@ -92,6 +92,21 @@ def action_sequences_from_individual(individual, jobs):
     return job_action_seq, machine_action_seq
 
 
+def finite_log_probs_and_entropy(logits, context: str):
+    finite_mask = torch.isfinite(logits)
+    if not finite_mask.any():
+        raise RuntimeError(f"No finite policy logits in {context}; model parameters may contain NaN.")
+
+    valid_logits = logits[finite_mask]
+    valid_log_probs = F.log_softmax(valid_logits, dim=0)
+    valid_probs = torch.exp(valid_log_probs)
+    entropy = -(valid_probs * valid_log_probs).sum()
+
+    log_probs = torch.full_like(logits, float("-inf"))
+    log_probs[finite_mask] = valid_log_probs
+    return log_probs, entropy
+
+
 def evaluate_action_steps_multi(
     jobs,
     model,
@@ -137,19 +152,21 @@ def evaluate_action_steps_multi(
             values.append(model.forward_critic(job_embeddings, amr_embeddings, job_mask).squeeze())
 
         job_logits = model.forward_job_actor(job_embeddings, job_mask).view(-1)
-        job_step_log_probs = F.log_softmax(job_logits, dim=0)
-        job_probs = torch.exp(job_step_log_probs)
+        if not torch.isfinite(job_logits[chosen_job_list_idx]):
+            raise RuntimeError("Chosen GNN job action has a non-finite logit during replay.")
+        job_step_log_probs, job_entropy = finite_log_probs_and_entropy(job_logits, "GNN job replay")
         job_log_probs.append(job_step_log_probs[chosen_job_list_idx])
-        job_entropies.append(-(job_probs * job_step_log_probs).sum())
+        job_entropies.append(job_entropy)
 
         chosen_job = jobs[chosen_job_list_idx]
         selected_job_emb = job_embeddings[:, chosen_job_list_idx, :]
 
         machine_logits = model.forward_machine_actor(selected_job_emb, amr_embeddings).view(-1)
-        machine_step_log_probs = F.log_softmax(machine_logits, dim=0)
-        machine_probs = torch.exp(machine_step_log_probs)
+        if not torch.isfinite(machine_logits[chosen_amr_idx]):
+            raise RuntimeError("Chosen GNN AMR action has a non-finite logit during replay.")
+        machine_step_log_probs, machine_entropy = finite_log_probs_and_entropy(machine_logits, "GNN AMR replay")
         machine_log_probs.append(machine_step_log_probs[chosen_amr_idx])
-        machine_entropies.append(-(machine_probs * machine_step_log_probs).sum())
+        machine_entropies.append(machine_entropy)
 
         chosen_amr = AMR_KEYS[chosen_amr_idx]
         order_seq.append(chosen_job.idx)
@@ -360,6 +377,8 @@ def train_reinforce(args):
             machine_loss = -(machine_lp * advantage_tensor).sum()
             entropy_bonus = job_entropy.sum() + machine_entropy.sum()
             total_loss = (job_loss + machine_loss - args.entropy_coef * entropy_bonus) / args.batch_size
+            if not torch.isfinite(total_loss).item():
+                raise RuntimeError("Non-finite GNN REINFORCE loss before backward.")
             total_loss.backward()
 
             epoch_job_loss += job_loss.item()
