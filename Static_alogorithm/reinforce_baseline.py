@@ -5,7 +5,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
 
-from GA.GA import Individual, Job, decode_schedule_tick_by_tick, load_dispatch_events
+from GA.GA import (
+    PICKUP,
+    Individual,
+    Job,
+    decode_schedule_tick_by_tick,
+    load_dispatch_events,
+    paired_operation_order,
+    repair_operation_order,
+)
 from dispatching_rules import dispatching_rules as dr
 
 
@@ -33,6 +41,14 @@ def parse_rule_name(rule_name: str) -> Tuple[str, str]:
     dr.parse_rule_list(job_rule, dr.JOB_RULES, "job")
     dr.parse_rule_list(amr_rule, dr.AMR_RULES, "AMR")
     return job_rule, amr_rule
+
+
+def job_order_from_individual(individual: Individual, jobs: Sequence[Job]) -> List[int]:
+    return [
+        op.job_idx
+        for op in repair_operation_order(list(individual.order), list(jobs))
+        if op.kind == PICKUP
+    ]
 
 
 def load_training_events(inbox: str = "", inboxes: str = ""):
@@ -109,7 +125,7 @@ def complete_with_dispatch_rule(
         dr.apply_assignment(job, estimate, state)
         unscheduled.remove(job)
 
-    return Individual(order=order, amr_assignment=assignment)
+    return Individual(order=paired_operation_order(order), amr_assignment=assignment)
 
 
 def compute_dispatch_baseline_comparison(
@@ -138,14 +154,15 @@ def compute_dispatch_baseline_comparison(
     )
 
     episode_advantage = baseline_makespan - sampled_makespan
+    sampled_job_order = job_order_from_individual(sampled_individual, jobs)
     if baseline_mode == "episode":
-        step_advantages = [episode_advantage for _ in sampled_individual.order]
+        step_advantages = [episode_advantage for _ in sampled_job_order]
     else:
         step_advantages = []
         prefix_order: List[int] = []
         prefix_assignment: Dict[int, str] = {}
 
-        for job_idx in sampled_individual.order:
+        for job_idx in sampled_job_order:
             chosen_amr = sampled_individual.amr_assignment[job_idx]
 
             rule_next_individual = complete_with_dispatch_rule(
@@ -208,4 +225,3 @@ def normalize_advantage_batches(
         return [[0.0 for _ in values] for values in nested]
 
     return [[(value - mean) / (std + eps) for value in values] for values in nested]
-

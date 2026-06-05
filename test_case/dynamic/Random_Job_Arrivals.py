@@ -10,6 +10,12 @@ OUTPUT_FILE = "test_dataset_demo_v2.jsonl"
 
 # --- Domain Constants ---
 JOB_TYPES = ["A", "B", "C"]
+JOB_PROCESSING_TIMES = {
+    "A": 5.0,
+    "B": 10.0,
+    "C": 15.0,
+}
+INBOUND_DOCKS = ["dock1", "dock2", "dock3"]
 # Station IDs for Work Stations (Where the job needs to go)
 # Assuming 5 stations labeled 1 to 5 as per your visualizer
 DESTINATION_STATION_IDS = [1, 2, 3, 4, 5] 
@@ -32,19 +38,16 @@ def generate_episode(episode_id):
             break
 
         # 2. Random Attributes
-        proc_time = float(random.choice([5, 10, 15]))
-        if proc_time == 5.0:
-            j_type = "A"
-        elif proc_time == 10.0:
-            j_type = "B"
-        else:
-            j_type = "C"
+        j_type = random.choice(JOB_TYPES)
+        proc_time = float(JOB_PROCESSING_TIMES[j_type])
+        inbound_dock = random.choice(INBOUND_DOCKS)
         dest_id = random.choice(DESTINATION_STATION_IDS)
 
         # 3. Create Job Record (Minimal Data)
         job = {
             "id": job_counter,
             "type": j_type,
+            "inbound_dock": inbound_dock,
             "proc_time": proc_time,
             "arrival_time": round(current_time, 2),
             "dest_station_id": dest_id

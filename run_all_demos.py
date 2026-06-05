@@ -2,6 +2,7 @@ import subprocess
 import time
 import os
 import signal
+import sys
 
 def launch():
     print("Launching all demos...")
@@ -10,6 +11,7 @@ def launch():
     root_dir = os.path.dirname(os.path.abspath(__file__))
     models_dir = os.path.join(root_dir, "Random_Job_Arrivals", "models")
     routing_dir = os.path.join(root_dir, "AMRs_Routing")
+    python_executable = sys.executable
     
     processes = []
     
@@ -27,7 +29,7 @@ def launch():
         # 1. Dynamic Pairing
         print("Starting Dynamic Pairing Demo...")
         p1 = subprocess.Popen(
-            ["python", "Dynamic_Pairing_Demo.py", "--window_pos", "+0+0", "--state_file", "dynamic_amr_state.json", "--sync_file", sync_file],
+            [python_executable, "Dynamic_Pairing_Demo.py", "--window_pos", "+0+0", "--state_file", "dynamic_amr_state.json", "--sync_file", sync_file],
             cwd=models_dir
         )
         processes.append(p1)
@@ -35,7 +37,7 @@ def launch():
         # 2. Routing Demo for Dynamic
         print("Starting Routing Demo (Dynamic)...")
         p2 = subprocess.Popen(
-            ["python", "Routing_Demo.py", "--state_file", "../Random_Job_Arrivals/models/dynamic_amr_state.json", "--window_pos", "+1300+0", "--title", "Dynamic Route Map", "--sync_file", sync_file],
+            [python_executable, "Routing_Demo.py", "--state_file", "../Random_Job_Arrivals/models/dynamic_amr_state.json", "--window_pos", "+1300+0", "--title", "Dynamic Route Map", "--sync_file", sync_file],
             cwd=routing_dir
         )
         processes.append(p2)
@@ -43,7 +45,7 @@ def launch():
         # 3. Periodic Pairing
         print("Starting Periodic Pairing Demo...")
         p3 = subprocess.Popen(
-            ["python", "Periodic_Pairing_Demo.py", "--window_pos", "+0+550", "--state_file", "periodic_amr_state.json", "--sync_file", sync_file],
+            [python_executable, "Periodic_Pairing_Demo.py", "--window_pos", "+0+550", "--state_file", "periodic_amr_state.json", "--sync_file", sync_file],
             cwd=models_dir
         )
         processes.append(p3)
@@ -51,7 +53,7 @@ def launch():
         # 4. Routing Demo for Periodic
         print("Starting Routing Demo (Periodic)...")
         p4 = subprocess.Popen(
-            ["python", "Routing_Demo.py", "--state_file", "../Random_Job_Arrivals/models/periodic_amr_state.json", "--window_pos", "+1300+550", "--title", "Periodic Route Map", "--sync_file", sync_file],
+            [python_executable, "Routing_Demo.py", "--state_file", "../Random_Job_Arrivals/models/periodic_amr_state.json", "--window_pos", "+1300+550", "--title", "Periodic Route Map", "--sync_file", sync_file],
             cwd=routing_dir
         )
         processes.append(p4)

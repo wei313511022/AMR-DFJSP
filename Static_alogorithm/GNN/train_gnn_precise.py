@@ -13,13 +13,21 @@ from GNN_precise import (
     AMR_KEYS,
     AMR_STARTS,
     STATIONS,
-    SUPPLY_LOCATIONS,
     TYPE_DURATION,
     SchedulerGNN,
     extract_state_gnn,
     solve_with_gnn,
 )
-from GA.GA import MAX_DEPTH, find_dynamic_path, make_jobs
+from GA.GA import (
+    PICKUP,
+    MAX_DEPTH,
+    empty_count_inventory,
+    find_dynamic_path,
+    job_pickup_location,
+    make_jobs,
+    normalize_count_inventory,
+    repair_operation_order,
+)
 from reinforce_baseline import (
     DEFAULT_BASELINE_RULE,
     compute_dispatch_baseline_comparison,
@@ -34,19 +42,13 @@ def _initial_precise_state(init_state=None):
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
-        amr_inventory = {
-            amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy()
-            for amr in AMR_KEYS
-        }
+        amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
         amr_states = {amr: (amr_positions[amr], amr_availabilities[amr]) for amr in AMR_KEYS}
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        amr_inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
-        amr_inventory["AMR1"]["A"] = 3
-        amr_inventory["AMR2"]["B"] = 3
-        amr_inventory["AMR3"]["C"] = 3
+        amr_inventory = empty_count_inventory()
         amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_KEYS}
     return amr_positions, amr_availabilities, station_availabilities, amr_inventory, amr_states, {}
 
@@ -64,31 +66,29 @@ def _apply_precise_action(
     material = chosen_job.type_
     start_time = amr_availabilities[chosen_amr]
 
-    if amr_inventory[chosen_amr][material] == 0:
-        supply_location = SUPPLY_LOCATIONS[material]
-        supply_path = find_dynamic_path(
-            amr_positions[chosen_amr],
-            supply_location,
-            start_time,
-            reservations,
-            amr_states,
-            chosen_amr,
-        )
-        supply_time = int(len(supply_path) - 1)
-        supply_end = start_time + supply_time + TYPE_DURATION[material]
-        if supply_time == 0 and amr_positions[chosen_amr] != supply_location:
-            supply_time = MAX_DEPTH
-            supply_end = start_time + supply_time
+    pickup_location = job_pickup_location(chosen_job)
+    pickup_path = find_dynamic_path(
+        amr_positions[chosen_amr],
+        pickup_location,
+        start_time,
+        reservations,
+        amr_states,
+        chosen_amr,
+    )
+    pickup_time = int(len(pickup_path) - 1)
+    if pickup_time == 0 and amr_positions[chosen_amr] != pickup_location:
+        pickup_time = MAX_DEPTH
+    pickup_end = max(start_time + pickup_time, float(chosen_job.arrival_time))
 
-        for t_offset, point in enumerate(supply_path):
-            reservations[(point, int(start_time) + t_offset)] = chosen_amr
-        for t_refill in range(int(start_time) + supply_time, int(supply_end) + 1):
-            reservations[(supply_location, t_refill)] = chosen_amr
+    for t_offset, point in enumerate(pickup_path):
+        reservations[(point, int(start_time) + t_offset)] = chosen_amr
+    for t_wait in range(int(start_time) + pickup_time, int(pickup_end) + 1):
+        reservations[(pickup_location, t_wait)] = chosen_amr
 
-        amr_states[chosen_amr] = (supply_location, supply_end)
-        amr_availabilities[chosen_amr] = supply_end
-        amr_positions[chosen_amr] = supply_location
-        amr_inventory[chosen_amr][material] = 3
+    amr_states[chosen_amr] = (pickup_location, pickup_end)
+    amr_availabilities[chosen_amr] = pickup_end
+    amr_positions[chosen_amr] = pickup_location
+    amr_inventory[chosen_amr][material] = min(amr_inventory[chosen_amr][material] + 1, 3)
 
     travel_start = amr_availabilities[chosen_amr]
     target_station = STATIONS[chosen_job.station]
@@ -121,34 +121,18 @@ def _apply_precise_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    return_start = process_end
-    home_position = AMR_STARTS[chosen_amr]
-    return_path = find_dynamic_path(
-        target_station,
-        home_position,
-        return_start,
-        reservations,
-        amr_states,
-        chosen_amr,
-    )
-    return_time = int(len(return_path) - 1)
-    if return_time == 0 and target_station != home_position:
-        return_time = MAX_DEPTH
-    return_end = return_start + return_time
-
-    for t_offset, point in enumerate(return_path):
-        reservations[(point, int(return_start) + t_offset)] = chosen_amr
-
-    amr_states[chosen_amr] = (home_position, return_end)
-    amr_availabilities[chosen_amr] = return_end
-    amr_positions[chosen_amr] = home_position
+    amr_availabilities[chosen_amr] = process_end
+    amr_positions[chosen_amr] = target_station
 
 
 def action_sequences_from_individual(individual, jobs):
     job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
     job_action_seq = []
     machine_action_seq = []
-    for job_id in individual.order:
+    for op in repair_operation_order(list(individual.order), list(jobs)):
+        if op.kind != PICKUP:
+            continue
+        job_id = op.job_idx
         job_action_seq.append(job_id_to_list_idx[job_id])
         amr = individual.amr_assignment[job_id]
         machine_action_seq.append(AMR_KEYS.index(amr))

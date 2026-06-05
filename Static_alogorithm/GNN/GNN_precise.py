@@ -23,8 +23,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
-    SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
+    SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
     JOB_COUNT, MAX_DEPTH,
+    empty_count_inventory, job_pickup_location, normalize_count_inventory, paired_operation_order,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness,
@@ -254,7 +255,7 @@ def extract_state_gnn(jobs, assigned_jobs_set, amr_positions, amr_availabilities
     # Compute simple completion time lower bounds for each job
     for job in jobs:
         pos = STATIONS[job.station]
-        supply_pos = SUPPLY_LOCATIONS[job.type_]
+        supply_pos = job_pickup_location(job)
 
         is_assigned = job.idx in assigned_jobs_set
         job_status = 1.0 if is_assigned else 0.0
@@ -263,12 +264,10 @@ def extract_state_gnn(jobs, assigned_jobs_set, amr_positions, amr_availabilities
         if not is_assigned:
             lb_candidates = []
             for amr in AMR_KEYS:
-                travel_est = heuristic(amr_positions[amr], pos)
-                supply_est = 0.0
-                if amr_inventory[amr].get(job.type_, 0) == 0:
-                    supply_est = heuristic(amr_positions[amr], supply_pos) + TYPE_DURATION[job.type_]
-                    travel_est = heuristic(supply_pos, pos)
-                lb = max(amr_availabilities[amr] + supply_est + travel_est,
+                pickup_est = heuristic(amr_positions[amr], supply_pos)
+                travel_est = heuristic(supply_pos, pos)
+                arrival_wait = max(0.0, float(job.arrival_time) - (amr_availabilities[amr] + pickup_est))
+                lb = max(amr_availabilities[amr] + pickup_est + arrival_wait + travel_est,
                          station_availabilities.get(job.station, 0.0)) + job.duration
                 lb_candidates.append(lb)
             lb_val = min(lb_candidates) if lb_candidates else 0.0
@@ -353,17 +352,14 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
-        amr_inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_KEYS}
+        amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
         amr_states = {amr: (amr_positions[amr], amr_availabilities[amr]) for amr in AMR_KEYS}
         reservations = {}
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        amr_inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
-        amr_inventory["AMR1"]["A"] = 3
-        amr_inventory["AMR2"]["B"] = 3
-        amr_inventory["AMR3"]["C"] = 3
+        amr_inventory = empty_count_inventory()
         amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_KEYS}
         reservations = {}
 
@@ -436,26 +432,22 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         material = chosen_job.type_
         start_time = amr_availabilities[chosen_amr]
 
-        # Supply refill if needed
-        if amr_inventory[chosen_amr][material] == 0:
-            supply_location = SUPPLY_LOCATIONS[material]
-            supply_path = find_dynamic_path(amr_positions[chosen_amr], supply_location, start_time, reservations, amr_states, chosen_amr)
-            supply_time = int(len(supply_path) - 1)
-            supply_end = start_time + supply_time + TYPE_DURATION[material]
-            if supply_time == 0 and amr_positions[chosen_amr] != supply_location:
-                supply_time = MAX_DEPTH
-                supply_end = start_time + supply_time
+        pickup_location = job_pickup_location(chosen_job)
+        pickup_path = find_dynamic_path(amr_positions[chosen_amr], pickup_location, start_time, reservations, amr_states, chosen_amr)
+        pickup_time = int(len(pickup_path) - 1)
+        if pickup_time == 0 and amr_positions[chosen_amr] != pickup_location:
+            pickup_time = MAX_DEPTH
+        pickup_end = max(start_time + pickup_time, float(chosen_job.arrival_time))
 
-            for t_offset, pt in enumerate(supply_path):
-                reservations[(pt, int(start_time) + t_offset)] = chosen_amr
-            for t_refill in range(int(start_time) + supply_time, int(supply_end) + 1):
-                reservations[(supply_location, t_refill)] = chosen_amr
+        for t_offset, pt in enumerate(pickup_path):
+            reservations[(pt, int(start_time) + t_offset)] = chosen_amr
+        for t_wait in range(int(start_time) + pickup_time, int(pickup_end) + 1):
+            reservations[(pickup_location, t_wait)] = chosen_amr
 
-            amr_states[chosen_amr] = (supply_location, supply_end)
-            amr_availabilities[chosen_amr] = supply_end
-            amr_positions[chosen_amr] = supply_location
-            start_time = supply_end
-            amr_inventory[chosen_amr][material] = 3
+        amr_states[chosen_amr] = (pickup_location, pickup_end)
+        amr_availabilities[chosen_amr] = pickup_end
+        amr_positions[chosen_amr] = pickup_location
+        amr_inventory[chosen_amr][material] = min(amr_inventory[chosen_amr][material] + 1, 3)
 
         # Travel to station
         travel_start = amr_availabilities[chosen_amr]
@@ -483,28 +475,15 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
         amr_inventory[chosen_amr][material] -= 1
         station_availabilities[chosen_job.station] = process_end
 
-        # Return to home base
-        return_start = process_end
-        next_dest = AMR_STARTS[chosen_amr]
-        return_path = find_dynamic_path(STATIONS[chosen_job.station], next_dest, return_start, reservations, amr_states, chosen_amr)
-        return_time = int(len(return_path) - 1)
-        if return_time == 0 and STATIONS[chosen_job.station] != next_dest:
-            return_time = MAX_DEPTH
-        return_end = return_start + return_time
-
-        for t_offset, pt in enumerate(return_path):
-            reservations[(pt, int(return_start) + t_offset)] = chosen_amr
-
-        amr_states[chosen_amr] = (next_dest, return_end)
-        amr_availabilities[chosen_amr] = return_end
-        amr_positions[chosen_amr] = next_dest
+        amr_availabilities[chosen_amr] = process_end
+        amr_positions[chosen_amr] = STATIONS[chosen_job.station]
 
     # Finalize Individual
     final_assignment = []
     for i in range(len(jobs)):
         final_assignment.append(amr_assignment_map[i])
 
-    ind = Individual(order=order_seq, amr_assignment=final_assignment)
+    ind = Individual(order=paired_operation_order(order_seq), amr_assignment=final_assignment)
 
     solve_dur = time.perf_counter() - perf_start_time
     return ind, (total_job_log_prob, total_machine_log_prob), solve_dur

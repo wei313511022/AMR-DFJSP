@@ -14,7 +14,6 @@ from Attention import (
     AMR_KEYS,
     AMR_STARTS,
     STATIONS,
-    SUPPLY_LOCATIONS,
     TYPE_DURATION,
     SchedulerAttention,
     extract_state,
@@ -22,9 +21,14 @@ from Attention import (
     solve_with_attention,
 )
 from GA.GA import (
+    PICKUP,
     collision_routing_iters,
+    empty_count_inventory,
+    job_pickup_location,
     local_improve,
     make_jobs,
+    normalize_count_inventory,
+    repair_operation_order,
     routing_iters,
 )
 from reinforce_baseline import (
@@ -41,18 +45,12 @@ def _initial_fast_state(init_state=None):
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
-        amr_inventory = {
-            amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy()
-            for amr in AMR_KEYS
-        }
+        amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        amr_inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
-        amr_inventory["AMR1"]["A"] = 3
-        amr_inventory["AMR2"]["B"] = 3
-        amr_inventory["AMR3"]["C"] = 3
+        amr_inventory = empty_count_inventory()
     return amr_positions, amr_availabilities, station_availabilities, amr_inventory
 
 
@@ -68,11 +66,10 @@ def _apply_fast_action(
     curr_pos = amr_positions[chosen_amr]
     avail = amr_availabilities[chosen_amr]
 
-    if amr_inventory[chosen_amr][material] == 0:
-        supply_location = SUPPLY_LOCATIONS[material]
-        avail += heuristic(curr_pos, supply_location)
-        curr_pos = supply_location
-        amr_inventory[chosen_amr][material] = 3
+    pickup_location = job_pickup_location(chosen_job)
+    avail = max(avail + heuristic(curr_pos, pickup_location), float(chosen_job.arrival_time))
+    curr_pos = pickup_location
+    amr_inventory[chosen_amr][material] = min(amr_inventory[chosen_amr][material] + 1, 3)
 
     target_station = STATIONS[chosen_job.station]
     avail += heuristic(curr_pos, target_station)
@@ -81,15 +78,17 @@ def _apply_fast_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    home_pos = AMR_STARTS[chosen_amr]
-    amr_availabilities[chosen_amr] = process_end + heuristic(target_station, home_pos)
-    amr_positions[chosen_amr] = home_pos
+    amr_availabilities[chosen_amr] = process_end
+    amr_positions[chosen_amr] = target_station
 
 
 def action_sequence_from_individual(individual, jobs):
     job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
     action_seq = []
-    for job_id in individual.order:
+    for op in repair_operation_order(list(individual.order), list(jobs)):
+        if op.kind != PICKUP:
+            continue
+        job_id = op.job_idx
         job_idx = job_id_to_list_idx[job_id]
         amr = individual.amr_assignment[job_id]
         amr_idx = AMR_KEYS.index(amr)

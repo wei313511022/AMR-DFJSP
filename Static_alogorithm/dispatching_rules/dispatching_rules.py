@@ -13,17 +13,19 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from GA.GA import (  # noqa: E402
     AMR_KEYS,
+    AMR_LOAD_CAPACITY,
     AMR_STARTS,
     DISPATCH_EVENT_INDEX_ENV,
     Individual,
     Job,
     STATIONS,
-    SUPPLY_LOCATIONS,
     TYPE_DURATION,
     decode_schedule_tick_by_tick,
     heuristic,
+    job_pickup_location,
     load_dispatch_events,
     make_jobs,
+    paired_operation_order,
     plot_gantt,
 )
 
@@ -81,19 +83,11 @@ class AssignmentEstimate:
 
 
 def initial_state() -> RuleState:
-    inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
-    if "AMR1" in inventory:
-        inventory["AMR1"]["A"] = 3
-    if "AMR2" in inventory:
-        inventory["AMR2"]["B"] = 3
-    if "AMR3" in inventory:
-        inventory["AMR3"]["C"] = 3
-
     return RuleState(
         amr_positions={amr: AMR_STARTS[amr] for amr in AMR_KEYS},
         amr_availabilities={amr: 0.0 for amr in AMR_KEYS},
         station_availabilities={station: 0.0 for station in STATIONS.keys()},
-        inventory=inventory,
+        inventory={amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS},
         assigned_count={amr: 0 for amr in AMR_KEYS},
     )
 
@@ -102,37 +96,30 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     material = job.type_
     curr_pos = state.amr_positions[amr]
     avail = state.amr_availabilities[amr]
-    supply_needed = state.inventory[amr].get(material, 0) == 0
-    travel_time = 0.0
-
-    if supply_needed:
-        supply_location = SUPPLY_LOCATIONS[material]
-        to_supply = heuristic(curr_pos, supply_location)
-        supply_end = avail + to_supply + TYPE_DURATION[material]
-        curr_pos = supply_location
-        travel_time += to_supply
-    else:
-        supply_end = avail
+    capacity_blocked = state.inventory[amr].get(material, 0) >= AMR_LOAD_CAPACITY
+    pickup_location = job_pickup_location(job)
+    to_pickup = heuristic(curr_pos, pickup_location)
+    pickup_end = max(avail + to_pickup, float(job.arrival_time))
 
     target_station = STATIONS[job.station]
-    to_station = heuristic(curr_pos, target_station)
-    travel_end = supply_end + to_station
+    to_station = heuristic(pickup_location, target_station)
+    travel_end = pickup_end + to_station
     process_start = max(travel_end, state.station_availabilities[job.station])
     process_end = process_start + job.duration
-    return_end = process_end + heuristic(target_station, AMR_STARTS[amr])
-    travel_time += to_station + heuristic(target_station, AMR_STARTS[amr])
+    return_end = process_end
+    travel_time = to_pickup + to_station
 
     return AssignmentEstimate(
         amr=amr,
         start_time=avail,
-        supply_end=supply_end,
+        supply_end=pickup_end,
         travel_end=travel_end,
         process_start=process_start,
         process_end=process_end,
         return_end=return_end,
         completion_time=return_end,
         travel_time=travel_time,
-        supply_needed=supply_needed,
+        supply_needed=capacity_blocked,
     )
 
 
@@ -140,13 +127,14 @@ def apply_assignment(job: Job, estimate: AssignmentEstimate, state: RuleState) -
     amr = estimate.amr
     material = job.type_
 
-    if estimate.supply_needed:
-        state.inventory[amr][material] = 3
-
+    state.inventory[amr][material] = min(
+        AMR_LOAD_CAPACITY,
+        state.inventory[amr].get(material, 0) + 1,
+    )
     state.inventory[amr][material] -= 1
     state.station_availabilities[job.station] = estimate.process_end
     state.amr_availabilities[amr] = estimate.return_end
-    state.amr_positions[amr] = AMR_STARTS[amr]
+    state.amr_positions[amr] = STATIONS[job.station]
     state.assigned_count[amr] += 1
 
 
@@ -298,7 +286,7 @@ def solve_with_dispatching_rules(
         unscheduled.remove(job)
 
     solve_time = time.perf_counter() - start_time
-    return Individual(order=order, amr_assignment=amr_assignment), solve_time
+    return Individual(order=paired_operation_order(order), amr_assignment=amr_assignment), solve_time
 
 
 def evaluate_individual(individual: Individual, jobs: Sequence[Job]) -> Tuple[float, int]:

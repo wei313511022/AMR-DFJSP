@@ -23,8 +23,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from GA.GA import (
     Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
-    SUPPLY_LOCATIONS, SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
+    SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
     JOB_COUNT, routing_iters, collision_routing_iters,
+    empty_count_inventory, job_pickup_location, normalize_count_inventory, paired_operation_order,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
@@ -270,7 +271,7 @@ def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, am
     job_mask = []
     for job in jobs:
         pos = STATIONS[job.station]
-        supply_pos = SUPPLY_LOCATIONS[job.type_]
+        supply_pos = job_pickup_location(job)
         
         is_assigned = job.idx in assigned_jobs_set
         job_status = 1.0 if is_assigned else 0.0
@@ -310,16 +311,12 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
-        amr_inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_KEYS}
+        amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        
-        amr_inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS}
-        amr_inventory["AMR1"]["A"] = 3
-        amr_inventory["AMR2"]["B"] = 3
-        amr_inventory["AMR3"]["C"] = 3
+        amr_inventory = empty_count_inventory()
     
     assigned_jobs_set = set()
     
@@ -385,12 +382,13 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
         curr_pos = amr_positions[chosen_amr]
         avail = amr_availabilities[chosen_amr]
         
-        # Check supply
-        if amr_inventory[chosen_amr][mat] == 0:
-            supply_loc = SUPPLY_LOCATIONS[mat]
-            avail += heuristic(curr_pos, supply_loc)
-            curr_pos = supply_loc
-            amr_inventory[chosen_amr][mat] = 3
+        pickup_loc = job_pickup_location(chosen_job)
+        avail = max(avail + heuristic(curr_pos, pickup_loc), float(chosen_job.arrival_time))
+        curr_pos = pickup_loc
+        amr_inventory[chosen_amr][mat] = min(
+            amr_inventory[chosen_amr][mat] + 1,
+            3,
+        )
             
         # Travel to station
         target_station = STATIONS[chosen_job.station]
@@ -404,18 +402,15 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
         # Update station availability before returning home.
         station_availabilities[chosen_job.station] = process_end
         
-        # Return home after each job to clear the station in the fast rollout.
-        home_pos = AMR_STARTS[chosen_amr]
-        return_end = process_end + heuristic(target_station, home_pos)
-        amr_availabilities[chosen_amr] = return_end
-        amr_positions[chosen_amr] = home_pos
+        amr_availabilities[chosen_amr] = process_end
+        amr_positions[chosen_amr] = target_station
             
     # Finalize Individual (Order amr_assignment list by job_idx)
     final_assignment = []
     for i in range(len(jobs)):
         final_assignment.append(amr_assignment_map[i])
         
-    ind = Individual(order=order_seq, amr_assignment=final_assignment)
+    ind = Individual(order=paired_operation_order(order_seq), amr_assignment=final_assignment)
     
     solve_dur = time.perf_counter() - start_time
     return ind, total_log_prob, solve_dur

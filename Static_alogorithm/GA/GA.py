@@ -34,8 +34,21 @@ STATIONS = {
 OBSTACLES = set()
 BASES = list(AMR_STARTS.values()) # Parking spots are at the bases
 TYPE_DURATION = {"A": 5, "B": 10, "C": 15}
-SUPPLY_LOCATIONS = {"A": (0, 8), "B": (0, 5), "C": (0, 2)}
-_GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(SUPPLY_LOCATIONS.values())
+PROCESSING_TIMES = [float(v) for v in TYPE_DURATION.values()]
+PROCESSING_TIME_TO_TYPE = {float(v): k for k, v in TYPE_DURATION.items()}
+JOB_TYPE_KEYS = list(TYPE_DURATION.keys())
+INBOUND_DOCK_LOCATIONS = {"dock1": (0, 8), "dock2": (0, 5), "dock3": (0, 2)}
+INBOUND_DOCK_KEYS = list(INBOUND_DOCK_LOCATIONS.keys())
+DOCK_ALIASES = {
+    "1": "dock1", "dock1": "dock1", "A": "dock1",
+    "2": "dock2", "dock2": "dock2", "B": "dock2",
+    "3": "dock3", "dock3": "dock3", "C": "dock3",
+}
+SUPPLY_LOCATIONS = INBOUND_DOCK_LOCATIONS
+AMR_LOAD_CAPACITY = 3
+PICKUP = "pickup"
+UNLOAD = "unload"
+_GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(INBOUND_DOCK_LOCATIONS.values())
 GRID_MIN_X = min(p[0] for p in _GRID_POINTS)
 GRID_MAX_X = max(p[0] for p in _GRID_POINTS)
 GRID_MIN_Y = min(p[1] for p in _GRID_POINTS)
@@ -63,11 +76,18 @@ class Job:
     type_: str
     duration: float
     station: str
+    inbound_dock: str = "dock1"
+    arrival_time: float = 0.0
+
+@dataclass(frozen=True)
+class Operation:
+    job_idx: int
+    kind: str
 
 # one solution in GA
 @dataclass
 class Individual:
-    order: List[int]          # permutation of job execution order
+    order: List[Operation]    # operation sequence: pickup(job) and unload(job)
     amr_assignment: List[str] # job assigned to amr
 
 # check whether routing within the bound
@@ -259,31 +279,224 @@ def grid_distance(p: Tuple[int, int], q: Tuple[int, int]) -> float:
     path = shortest_path(p, q)
     return float(len(path) - 1)
 
+def job_type_from_duration(duration: float) -> str:
+    return PROCESSING_TIME_TO_TYPE.get(float(duration), random.choice(list(TYPE_DURATION.keys())))
+
+def job_type_from_value(raw_type: Optional[str], duration: Optional[float] = None) -> str:
+    if raw_type is not None:
+        candidate = str(raw_type).strip().upper()
+        if candidate in TYPE_DURATION:
+            return candidate
+    if duration is not None:
+        return job_type_from_duration(duration)
+    return random.choice(JOB_TYPE_KEYS)
+
+def dock_key_from_value(raw_dock: Optional[str]) -> str:
+    if raw_dock is None:
+        return random.choice(INBOUND_DOCK_KEYS)
+    key = str(raw_dock).strip()
+    if key in DOCK_ALIASES:
+        return DOCK_ALIASES[key]
+    upper_key = key.upper()
+    if upper_key in DOCK_ALIASES:
+        return DOCK_ALIASES[upper_key]
+    return random.choice(INBOUND_DOCK_KEYS)
+
+def _operation_key(op: Operation) -> Tuple[int, str]:
+    return (op.job_idx, op.kind)
+
+def _normalize_operation(gene) -> Optional[Operation]:
+    if isinstance(gene, Operation):
+        return gene if gene.kind in {PICKUP, UNLOAD} else None
+    if isinstance(gene, dict):
+        job_idx = gene.get("job_idx", gene.get("job", gene.get("idx")))
+        kind = str(gene.get("kind", gene.get("operation", ""))).lower()
+        if job_idx is None:
+            return None
+        return Operation(int(job_idx), kind) if kind in {PICKUP, UNLOAD} else None
+    if isinstance(gene, (tuple, list)) and len(gene) >= 2:
+        kind = str(gene[1]).lower()
+        return Operation(int(gene[0]), kind) if kind in {PICKUP, UNLOAD} else None
+    return None
+
+def repair_operation_order(order: List[Operation], jobs: List[Job]) -> List[Operation]:
+    job_ids = [job.idx for job in jobs]
+    valid_jobs = set(job_ids)
+    legacy_order = True
+    legacy_job_ids = []
+    for gene in order:
+        if _normalize_operation(gene) is not None:
+            legacy_order = False
+            break
+        try:
+            legacy_job_ids.append(int(gene))
+        except (TypeError, ValueError):
+            continue
+    if legacy_order:
+        repaired = []
+        for job_id in legacy_job_ids:
+            if job_id in valid_jobs:
+                repaired.append(Operation(job_id, PICKUP))
+                repaired.append(Operation(job_id, UNLOAD))
+        for job_id in job_ids:
+            if job_id not in {_op.job_idx for _op in repaired}:
+                repaired.append(Operation(job_id, PICKUP))
+                repaired.append(Operation(job_id, UNLOAD))
+        return repaired
+
+    repaired: List[Operation] = []
+    seen_pickups = set()
+    seen_unloads = set()
+    deferred_unloads = set()
+
+    def append_unload_if_ready(job_id: int) -> None:
+        if job_id in deferred_unloads and job_id in seen_pickups and job_id not in seen_unloads:
+            repaired.append(Operation(job_id, UNLOAD))
+            seen_unloads.add(job_id)
+            deferred_unloads.discard(job_id)
+
+    for gene in order:
+        op = _normalize_operation(gene)
+        if op is None or op.job_idx not in valid_jobs:
+            continue
+        if op.kind == PICKUP:
+            if op.job_idx not in seen_pickups:
+                repaired.append(op)
+                seen_pickups.add(op.job_idx)
+                append_unload_if_ready(op.job_idx)
+        elif op.job_idx in seen_pickups and op.job_idx not in seen_unloads:
+            repaired.append(op)
+            seen_unloads.add(op.job_idx)
+        elif op.job_idx not in seen_pickups:
+            deferred_unloads.add(op.job_idx)
+
+    for job_id in job_ids:
+        if job_id not in seen_pickups:
+            repaired.append(Operation(job_id, PICKUP))
+            seen_pickups.add(job_id)
+        append_unload_if_ready(job_id)
+        if job_id not in seen_unloads:
+            repaired.append(Operation(job_id, UNLOAD))
+            seen_unloads.add(job_id)
+    return repaired
+
+def random_operation_order(jobs: List[Job]) -> List[Operation]:
+    remaining_pickups = {job.idx for job in jobs}
+    picked = set()
+    unloaded = set()
+    order: List[Operation] = []
+    while len(unloaded) < len(jobs):
+        candidates = [(job_id, PICKUP) for job_id in remaining_pickups]
+        candidates += [(job_id, UNLOAD) for job_id in picked if job_id not in unloaded]
+        job_id, kind = random.choice(candidates)
+        order.append(Operation(job_id, kind))
+        if kind == PICKUP:
+            remaining_pickups.remove(job_id)
+            picked.add(job_id)
+        else:
+            unloaded.add(job_id)
+    return order
+
+def paired_operation_order(job_order: List[int]) -> List[Operation]:
+    return [op for job_id in job_order for op in (Operation(job_id, PICKUP), Operation(job_id, UNLOAD))]
+
+def empty_inventory() -> Dict[str, Dict[str, List[int]]]:
+    return {amr: {mat: [] for mat in TYPE_DURATION} for amr in AMR_STARTS}
+
+def inventory_quantity(value) -> int:
+    if isinstance(value, (list, tuple, set)):
+        return len(value)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+def empty_count_inventory() -> Dict[str, Dict[str, int]]:
+    return {amr: {mat: 0 for mat in TYPE_DURATION} for amr in AMR_STARTS}
+
+def normalize_count_inventory(raw_inventory: Optional[Dict]) -> Dict[str, Dict[str, int]]:
+    inventory = empty_count_inventory()
+    if not raw_inventory:
+        return inventory
+    for amr in AMR_STARTS:
+        raw_amr_inv = raw_inventory.get(amr, {})
+        for mat in TYPE_DURATION:
+            inventory[amr][mat] = inventory_quantity(raw_amr_inv.get(mat, 0))
+    return inventory
+
+def normalize_inventory(raw_inventory: Optional[Dict]) -> Dict[str, Dict[str, List[int]]]:
+    inventory = empty_inventory()
+    if not raw_inventory:
+        return inventory
+    for amr in AMR_STARTS:
+        raw_amr_inv = raw_inventory.get(amr, {})
+        for mat in TYPE_DURATION:
+            value = raw_amr_inv.get(mat, [])
+            if isinstance(value, list):
+                inventory[amr][mat] = [int(job_id) for job_id in value]
+            elif isinstance(value, tuple) or isinstance(value, set):
+                inventory[amr][mat] = [int(job_id) for job_id in value]
+            else:
+                inventory[amr][mat] = []
+    return inventory
+
+def inventory_count(inventory: Dict[str, Dict[str, List[int]]], amr: str, mat: str) -> int:
+    return len(inventory[amr][mat])
+
+def job_pickup_location(job: Job) -> Tuple[int, int]:
+    return INBOUND_DOCK_LOCATIONS[dock_key_from_value(job.inbound_dock)]
+
+def job_is_onboard(inventory: Dict[str, Dict[str, List[int]]], amr: str, job: Job) -> bool:
+    return job.idx in inventory[amr][job.type_]
+
+def find_pending_unload(amr: str, operations: List[Operation], completed: set, inventory: Dict[str, Dict[str, List[int]]],
+                        assignments: List[str], job_map: Dict[int, Job]) -> Optional[Operation]:
+    for op in operations:
+        if op.kind != UNLOAD or _operation_key(op) in completed:
+            continue
+        if assignments[op.job_idx] != amr:
+            continue
+        job = job_map[op.job_idx]
+        if job_is_onboard(inventory, amr, job):
+            return op
+    return None
+
 # Reorder the job order so that Jobs on the same AMR and of the same job type are grouped together as much as possible
 def cluster_jobs_by_material(order: List[int], assignments: List[str], jobs: List[Job]) -> List[int]:
+    job_map = {job.idx: job for job in jobs}
     keyed = []
     for idx, job_idx in enumerate(order):
         amr = assignments[job_idx]
-        job_type = jobs[job_idx].type_
+        job_type = job_map[job_idx].type_
         keyed.append((amr, job_type, idx, job_idx))
     # Sort by AMR, then Material, then original index 
     keyed.sort(key=lambda item: (item[0], item[1], item[2]))
     return [item[3] for item in keyed]
 
-def find_adjacent_blocks(order: List[int], assignments: List[str], jobs: List[Job]) -> List[Tuple[int, int]]:
-    """Identifies blocks of consecutive jobs with same AMR and Type."""
+def cluster_operations_by_material(order: List[Operation], assignments: List[str], jobs: List[Job]) -> List[Operation]:
+    job_map = {job.idx: job for job in jobs}
+    keyed = []
+    for idx, op in enumerate(order):
+        job = job_map[op.job_idx]
+        keyed.append((assignments[op.job_idx], job.type_, idx, op))
+    keyed.sort(key=lambda item: (item[0], item[1], item[2]))
+    return repair_operation_order([item[3] for item in keyed], jobs)
+
+def find_adjacent_blocks(order: List[Operation], assignments: List[str], jobs: List[Job]) -> List[Tuple[int, int]]:
+    """Identifies blocks of consecutive operations with same AMR and Type."""
+    job_map = {job.idx: job for job in jobs}
     job_count = len(order)
     blocks = []
     idx = 0
     while idx < job_count:
         start = idx
-        current_job = order[idx]
-        curr_amr = assignments[current_job]
-        curr_type = jobs[current_job].type_
+        current_job = job_map[order[idx].job_idx]
+        curr_amr = assignments[current_job.idx]
+        curr_type = current_job.type_
         idx += 1
         while idx < job_count:
-            next_job = order[idx]
-            if assignments[next_job] == curr_amr and jobs[next_job].type_ == curr_type:
+            next_job = job_map[order[idx].job_idx]
+            if assignments[next_job.idx] == curr_amr and next_job.type_ == curr_type:
                 idx += 1
             else:
                 break
@@ -292,11 +505,14 @@ def find_adjacent_blocks(order: List[int], assignments: List[str], jobs: List[Jo
     return blocks
 
 # Verify if the AMR has another task later in the sequence.If have,return the task,otherwise return null.
-def get_next_job_for_amr(amr: str, current_pos_in_order: int, order: List[int], assignments: List[str], jobs: List[Job], job_map: Dict[int, Job] = None) -> Optional[Job]:
+def get_next_job_for_amr(amr: str, current_pos_in_order: int, order: List[Operation], assignments: List[str], jobs: List[Job], job_map: Dict[int, Job] = None) -> Optional[Job]:
     if job_map is None:
         job_map = {job.idx: job for job in jobs}
     for i in range(current_pos_in_order + 1, len(order)):
-        next_job_idx = order[i]
+        op = _normalize_operation(order[i])
+        if op is None:
+            continue
+        next_job_idx = op.job_idx
         if assignments[next_job_idx] == amr:
             return job_map[next_job_idx]
     return None
@@ -366,7 +582,7 @@ def _diagnose_and_print_failure(amr: str, job_id: int, path_type: str, start_pos
     print(f"  [WARNING] Pathfinding failed for AMR '{amr}' on Job {job_id} ({path_type} path: {start_pos} -> {end_pos} at t={start_time:.1f}).")
     print(f"  [DIAGNOSIS] Reason: {reason}")
 
-def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = False, init_state: dict = None) -> Tuple[Dict[str, float], List[Tuple], List[Tuple[int, float]], Dict[str, List[Tuple[int, int]]], int]:
+def decode_schedule_legacy(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = False, init_state: dict = None) -> Tuple[Dict[str, float], List[Tuple], List[Tuple[int, float]], Dict[str, List[Tuple[int, int]]], int]:
     job_map = {job.idx: job for job in jobs} # get job information
     timelines: List[Tuple] = []
     
@@ -374,16 +590,16 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         availability = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_STARTS}
         current_position = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_STARTS}
         amr_states = {amr: (current_position[amr], availability[amr]) for amr in AMR_STARTS}
-        inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_STARTS}
+        inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION}).copy() for amr in AMR_STARTS}
     else:
         availability = {amr: 0.0 for amr in AMR_STARTS} # amr availability time
         current_position = {amr: AMR_STARTS[amr] for amr in AMR_STARTS} # current position of each AMR
         # Track AMR states for collision avoidance: amr -> (position, free_time)
         amr_states = {amr: (AMR_STARTS[amr], 0.0) for amr in AMR_STARTS}
-        inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_STARTS} # How much material do we currently have on hand for this AMR?
-        if "AMR1" in inventory: inventory["AMR1"]["A"] = 3
-        if "AMR2" in inventory: inventory["AMR2"]["B"] = 3
-        if "AMR3" in inventory: inventory["AMR3"]["C"] = 3
+        inventory = {amr: {mat: 0 for mat in TYPE_DURATION} for amr in AMR_STARTS} # Current carried jobs by type.
+        if "AMR1" in inventory: inventory["AMR1"]["A"] = AMR_LOAD_CAPACITY
+        if "AMR2" in inventory: inventory["AMR2"]["B"] = AMR_LOAD_CAPACITY
+        if "AMR3" in inventory: inventory["AMR3"]["C"] = AMR_LOAD_CAPACITY
         
     path_logs = {amr: [current_position[amr]] for amr in AMR_STARTS} if need_log else {}
     reservations: Dict[Tuple[Tuple[int, int], int], str] = {} # ((x, y), t) -> amr_id
@@ -401,7 +617,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         start_time = availability[amr]
         if need_log:
             queue_infos.append((job.idx, start_time))
-        # fill material
+        # Replenish the required job type if the AMR has none on board.
         if inventory[amr][material] == 0:
             supply_location = SUPPLY_LOCATIONS[material]
             if check_collision:
@@ -430,7 +646,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             availability[amr] = supply_end
             current_position[amr] = supply_location
             start_time = supply_end
-            inventory[amr][material] = 3 # Refill amount
+            inventory[amr][material] = AMR_LOAD_CAPACITY
             if need_log: _extend_path_log(path_logs, amr, supply_path)
 
         # From your current location, navigate to job.station
@@ -510,7 +726,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
 # ==========================================
 # True TICK-BY-TICK SIMULATION
 # ==========================================
-def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = True, init_state: dict = None):
+def decode_schedule_tick_by_tick_legacy(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = True, init_state: dict = None):
     if not check_collision:
         return decode_schedule(individual, jobs, need_log, False, init_state=init_state)
 
@@ -524,7 +740,7 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
     
     if init_state:
         positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_STARTS}
-        inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION.keys()}).copy() for amr in AMR_STARTS}
+        inventory = {amr: init_state["inventory"].get(amr, {mat: 0 for mat in TYPE_DURATION}).copy() for amr in AMR_STARTS}
         amr_states = {}
         for amr in AMR_STARTS:
             avail = init_state["availability"].get(amr, float(t))
@@ -534,10 +750,10 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
                 amr_states[amr] = {'mode': 'idle', 'goal': None, 'job': None, 'proc_ticks': 0}
     else:
         positions = {amr: AMR_STARTS[amr] for amr in AMR_STARTS}
-        inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_STARTS}
-        if "AMR1" in inventory: inventory["AMR1"]["A"] = 3
-        if "AMR2" in inventory: inventory["AMR2"]["B"] = 3
-        if "AMR3" in inventory: inventory["AMR3"]["C"] = 3
+        inventory = {amr: {mat: 0 for mat in TYPE_DURATION} for amr in AMR_STARTS}
+        if "AMR1" in inventory: inventory["AMR1"]["A"] = AMR_LOAD_CAPACITY
+        if "AMR2" in inventory: inventory["AMR2"]["B"] = AMR_LOAD_CAPACITY
+        if "AMR3" in inventory: inventory["AMR3"]["C"] = AMR_LOAD_CAPACITY
         amr_states = {amr: {'mode': 'idle', 'goal': None, 'job': None, 'proc_ticks': 0} for amr in AMR_STARTS}
     path_logs = {amr: [positions[amr]] for amr in AMR_STARTS} if need_log else {}
     timelines: List[Tuple] = []
@@ -546,7 +762,6 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
     
     station_occupied = {s: False for s in STATIONS}
     
-    t = 0
     while True:
         all_idle_and_empty = True
         for amr in AMR_KEYS:
@@ -616,7 +831,7 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
                 s['proc_ticks'] -= 1
                 if s['proc_ticks'] <= 0:
                     mat = s['job'].type_
-                    inventory[amr][mat] = 3
+                    inventory[amr][mat] = AMR_LOAD_CAPACITY
                     if need_log:
                         timelines.append((amr, s.get('route_start', t), t, "supply", f"Dock {mat}"))
                     s['mode'] = 'idle'
@@ -824,6 +1039,142 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
     return avail, timelines, queue_infos, path_logs, invalid_jobs_count
 
 
+def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = False, init_state: dict = None) -> Tuple[Dict[str, float], List[Tuple], List[Tuple[int, float]], Dict[str, List[Tuple[int, int]]], int]:
+    job_map = {job.idx: job for job in jobs}
+    operations = repair_operation_order(individual.order, jobs)
+    timelines: List[Tuple] = []
+    queue_infos: List[Tuple[int, float]] = []
+    invalid_jobs_count = 0
+
+    if init_state:
+        availability = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_STARTS}
+        current_position = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_STARTS}
+        inventory = normalize_inventory(init_state.get("inventory", {}))
+    else:
+        availability = {amr: 0.0 for amr in AMR_STARTS}
+        current_position = {amr: AMR_STARTS[amr] for amr in AMR_STARTS}
+        inventory = empty_inventory()
+
+    amr_states = {amr: (current_position[amr], availability[amr]) for amr in AMR_STARTS}
+    path_logs = {amr: [current_position[amr]] for amr in AMR_STARTS} if need_log else {}
+    reservations: Dict[Tuple[Tuple[int, int], int], str] = {}
+    station_available = {station: 0.0 for station in STATIONS}
+    completed = set()
+
+    def reserve_wait(location: Tuple[int, int], amr: str, start: float, end: float) -> None:
+        if not check_collision:
+            return
+        for tick in range(int(start), int(end) + 1):
+            reservations[(location, tick)] = amr
+
+    def move_amr(amr: str, destination: Tuple[int, int], start_time: float, job_id: int, path_type: str, label: str) -> float:
+        nonlocal invalid_jobs_count
+        origin = current_position[amr]
+        if check_collision:
+            path = find_dynamic_path(origin, destination, start_time, reservations, amr_states, amr)
+        else:
+            path = shortest_path(origin, destination)
+        travel_time = int(len(path) - 1)
+        if travel_time == 0 and origin != destination:
+            travel_time = MAX_DEPTH
+            invalid_jobs_count += 1
+            if need_log and check_collision:
+                _diagnose_and_print_failure(amr, job_id, path_type, origin, destination, start_time, reservations, amr_states)
+        end_time = start_time + travel_time
+        if check_collision:
+            for t_offset, point in enumerate(path):
+                reservations[(point, int(start_time) + t_offset)] = amr
+            amr_states[amr] = (destination, end_time)
+        if need_log and travel_time > 0:
+            timelines.append((amr, start_time, end_time, "travel", label))
+            _extend_path_log(path_logs, amr, path)
+        availability[amr] = end_time
+        current_position[amr] = destination
+        return end_time
+
+    def execute_unload(op: Operation) -> None:
+        nonlocal invalid_jobs_count
+        key = _operation_key(op)
+        if key in completed:
+            return
+        job = job_map[op.job_idx]
+        amr = individual.amr_assignment[op.job_idx]
+        if not job_is_onboard(inventory, amr, job):
+            invalid_jobs_count += 1
+            availability[amr] += MAX_DEPTH
+            completed.add(key)
+            return
+
+        travel_start = availability[amr]
+        station_pos = STATIONS[job.station]
+        travel_end = move_amr(amr, station_pos, travel_start, job.idx, "unload", f"Job{job.idx} unload trans {int(grid_distance(current_position[amr], station_pos))}s")
+        earliest_start = max(travel_end, station_available[job.station])
+        if need_log and earliest_start > travel_end:
+            timelines.append((amr, travel_end, earliest_start, "wait", "Wait Stn"))
+        reserve_wait(station_pos, amr, travel_end, earliest_start)
+
+        process_start = earliest_start
+        process_end = process_start + job.duration
+        if need_log:
+            timelines.append((amr, process_start, process_end, f"process_{job.type_}", f"Job{job.idx} {job.type_}({int(job.duration)}s)"))
+        reserve_wait(station_pos, amr, process_start, process_end)
+        inventory[amr][job.type_].remove(job.idx)
+        station_available[job.station] = process_end
+        availability[amr] = process_end
+        current_position[amr] = station_pos
+        if check_collision:
+            amr_states[amr] = (station_pos, process_end)
+        completed.add(key)
+
+    def execute_pickup(op: Operation) -> None:
+        nonlocal invalid_jobs_count
+        key = _operation_key(op)
+        if key in completed:
+            return
+        job = job_map[op.job_idx]
+        amr = individual.amr_assignment[op.job_idx]
+
+        while inventory_count(inventory, amr, job.type_) >= AMR_LOAD_CAPACITY:
+            unload_op = find_pending_unload(amr, operations, completed, inventory, individual.amr_assignment, job_map)
+            if unload_op is None:
+                invalid_jobs_count += 1
+                availability[amr] += MAX_DEPTH
+                completed.add(key)
+                return
+            execute_unload(unload_op)
+
+        dock_key = dock_key_from_value(job.inbound_dock)
+        dock_pos = INBOUND_DOCK_LOCATIONS[dock_key]
+        if need_log:
+            queue_infos.append((job.idx, availability[amr]))
+        travel_start = availability[amr]
+        travel_end = move_amr(amr, dock_pos, travel_start, job.idx, "pickup", f"Job{job.idx} pickup trans {int(grid_distance(current_position[amr], dock_pos))}s")
+        pickup_time = max(travel_end, float(job.arrival_time))
+        if need_log and pickup_time > travel_end:
+            timelines.append((amr, travel_end, pickup_time, "wait", "Wait Arrival"))
+        reserve_wait(dock_pos, amr, travel_end, pickup_time)
+        availability[amr] = pickup_time
+        current_position[amr] = dock_pos
+        inventory[amr][job.type_].append(job.idx)
+        if check_collision:
+            amr_states[amr] = (dock_pos, pickup_time)
+        completed.add(key)
+
+    for op in operations:
+        if _operation_key(op) in completed:
+            continue
+        if op.kind == PICKUP:
+            execute_pickup(op)
+        else:
+            execute_unload(op)
+
+    return availability, timelines, queue_infos, path_logs, invalid_jobs_count
+
+
+def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = True, init_state: dict = None):
+    return decode_schedule(individual, jobs, need_log=need_log, check_collision=check_collision, init_state=init_state)
+
+
 def fitness(individual: Individual, jobs: List[Job], check_collision: bool = False, init_state: dict = None) -> Tuple[float, List[Tuple]]:
     availability, timeline, _, _, _ = decode_schedule_tick_by_tick(individual, jobs, need_log=False, check_collision=check_collision, init_state=init_state)
     makespan = max(availability.values()) - (init_state["time"] if init_state else 0)
@@ -837,8 +1188,7 @@ def fitness(individual: Individual, jobs: List[Job], check_collision: bool = Fal
 # Random individual generation
 # Can increase diversity of initial population
 def random_individual(jobs: List[Job]) -> Individual:
-    order = [job.idx for job in jobs]
-    random.shuffle(order)
+    order = random_operation_order(jobs)
     assign = [random.choice(AMR_KEYS) for _ in jobs]
     return Individual(order=order, amr_assignment=assign)
 
@@ -854,28 +1204,31 @@ def greedy_individual(jobs: List[Job]) -> Individual:
     order = [job.idx for job in jobs]
     random.shuffle(order)
     clustered_order = cluster_jobs_by_material(order, assign, jobs)
-    return Individual(order=clustered_order, amr_assignment=assign)
+    return Individual(order=paired_operation_order(clustered_order), amr_assignment=assign)
 
 def order_crossover(parent_a: Individual, parent_b: Individual, jobs: List[Job]) -> Individual:
     # Take a random segment from parent A [a:b).Place this segment unchanged into the child's position.Fill in the remaining positions in the order of parent B.
-    size = len(parent_a.order)
-    if size < 2: return Individual(order=list(parent_a.order), amr_assignment=list(parent_a.amr_assignment))
+    parent_a_order = repair_operation_order(parent_a.order, jobs)
+    parent_b_order = repair_operation_order(parent_b.order, jobs)
+    size = len(parent_a_order)
+    if size < 2:
+        return Individual(order=list(parent_a_order), amr_assignment=list(parent_a.amr_assignment))
     a, b = sorted(random.sample(range(size), 2))
-    child_order = [-1] * size
-    child_order[a:b] = parent_a.order[a:b]
-    fill = [gene for gene in parent_b.order if gene not in child_order]
+    child_order = [None] * size
+    child_order[a:b] = parent_a_order[a:b]
+    fill = [gene for gene in parent_b_order if gene not in child_order]
     ptr = 0
     for i in range(size):
-        if child_order[i] == -1:
+        if child_order[i] is None:
             child_order[i] = fill[ptr]
             ptr += 1
     child_assign = parent_a.amr_assignment[:]
-    for idx in range(size):
+    for idx in range(len(child_assign)):
         # 50% chance to inherit AMR assignment from parent B or parent A
         if random.random() < 0.5:
             child_assign[idx] = parent_b.amr_assignment[idx]
     # Reorder the job order so that Jobs on the same AMR and of the same job type are grouped together as much as possible 
-    clustered_order = cluster_jobs_by_material(child_order, child_assign, jobs)
+    clustered_order = cluster_operations_by_material(repair_operation_order(child_order, jobs), child_assign, jobs)
     return Individual(order=clustered_order, amr_assignment=child_assign)
 
 # Moves a job from the busiest AMR to the idlest AMR.
@@ -891,10 +1244,12 @@ def smart_load_balance_mutate(individual: Individual, jobs: List[Job], init_stat
         individual.amr_assignment[victim_job] = idlest_amr
 
 def mutate(individual: Individual, jobs: List[Job], init_state: dict = None) -> None:
+    individual.order = repair_operation_order(individual.order, jobs)
+    job_map = {job.idx: job for job in jobs}
     size = len(individual.order)
     if size < 2: 
         # Only allow AMR reassignment for single job
-        if size == 1 and random.random() < MUTATION_RATE:
+        if len(individual.amr_assignment) == 1 and random.random() < MUTATION_RATE:
             individual.amr_assignment[0] = random.choice(AMR_KEYS)
         return
         
@@ -902,29 +1257,33 @@ def mutate(individual: Individual, jobs: List[Job], init_state: dict = None) -> 
     if random.random() < MUTATION_RATE:
         i, j = random.sample(range(size), 2)
         individual.order[i], individual.order[j] = individual.order[j], individual.order[i]
+        individual.order = repair_operation_order(individual.order, jobs)
     # Randomly modify the AMR of certain jobs
-    for idx in range(size):
+    for idx in range(len(individual.amr_assignment)):
         if random.random() < MUTATION_RATE * 0.5: 
             individual.amr_assignment[idx] = random.choice(AMR_KEYS)
     # Move a specific job next to a job with the same AMR and the same type.
     if random.random() < MUTATION_RATE:
         idx = random.randrange(size)
-        job_idx = individual.order[idx]
-        target_type = jobs[job_idx].type_
+        op = individual.order[idx]
+        job_idx = op.job_idx
+        target_type = job_map[job_idx].type_
         target_amr = individual.amr_assignment[job_idx]
-        for target_idx, other_job in enumerate(individual.order):
+        for target_idx, other_op in enumerate(individual.order):
             if target_idx == idx: continue
-            if (individual.amr_assignment[other_job] == target_amr and jobs[other_job].type_ == target_type):
+            other_job = other_op.job_idx
+            if (individual.amr_assignment[other_job] == target_amr and job_map[other_job].type_ == target_type):
                 individual.order.pop(idx)
                 insert_idx = target_idx if target_idx < idx else target_idx
-                individual.order.insert(insert_idx + (1 if target_idx >= idx else 0), job_idx)
+                individual.order.insert(insert_idx + (1 if target_idx >= idx else 0), op)
                 break
+        individual.order = repair_operation_order(individual.order, jobs)
     # Load Balance
     if random.random() < MUTATION_RATE:
         smart_load_balance_mutate(individual, jobs, init_state=init_state)
 
 def local_improve(individual: Individual, jobs: List[Job], max_iters: int = routing_iters, check_collision: bool = False, init_state: dict = None) -> Individual:
-    current = Individual(order=list(individual.order), amr_assignment=list(individual.amr_assignment))
+    current = Individual(order=repair_operation_order(list(individual.order), jobs), amr_assignment=list(individual.amr_assignment))
     job_count = len(current.order)
     if job_count < 2: return current
     
@@ -935,11 +1294,12 @@ def local_improve(individual: Individual, jobs: List[Job], max_iters: int = rout
         # Each time, randomly select two job_i and job_j and try to swap them.One of them needs to belong to the critical AMR.
         improved = False
         i, j = random.sample(range(job_count), 2)
-        job_i = current.order[i]
-        job_j = current.order[j]
+        job_i = current.order[i].job_idx
+        job_j = current.order[j].job_idx
         if current.amr_assignment[job_i] == critical_amr or current.amr_assignment[job_j] == critical_amr:
             new_order = list(current.order)
             new_order[i], new_order[j] = new_order[j], new_order[i]
+            new_order = repair_operation_order(new_order, jobs)
             neighbor = Individual(order=new_order, amr_assignment=list(current.amr_assignment))
             score, _ = fitness(neighbor, jobs, check_collision=check_collision, init_state=init_state)
             # Only accept the neighbor if it improves the fitness
@@ -957,7 +1317,7 @@ def local_improve(individual: Individual, jobs: List[Job], max_iters: int = rout
                 block = current.order[start:end]
                 remainder = current.order[:start] + current.order[end:]
                 insert_pos = random.randint(0, len(remainder))
-                new_order = remainder[:insert_pos] + block + remainder[insert_pos:]
+                new_order = repair_operation_order(remainder[:insert_pos] + block + remainder[insert_pos:], jobs)
                 neighbor = Individual(order=new_order, amr_assignment=list(current.amr_assignment))
                 score, _ = fitness(neighbor, jobs, check_collision=check_collision, init_state=init_state)
                 if score < best_score:
@@ -1163,10 +1523,14 @@ def plot_gantt(timeline: List[Tuple], queue_infos: List[Tuple[int, float]], jobs
 # Data Loading & Execution 
 def station_key_from_value(raw_station: Optional[str]) -> Optional[str]:
     if raw_station is None: return None
-    try: station_id = int(raw_station)
+    raw_text = str(raw_station).strip()
+    if raw_text in STATIONS:
+        return raw_text
+    try: station_id = int(raw_text)
     except: return None
     key = f"station{station_id}"
     return key if key in STATIONS else None
+
 def load_dispatch_events(path: Path = DISPATCH_INBOX) -> List[Dict[str, object]]:
     events = []
     if not path.exists(): return events
@@ -1176,24 +1540,19 @@ def load_dispatch_events(path: Path = DISPATCH_INBOX) -> List[Dict[str, object]]
         except: continue
         jobs = []
         for job_idx, raw_job in enumerate(data.get("jobs", [])):
-            station_key = station_key_from_value(raw_job.get("station"))
+            station_key = station_key_from_value(raw_job.get("station", raw_job.get("dest_station_id")))
             if station_key is None: continue
-            
+
+            raw_duration = None
             if "proc_time" in raw_job:
-                duration = float(raw_job["proc_time"])
+                raw_duration = float(raw_job["proc_time"])
             elif "duration" in raw_job:
-                duration = float(raw_job["duration"])
-            else:
-                jid = raw_job.get("id", raw_job.get("jid", job_idx))
-                duration = float(random.Random(jid).choice([5.0, 10.0, 15.0]))
-                
-            if duration == 5.0:
-                type_ = "A"
-            elif duration == 10.0:
-                type_ = "B"
-            else:
-                type_ = "C"
-            jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key))
+                raw_duration = float(raw_job["duration"])
+            type_ = job_type_from_value(raw_job.get("type", raw_job.get("jtype")), raw_duration)
+            duration = float(TYPE_DURATION[type_])
+            inbound_dock = dock_key_from_value(raw_job.get("inbound_dock", raw_job.get("dock")))
+            arrival_time = float(raw_job.get("arrival_time", 0.0))
+            jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key, inbound_dock=inbound_dock, arrival_time=arrival_time))
         if jobs:
             events.append({"index": idx, "dispatch_time": float(data.get("dispatch_time", 0.0)), "jobs": jobs})
     return events
@@ -1202,14 +1561,10 @@ def make_jobs() -> List[Job]:
     jobs = []
     for idx in range(JOB_COUNT):
         station = random.choice(stations)
-        duration = float(random.Random(idx).choice([5.0, 10.0, 15.0]))
-        if duration == 5.0:
-            type_ = "A"
-        elif duration == 10.0:
-            type_ = "B"
-        else:
-            type_ = "C"
-        jobs.append(Job(idx=idx, type_=type_, duration=duration, station=station))
+        type_ = random.choice(JOB_TYPE_KEYS)
+        duration = float(TYPE_DURATION[type_])
+        inbound_dock = random.choice(INBOUND_DOCK_KEYS)
+        jobs.append(Job(idx=idx, type_=type_, duration=duration, station=station, inbound_dock=inbound_dock, arrival_time=0.0))
     return jobs
 def describe_solution(individual: Individual, jobs: List[Job], solve_time: float = None, show_gantt: bool = False, save_img: str = None) -> Tuple[float, float]:
     availability, decoded_timeline, queue_infos, path_logs, invalid_count = decode_schedule_tick_by_tick(individual, jobs, need_log=True, check_collision=True)

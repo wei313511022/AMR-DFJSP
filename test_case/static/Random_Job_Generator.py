@@ -13,11 +13,12 @@ STATION_COUNT = 5
 
 # Job definitions
 JOB_TYPES = {
-    "A": {"time": 5},
-    "B": {"time": 10},
-    "C": {"time": 15},
+    "A": {"time": 5.0},
+    "B": {"time": 10.0},
+    "C": {"time": 15.0},
 }
 JOB_TYPE_KEYS = list(JOB_TYPES.keys())
+INBOUND_DOCKS = ["dock1", "dock2", "dock3"]
 
 # --------------------------- Logic ---------------------------
 
@@ -50,11 +51,13 @@ def generate_data(num_batches, batch_size):
                 
                 jtype = random.choice(JOB_TYPE_KEYS)
                 proc_time = float(JOB_TYPES[jtype]["time"])
+                inbound_dock = random.choice(INBOUND_DOCKS)
                 station = random.randint(1, STATION_COUNT)
                 
                 job_data = {
                     "jid": current_job_id,
                     "type": jtype,
+                    "inbound_dock": inbound_dock,
                     "proc_time": proc_time,
                     "station": station
                 }

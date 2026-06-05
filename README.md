@@ -10,3 +10,23 @@
 
 
 ref: https://github.com/SchedulingLab/fjsp-instances/tree/main
+
+## Environment setup
+
+On Windows PowerShell, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup_env.ps1
+```
+
+Then run demos with:
+
+```powershell
+.\.venv\Scripts\python.exe run_all_demos.py
+```
+
+Run training with:
+
+```powershell
+.\.venv\Scripts\python.exe train_all_models_parallel.py
+```
