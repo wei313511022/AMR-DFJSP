@@ -1,0 +1,3 @@
+Training on: cuda
+Starting Attention Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Traceback (most recent call last):

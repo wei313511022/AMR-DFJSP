@@ -1,0 +1,4 @@
+Training on: cuda
+Starting GNN Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 646, in <module>
