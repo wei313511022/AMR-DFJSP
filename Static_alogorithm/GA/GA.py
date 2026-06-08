@@ -1086,7 +1086,8 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
                 reservations[(point, int(start_time) + t_offset)] = amr
             amr_states[amr] = (destination, end_time)
         if need_log and travel_time > 0:
-            timelines.append((amr, start_time, end_time, "travel", label))
+            timeline_kind = "return" if path_type == "return" else "travel"
+            timelines.append((amr, start_time, end_time, timeline_kind, label))
             _extend_path_log(path_logs, amr, path)
         availability[amr] = end_time
         current_position[amr] = destination
@@ -1125,6 +1126,18 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         if check_collision:
             amr_states[amr] = (station_pos, process_end)
         completed.add(key)
+
+        base_pos = AMR_STARTS[amr]
+        if current_position[amr] != base_pos:
+            return_start = availability[amr]
+            move_amr(
+                amr,
+                base_pos,
+                return_start,
+                job.idx,
+                "return",
+                f"Return Home {int(grid_distance(current_position[amr], base_pos))}s",
+            )
 
     def execute_pickup(op: Operation) -> None:
         nonlocal invalid_jobs_count
