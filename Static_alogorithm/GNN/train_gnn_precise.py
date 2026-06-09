@@ -121,8 +121,27 @@ def _apply_precise_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    amr_availabilities[chosen_amr] = process_end
-    amr_positions[chosen_amr] = target_station
+    return_start = process_end
+    base_pos = AMR_STARTS[chosen_amr]
+    return_path = find_dynamic_path(
+        target_station,
+        base_pos,
+        return_start,
+        reservations,
+        amr_states,
+        chosen_amr,
+    )
+    return_time = int(len(return_path) - 1)
+    if return_time == 0 and target_station != base_pos:
+        return_time = MAX_DEPTH
+    return_end = return_start + return_time
+
+    for t_offset, point in enumerate(return_path):
+        reservations[(point, int(return_start) + t_offset)] = chosen_amr
+
+    amr_states[chosen_amr] = (base_pos, return_end)
+    amr_availabilities[chosen_amr] = return_end
+    amr_positions[chosen_amr] = base_pos
 
 
 def action_sequences_from_individual(individual, jobs):

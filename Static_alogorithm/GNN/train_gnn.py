@@ -78,8 +78,10 @@ def _apply_fast_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    amr_availabilities[chosen_amr] = process_end
-    amr_positions[chosen_amr] = target_station
+    base_pos = AMR_STARTS[chosen_amr]
+    return_end = process_end + heuristic(target_station, base_pos)
+    amr_availabilities[chosen_amr] = return_end
+    amr_positions[chosen_amr] = base_pos
 
 
 def action_sequences_from_individual(individual, jobs):
