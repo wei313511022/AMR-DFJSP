@@ -294,6 +294,11 @@ def _select_jobs(dispatch_events):
     return make_jobs()
 
 
+def assignment_load_stats(individual) -> tuple[int, int, float]:
+    counts = [sum(1 for amr in individual.amr_assignment if amr == key) for key in AMR_KEYS]
+    return max(counts), min(counts), max(counts) - min(counts)
+
+
 def _save_reinforce_chart(
     chart_path,
     title_prefix,
@@ -412,6 +417,10 @@ def train_reinforce(args):
         batch_baseline = []
         batch_improvement = []
         batch_wins = []
+        batch_sampled_invalid = []
+        batch_baseline_invalid = []
+        batch_max_load = []
+        batch_load_gap = []
 
         for batch_idx in range(args.batch_size):
             jobs = _select_jobs(dispatch_events)
@@ -431,6 +440,11 @@ def train_reinforce(args):
             batch_baseline.append(comparison.baseline_makespan)
             batch_improvement.append(comparison.improvement)
             batch_wins.append(1.0 if comparison.win else 0.0)
+            batch_sampled_invalid.append(comparison.sampled_invalid_jobs)
+            batch_baseline_invalid.append(comparison.baseline_invalid_jobs)
+            max_load, _, load_gap = assignment_load_stats(individual)
+            batch_max_load.append(max_load)
+            batch_load_gap.append(load_gap)
 
         normalized_advantages = normalize_advantage_batches(
             batch_advantages, enabled=args.normalize_advantage
@@ -471,6 +485,10 @@ def train_reinforce(args):
         avg_improvement = sum(batch_improvement) / args.batch_size
         win_rate = sum(batch_wins) / args.batch_size
         avg_entropy = epoch_entropy / args.batch_size
+        avg_sampled_invalid = sum(batch_sampled_invalid) / args.batch_size
+        avg_baseline_invalid = sum(batch_baseline_invalid) / args.batch_size
+        avg_max_load = sum(batch_max_load) / args.batch_size
+        avg_load_gap = sum(batch_load_gap) / args.batch_size
 
         losses_job.append(avg_job_loss)
         losses_machine.append(avg_machine_loss)
@@ -483,7 +501,9 @@ def train_reinforce(args):
             f"Epoch [{epoch}/{args.epochs}] | Sampled: {avg_sampled:.2f} "
             f"| Baseline: {avg_baseline:.2f} | Improvement: {avg_improvement:.2f} "
             f"| Win Rate: {win_rate:.2%} | Job Loss: {avg_job_loss:.4f} "
-            f"| AMR Loss: {avg_machine_loss:.4f} | Entropy: {avg_entropy:.4f}"
+            f"| AMR Loss: {avg_machine_loss:.4f} | Entropy: {avg_entropy:.4f} "
+            f"| Invalid S/B: {avg_sampled_invalid:.2f}/{avg_baseline_invalid:.2f} "
+            f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
         )
 
         if avg_sampled < best_makespan:

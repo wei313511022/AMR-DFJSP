@@ -106,8 +106,9 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     travel_end = pickup_end + to_station
     process_start = max(travel_end, state.station_availabilities[job.station])
     process_end = process_start + job.duration
-    return_end = process_end
-    travel_time = to_pickup + to_station
+    to_base = heuristic(target_station, AMR_STARTS[amr])
+    return_end = process_end + to_base
+    travel_time = to_pickup + to_station + to_base
 
     return AssignmentEstimate(
         amr=amr,
@@ -134,7 +135,7 @@ def apply_assignment(job: Job, estimate: AssignmentEstimate, state: RuleState) -
     state.inventory[amr][material] -= 1
     state.station_availabilities[job.station] = estimate.process_end
     state.amr_availabilities[amr] = estimate.return_end
-    state.amr_positions[amr] = STATIONS[job.station]
+    state.amr_positions[amr] = AMR_STARTS[amr]
     state.assigned_count[amr] += 1
 
 
