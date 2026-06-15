@@ -36,8 +36,9 @@ from reinforce_baseline import (
     normalize_advantage_batches,
 )
 from training_checkpoints import (
+    evaluate_validation_events,
     load_training_checkpoint,
-    save_model_weights,
+    maybe_save_best_model,
     save_training_checkpoint,
 )
 
@@ -316,6 +317,21 @@ def load_balance_step_advantages(machine_action_seq):
     return advantages
 
 
+def _load_validation_events(args):
+    events = load_training_events(args.validation_inbox, args.validation_inboxes)
+    if (args.validation_inbox or args.validation_inboxes) and not events:
+        raise ValueError("Validation inbox path(s) were provided, but no validation events were loaded.")
+    if events:
+        print(f"Loaded {len(events)} validation event(s).")
+    return events
+
+
+def _should_validate(epoch: int, args, validation_events) -> bool:
+    return bool(validation_events) and (
+        epoch == 1 or epoch == args.epochs or epoch % args.validation_interval == 0
+    )
+
+
 def _save_reinforce_chart(
     chart_path,
     title_prefix,
@@ -409,6 +425,7 @@ def train_reinforce(args):
     print(f"Training on: {device}")
 
     dispatch_events = load_training_events(args.inbox, args.inboxes)
+    validation_events = _load_validation_events(args)
     gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
     load_training_checkpoint(
@@ -539,10 +556,35 @@ def train_reinforce(args):
             f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
         )
 
-        if avg_sampled < best_makespan:
-            best_makespan = avg_sampled
-            save_model_weights(gnn_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
-            print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+        if _should_validate(epoch, args, validation_events):
+            validation = evaluate_validation_events(
+                validation_events,
+                gnn_model,
+                solve_with_gnn,
+                evaluate_makespan,
+            )
+            print(
+                f"   -> Validation | Samples: {validation['samples']} "
+                f"| Makespan: {validation['makespan']:.2f} "
+                f"| Invalid Jobs: {validation['invalid_jobs']:.2f}"
+            )
+            best_makespan = maybe_save_best_model(
+                model=gnn_model,
+                best_model_path=args.best_model_path,
+                fallback_model_path=LEGACY_BEST_MODEL_PATH,
+                current_metric=validation["makespan"],
+                best_metric=best_makespan,
+                metric_label="Val Makespan",
+            )
+        elif not validation_events:
+            best_makespan = maybe_save_best_model(
+                model=gnn_model,
+                best_model_path=args.best_model_path,
+                fallback_model_path=LEGACY_BEST_MODEL_PATH,
+                current_metric=avg_sampled,
+                best_metric=best_makespan,
+                metric_label="Makespan",
+            )
 
         save_training_checkpoint(
             args.latest_checkpoint_path,
@@ -575,6 +617,7 @@ def train_ppo(args):
     print(f"Training on: {device}")
 
     dispatch_events = load_training_events(args.inbox, args.inboxes)
+    validation_events = _load_validation_events(args)
     gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
     optimizer_critic = optim.Adam(gnn_model.critic.parameters(), lr=args.lr_critic)
@@ -685,10 +728,35 @@ def train_ppo(args):
             f"| Critic Loss: {epoch_critic_loss:.4f}"
         )
 
-        if avg_batch_makespan < best_makespan:
-            best_makespan = avg_batch_makespan
-            save_model_weights(gnn_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
-            print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+        if _should_validate(epoch, args, validation_events):
+            validation = evaluate_validation_events(
+                validation_events,
+                gnn_model,
+                solve_with_gnn,
+                evaluate_makespan,
+            )
+            print(
+                f"   -> Validation | Samples: {validation['samples']} "
+                f"| Makespan: {validation['makespan']:.2f} "
+                f"| Invalid Jobs: {validation['invalid_jobs']:.2f}"
+            )
+            best_makespan = maybe_save_best_model(
+                model=gnn_model,
+                best_model_path=args.best_model_path,
+                fallback_model_path=LEGACY_BEST_MODEL_PATH,
+                current_metric=validation["makespan"],
+                best_metric=best_makespan,
+                metric_label="Val Makespan",
+            )
+        elif not validation_events:
+            best_makespan = maybe_save_best_model(
+                model=gnn_model,
+                best_model_path=args.best_model_path,
+                fallback_model_path=LEGACY_BEST_MODEL_PATH,
+                current_metric=avg_batch_makespan,
+                best_metric=best_makespan,
+                metric_label="Makespan",
+            )
 
         save_training_checkpoint(
             args.latest_checkpoint_path,
@@ -705,6 +773,8 @@ def train_ppo(args):
 
 
 def train(args):
+    if args.validation_interval < 1:
+        raise ValueError("--validation_interval must be at least 1")
     if args.rl_method == "ppo":
         train_ppo(args)
     else:
@@ -720,6 +790,14 @@ def build_parser():
         default="",
         help="Comma-separated dispatch JSONL files used as one combined training pool",
     )
+    parser.add_argument("--validation_inbox", type=str, default="", help="Optional fixed validation dispatch JSONL file")
+    parser.add_argument(
+        "--validation_inboxes",
+        type=str,
+        default="",
+        help="Comma-separated fixed validation dispatch JSONL files",
+    )
+    parser.add_argument("--validation_interval", type=int, default=50, help="Epoch interval for fixed validation scoring")
     parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="Schedules sampled per update")
     parser.add_argument("--lr_actor", type=float, default=1e-3, help="Actor learning rate")
