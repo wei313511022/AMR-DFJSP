@@ -299,6 +299,15 @@ def assignment_load_stats(individual) -> tuple[int, int, float]:
     return max(counts), min(counts), max(counts) - min(counts)
 
 
+def load_balance_step_advantages(machine_action_seq):
+    counts = [0 for _ in AMR_KEYS]
+    advantages = []
+    for chosen_amr_idx in machine_action_seq:
+        advantages.append(float(min(counts) - counts[chosen_amr_idx]))
+        counts[chosen_amr_idx] += 1
+    return advantages
+
+
 def _save_reinforce_chart(
     chart_path,
     title_prefix,
@@ -434,7 +443,15 @@ def train_reinforce(args):
                 seed=args.seed + batch_idx,
             )
 
-            trajectories.append((jobs, job_action_seq, machine_action_seq, comparison.step_advantages))
+            trajectories.append(
+                (
+                    jobs,
+                    job_action_seq,
+                    machine_action_seq,
+                    comparison.step_advantages,
+                    load_balance_step_advantages(machine_action_seq),
+                )
+            )
             batch_advantages.append(comparison.step_advantages)
             batch_sampled.append(comparison.sampled_makespan)
             batch_baseline.append(comparison.baseline_makespan)
@@ -455,15 +472,17 @@ def train_reinforce(args):
         epoch_machine_loss = 0.0
         epoch_entropy = 0.0
 
-        for (jobs, job_action_seq, machine_action_seq, _), advantages in zip(
+        for (jobs, job_action_seq, machine_action_seq, _, load_advantages), advantages in zip(
             trajectories, normalized_advantages
         ):
             job_lp, machine_lp, job_entropy, machine_entropy, _ = evaluate_action_steps_multi(
                 jobs, gnn_model, job_action_seq, machine_action_seq
             )
             advantage_tensor = torch.tensor(advantages, dtype=torch.float32, device=job_lp.device)
+            load_advantage_tensor = torch.tensor(load_advantages, dtype=torch.float32, device=machine_lp.device)
+            machine_advantage_tensor = advantage_tensor + args.load_balance_coef * load_advantage_tensor
             job_loss = -(job_lp * advantage_tensor).sum()
-            machine_loss = -(machine_lp * advantage_tensor).sum()
+            machine_loss = -(machine_lp * machine_advantage_tensor).sum()
             entropy_bonus = job_entropy.sum() + machine_entropy.sum()
             total_loss = (job_loss + machine_loss - args.entropy_coef * entropy_bonus) / args.batch_size
             if not torch.isfinite(total_loss).item():
@@ -672,6 +691,12 @@ def build_parser():
     parser.add_argument("--baseline_rule", type=str, default=DEFAULT_BASELINE_RULE)
     parser.add_argument("--baseline_mode", choices=["stepwise", "episode"], default="stepwise")
     parser.add_argument("--entropy_coef", type=float, default=0.01)
+    parser.add_argument(
+        "--load_balance_coef",
+        type=float,
+        default=0.1,
+        help="Machine-actor penalty for assigning jobs to already overloaded AMRs during REINFORCE replay",
+    )
     parser.add_argument("--normalize_advantage", dest="normalize_advantage", action="store_true", default=True)
     parser.add_argument("--no_normalize_advantage", dest="normalize_advantage", action="store_false")
     parser.add_argument("--grad_clip", type=float, default=1.0)
