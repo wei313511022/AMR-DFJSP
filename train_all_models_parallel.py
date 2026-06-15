@@ -120,6 +120,27 @@ def parse_args() -> argparse.Namespace:
         help="Comma-separated dispatch JSONL files passed to every training script.",
     )
     parser.add_argument(
+        "--validation_inbox",
+        "--validation-inbox",
+        type=Path,
+        default=None,
+        help="Optional fixed validation dispatch JSONL passed to every training script.",
+    )
+    parser.add_argument(
+        "--validation_inboxes",
+        "--validation-inboxes",
+        type=str,
+        default="",
+        help="Comma-separated fixed validation dispatch JSONL files passed to every training script.",
+    )
+    parser.add_argument(
+        "--validation_interval",
+        "--validation-interval",
+        type=int,
+        default=50,
+        help="Epoch interval for fixed validation scoring in every training script.",
+    )
+    parser.add_argument(
         "--python",
         default=sys.executable,
         help="Python executable used to launch child training processes.",
@@ -291,6 +312,11 @@ def command_for(
         cmd.extend(["--inbox", str(args.inbox)])
     if args.inboxes:
         cmd.extend(["--inboxes", args.inboxes])
+    if args.validation_inbox is not None:
+        cmd.extend(["--validation_inbox", str(args.validation_inbox)])
+    if args.validation_inboxes:
+        cmd.extend(["--validation_inboxes", args.validation_inboxes])
+    cmd.extend(["--validation_interval", str(args.validation_interval)])
     if args.batch_size is not None:
         cmd.extend(["--batch_size", str(args.batch_size)])
     if not args.normalize_advantage:
@@ -400,6 +426,8 @@ def main() -> int:
         args.logs_dir = ROOT / args.logs_dir
     if args.inbox is not None and not args.inbox.is_absolute():
         args.inbox = ROOT / args.inbox
+    if args.validation_inbox is not None and not args.validation_inbox.is_absolute():
+        args.validation_inbox = ROOT / args.validation_inbox
     if args.inboxes:
         normalized_inboxes = []
         for raw_path in args.inboxes.split(","):
@@ -411,6 +439,17 @@ def main() -> int:
                 inbox_path = ROOT / inbox_path
             normalized_inboxes.append(str(inbox_path))
         args.inboxes = ",".join(normalized_inboxes)
+    if args.validation_inboxes:
+        normalized_validation_inboxes = []
+        for raw_path in args.validation_inboxes.split(","):
+            raw_path = raw_path.strip()
+            if not raw_path:
+                continue
+            inbox_path = Path(raw_path)
+            if not inbox_path.is_absolute():
+                inbox_path = ROOT / inbox_path
+            normalized_validation_inboxes.append(str(inbox_path))
+        args.validation_inboxes = ",".join(normalized_validation_inboxes)
 
     targets = normalize_models(args.models)
 
@@ -422,6 +461,8 @@ def main() -> int:
         raise SystemExit("--epochs must be at least 1")
     if args.batch_size is not None and args.batch_size < 1:
         raise SystemExit("--batch_size must be at least 1")
+    if args.validation_interval < 1:
+        raise SystemExit("--validation_interval must be at least 1")
 
     missing = [target.script for target in targets if not target.script.exists()]
     if missing:
@@ -455,6 +496,11 @@ def main() -> int:
         print(f"Baseline curriculum: {args.baseline_curriculum}")
         print(f"Baseline mode: {args.baseline_mode}")
         print(f"Load balance coef: {args.load_balance_coef}")
+        print(f"Validation interval: {args.validation_interval}")
+        if args.validation_inbox is not None:
+            print(f"Validation inbox: {args.validation_inbox}")
+        if args.validation_inboxes:
+            print(f"Validation inboxes: {args.validation_inboxes}")
         print(f"Curriculum run directory: {run_dir}")
         print()
 
@@ -523,6 +569,11 @@ def main() -> int:
     print(f"Baseline rule: {args.baseline_rule}")
     print(f"Baseline mode: {args.baseline_mode}")
     print(f"Load balance coef: {args.load_balance_coef}")
+    print(f"Validation interval: {args.validation_interval}")
+    if args.validation_inbox is not None:
+        print(f"Validation inbox: {args.validation_inbox}")
+    if args.validation_inboxes:
+        print(f"Validation inboxes: {args.validation_inboxes}")
     print(f"Logs directory: {args.logs_dir}")
     print()
 

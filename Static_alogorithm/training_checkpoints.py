@@ -71,3 +71,48 @@ def save_training_checkpoint(
 def save_model_weights(model, model_path: str) -> None:
     _ensure_parent(model_path)
     torch.save(model.state_dict(), model_path)
+
+
+def evaluate_validation_events(events, model, solve_fn, evaluate_makespan_fn) -> dict[str, float]:
+    if not events:
+        return {
+            "makespan": float("nan"),
+            "invalid_jobs": float("nan"),
+            "samples": 0,
+        }
+
+    was_training = model.training
+    model.eval()
+    makespans = []
+    invalid_counts = []
+    try:
+        with torch.no_grad():
+            for event in events:
+                individual, _, _ = solve_fn(list(event["jobs"]), model, deterministic=True)
+                makespan, invalid_count = evaluate_makespan_fn(individual, event["jobs"])
+                makespans.append(float(makespan))
+                invalid_counts.append(float(invalid_count))
+    finally:
+        model.train(was_training)
+
+    return {
+        "makespan": sum(makespans) / len(makespans),
+        "invalid_jobs": sum(invalid_counts) / len(invalid_counts),
+        "samples": len(makespans),
+    }
+
+
+def maybe_save_best_model(
+    *,
+    model,
+    best_model_path: str,
+    fallback_model_path: str,
+    current_metric: float,
+    best_metric: float,
+    metric_label: str,
+) -> float:
+    if current_metric < best_metric:
+        save_model_weights(model, best_model_path or fallback_model_path)
+        print(f"   -> Saved new best model ({metric_label}: {current_metric:.2f})")
+        return current_metric
+    return best_metric
