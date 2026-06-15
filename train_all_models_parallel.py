@@ -7,7 +7,7 @@ Run from the AMR-DFJSP root:
 
 Useful options:
     python train_all_models_parallel.py --inbox test_case/static/dispatch_inbox_60.jsonl
-    python train_all_models_parallel.py --inboxes test_case/static/dispatch_inbox_20.jsonl,test_case/static/dispatch_inbox_40.jsonl
+    python train_all_models_parallel.py --inboxes test_case/static/dispatch_inbox_20.jsonl,test_case/static/dispatch_inbox_40.jsonl,test_case/static/dispatch_inbox_60.jsonl,test_case/static/dispatch_inbox_80.jsonl,test_case/static/dispatch_inbox_100.jsonl
     python train_all_models_parallel.py --epochs 2000
     python train_all_models_parallel.py --rl_method reinforce --baseline_rule earliest_completion_job+earliest_completion
     python train_all_models_parallel.py --load_balance_coef 0

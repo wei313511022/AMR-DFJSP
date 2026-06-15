@@ -1,0 +1,61 @@
+Training on: cuda
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_20.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_40.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_80.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_100.jsonl
+Starting GNN Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Epoch [1/2000] | Sampled: 1100.06 | Baseline: 778.38 | Improvement: -321.69 | Win Rate: 0.00% | Job Loss: 5.0601 | AMR Loss: -0.1590 | Entropy: 4.1298
+   -> Saved new best model (Makespan: 1100.06)
+   -> Saved updated training chart to /home/wei/AMR-DFJSP/Static_alogorithm/GNN/gnn_precise_training_metrics.png
+Epoch [2/2000] | Sampled: 1313.88 | Baseline: 852.19 | Improvement: -461.69 | Win Rate: 0.00% | Job Loss: 5.3186 | AMR Loss: -0.9477 | Entropy: 4.2368
+Epoch [3/2000] | Sampled: 1215.38 | Baseline: 747.19 | Improvement: -468.19 | Win Rate: 0.00% | Job Loss: 5.5009 | AMR Loss: -0.5756 | Entropy: 3.9756
+Epoch [4/2000] | Sampled: 1482.75 | Baseline: 779.31 | Improvement: -703.44 | Win Rate: 0.00% | Job Loss: 4.1507 | AMR Loss: -0.2540 | Entropy: 3.8209
+Epoch [5/2000] | Sampled: 1390.88 | Baseline: 713.00 | Improvement: -677.88 | Win Rate: 0.00% | Job Loss: 8.5631 | AMR Loss: 2.1056 | Entropy: 3.7085
+Epoch [6/2000] | Sampled: 1593.25 | Baseline: 658.94 | Improvement: -934.31 | Win Rate: 0.00% | Job Loss: 6.3607 | AMR Loss: 3.3747 | Entropy: 3.4420
+Epoch [7/2000] | Sampled: 1783.06 | Baseline: 712.94 | Improvement: -1070.12 | Win Rate: 0.00% | Job Loss: 6.2649 | AMR Loss: 4.0731 | Entropy: 3.3820
+Epoch [8/2000] | Sampled: 1821.44 | Baseline: 685.38 | Improvement: -1136.06 | Win Rate: 0.00% | Job Loss: 8.1680 | AMR Loss: 4.5275 | Entropy: 3.1749
+Epoch [9/2000] | Sampled: 1991.62 | Baseline: 723.88 | Improvement: -1267.75 | Win Rate: 0.00% | Job Loss: -0.9387 | AMR Loss: 4.0646 | Entropy: 3.0876
+Epoch [10/2000] | Sampled: 2062.31 | Baseline: 742.19 | Improvement: -1320.12 | Win Rate: 0.00% | Job Loss: 3.4300 | AMR Loss: 3.0104 | Entropy: 2.8969
+Epoch [11/2000] | Sampled: 2175.75 | Baseline: 760.94 | Improvement: -1414.81 | Win Rate: 0.00% | Job Loss: 1.1866 | AMR Loss: 1.3643 | Entropy: 2.6502
+Epoch [12/2000] | Sampled: 2092.50 | Baseline: 761.31 | Improvement: -1331.19 | Win Rate: 0.00% | Job Loss: 3.5981 | AMR Loss: 4.8169 | Entropy: 2.5348
+Epoch [13/2000] | Sampled: 2154.25 | Baseline: 752.06 | Improvement: -1402.19 | Win Rate: 0.00% | Job Loss: 1.3446 | AMR Loss: 2.9325 | Entropy: 2.3585
+Epoch [14/2000] | Sampled: 2023.62 | Baseline: 716.12 | Improvement: -1307.50 | Win Rate: 0.00% | Job Loss: 1.2829 | AMR Loss: 2.5420 | Entropy: 2.2164
+Epoch [15/2000] | Sampled: 2297.56 | Baseline: 807.75 | Improvement: -1489.81 | Win Rate: 0.00% | Job Loss: -5.1935 | AMR Loss: 1.7841 | Entropy: 2.1195
+Epoch [16/2000] | Sampled: 2114.50 | Baseline: 743.25 | Improvement: -1371.25 | Win Rate: 0.00% | Job Loss: -4.6998 | AMR Loss: 2.1323 | Entropy: 1.9632
+Epoch [17/2000] | Sampled: 2069.38 | Baseline: 726.25 | Improvement: -1343.12 | Win Rate: 0.00% | Job Loss: -9.4620 | AMR Loss: 1.9174 | Entropy: 1.7871
+Epoch [18/2000] | Sampled: 2099.06 | Baseline: 752.56 | Improvement: -1346.50 | Win Rate: 0.00% | Job Loss: -11.6478 | AMR Loss: 2.1418 | Entropy: 1.7946
+Epoch [19/2000] | Sampled: 2182.69 | Baseline: 758.31 | Improvement: -1424.38 | Win Rate: 0.00% | Job Loss: -15.2595 | AMR Loss: 1.6966 | Entropy: 1.6877
+Epoch [20/2000] | Sampled: 2335.81 | Baseline: 820.00 | Improvement: -1515.81 | Win Rate: 0.00% | Job Loss: -3.1550 | AMR Loss: 1.3744 | Entropy: 1.8654
+Epoch [21/2000] | Sampled: 2061.75 | Baseline: 717.44 | Improvement: -1344.31 | Win Rate: 0.00% | Job Loss: 0.2185 | AMR Loss: 1.3677 | Entropy: 1.8891
+Epoch [22/2000] | Sampled: 2231.44 | Baseline: 780.31 | Improvement: -1451.12 | Win Rate: 0.00% | Job Loss: 1.8808 | AMR Loss: 1.0467 | Entropy: 1.9552
+Epoch [23/2000] | Sampled: 1756.56 | Baseline: 613.75 | Improvement: -1142.81 | Win Rate: 0.00% | Job Loss: 1.4021 | AMR Loss: 1.5726 | Entropy: 1.6365
+Epoch [24/2000] | Sampled: 2004.75 | Baseline: 707.00 | Improvement: -1297.75 | Win Rate: 0.00% | Job Loss: 1.9249 | AMR Loss: 2.0573 | Entropy: 1.5504
+Epoch [25/2000] | Sampled: 2267.38 | Baseline: 782.69 | Improvement: -1484.69 | Win Rate: 0.00% | Job Loss: -0.1995 | AMR Loss: 1.0110 | Entropy: 1.5617
+Epoch [26/2000] | Sampled: 2538.00 | Baseline: 882.19 | Improvement: -1655.81 | Win Rate: 0.00% | Job Loss: -17.4350 | AMR Loss: 0.9923 | Entropy: 1.7382
+Epoch [27/2000] | Sampled: 2049.00 | Baseline: 709.88 | Improvement: -1339.12 | Win Rate: 0.00% | Job Loss: -15.2753 | AMR Loss: 0.8940 | Entropy: 1.4729
+Epoch [28/2000] | Sampled: 2177.69 | Baseline: 757.31 | Improvement: -1420.38 | Win Rate: 0.00% | Job Loss: -10.9365 | AMR Loss: 1.1791 | Entropy: 1.5451
+Epoch [29/2000] | Sampled: 2328.00 | Baseline: 806.88 | Improvement: -1521.12 | Win Rate: 0.00% | Job Loss: -1.8165 | AMR Loss: 0.9732 | Entropy: 1.5614
+Epoch [30/2000] | Sampled: 1871.25 | Baseline: 646.75 | Improvement: -1224.50 | Win Rate: 0.00% | Job Loss: 4.6982 | AMR Loss: 1.6680 | Entropy: 1.3844
+Epoch [31/2000] | Sampled: 1838.19 | Baseline: 637.81 | Improvement: -1200.38 | Win Rate: 0.00% | Job Loss: 3.0243 | AMR Loss: 0.8276 | Entropy: 1.3608
+Epoch [32/2000] | Sampled: 1952.31 | Baseline: 679.38 | Improvement: -1272.94 | Win Rate: 0.00% | Job Loss: 3.4695 | AMR Loss: 1.1747 | Entropy: 1.4191
+Epoch [33/2000] | Sampled: 2288.19 | Baseline: 796.44 | Improvement: -1491.75 | Win Rate: 0.00% | Job Loss: 5.7526 | AMR Loss: 0.8022 | Entropy: 1.5083
+Epoch [34/2000] | Sampled: 2245.81 | Baseline: 771.62 | Improvement: -1474.19 | Win Rate: 0.00% | Job Loss: 2.5616 | AMR Loss: 0.5161 | Entropy: 1.4870
+Epoch [35/2000] | Sampled: 2382.38 | Baseline: 808.50 | Improvement: -1573.88 | Win Rate: 0.00% | Job Loss: 2.6532 | AMR Loss: 0.7305 | Entropy: 1.5105
+Epoch [36/2000] | Sampled: 1492.50 | Baseline: 519.00 | Improvement: -973.50 | Win Rate: 0.00% | Job Loss: -1.4696 | AMR Loss: 0.9073 | Entropy: 1.1236
+Epoch [37/2000] | Sampled: 1849.00 | Baseline: 643.81 | Improvement: -1205.19 | Win Rate: 0.00% | Job Loss: -0.5824 | AMR Loss: 1.0057 | Entropy: 1.3108
+Epoch [38/2000] | Sampled: 2470.38 | Baseline: 842.62 | Improvement: -1627.75 | Win Rate: 0.00% | Job Loss: -3.0556 | AMR Loss: 0.6575 | Entropy: 1.5551
+Epoch [39/2000] | Sampled: 2269.06 | Baseline: 782.81 | Improvement: -1486.25 | Win Rate: 0.00% | Job Loss: -4.7932 | AMR Loss: 0.7085 | Entropy: 1.4430
+Epoch [40/2000] | Sampled: 2383.88 | Baseline: 844.69 | Improvement: -1539.19 | Win Rate: 0.00% | Job Loss: -1.8035 | AMR Loss: 0.7782 | Entropy: 1.4934
+Epoch [41/2000] | Sampled: 2310.00 | Baseline: 801.38 | Improvement: -1508.62 | Win Rate: 0.00% | Job Loss: -8.7254 | AMR Loss: 1.1282 | Entropy: 1.4798
+Epoch [42/2000] | Sampled: 2049.19 | Baseline: 712.44 | Improvement: -1336.75 | Win Rate: 0.00% | Job Loss: -10.5242 | AMR Loss: 1.0609 | Entropy: 1.4201
+Epoch [43/2000] | Sampled: 2332.38 | Baseline: 808.38 | Improvement: -1524.00 | Win Rate: 0.00% | Job Loss: -14.7633 | AMR Loss: 0.3115 | Entropy: 1.6138
+Epoch [44/2000] | Sampled: 2397.56 | Baseline: 828.19 | Improvement: -1569.38 | Win Rate: 0.00% | Job Loss: -16.7332 | AMR Loss: 0.3769 | Entropy: 1.7502
+Epoch [45/2000] | Sampled: 2079.25 | Baseline: 717.38 | Improvement: -1361.88 | Win Rate: 0.00% | Job Loss: -11.0660 | AMR Loss: 0.8043 | Entropy: 1.6380
+Epoch [46/2000] | Sampled: 2066.81 | Baseline: 701.50 | Improvement: -1365.31 | Win Rate: 0.00% | Job Loss: -14.2874 | AMR Loss: 0.5999 | Entropy: 1.6642
+Epoch [47/2000] | Sampled: 2245.50 | Baseline: 771.81 | Improvement: -1473.69 | Win Rate: 0.00% | Job Loss: -14.5729 | AMR Loss: 0.6466 | Entropy: 1.7084
+Epoch [48/2000] | Sampled: 2045.25 | Baseline: 711.50 | Improvement: -1333.75 | Win Rate: 0.00% | Job Loss: -14.9500 | AMR Loss: 0.7611 | Entropy: 1.5460
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 665, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 634, in train

@@ -1,0 +1,53 @@
+Training on: cuda
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_20.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_40.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_80.jsonl
+Loaded 100 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_100.jsonl
+Starting Attention Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Epoch [1/2000] | Sampled: 1178.62 | Baseline: 778.38 | Improvement: -400.25 | Win Rate: 0.00% | Actor Loss: 4.2775 | Entropy: 4.1128
+   -> Saved new best model (Makespan: 1178.62)
+   -> Saved updated training chart to /home/wei/AMR-DFJSP/Static_alogorithm/Attention/attention_precise_training_metrics.png
+Epoch [2/2000] | Sampled: 1755.25 | Baseline: 852.19 | Improvement: -903.06 | Win Rate: 0.00% | Actor Loss: 9.9827 | Entropy: 3.8495
+Epoch [3/2000] | Sampled: 1935.56 | Baseline: 747.19 | Improvement: -1188.38 | Win Rate: 0.00% | Actor Loss: 15.7330 | Entropy: 3.3897
+Epoch [4/2000] | Sampled: 2035.06 | Baseline: 779.31 | Improvement: -1255.75 | Win Rate: 0.00% | Actor Loss: 18.2218 | Entropy: 3.3174
+Epoch [5/2000] | Sampled: 1962.50 | Baseline: 713.00 | Improvement: -1249.50 | Win Rate: 0.00% | Actor Loss: 15.9496 | Entropy: 3.1772
+Epoch [6/2000] | Sampled: 1751.62 | Baseline: 658.94 | Improvement: -1092.69 | Win Rate: 0.00% | Actor Loss: 16.9704 | Entropy: 3.1407
+Epoch [7/2000] | Sampled: 1853.50 | Baseline: 712.94 | Improvement: -1140.56 | Win Rate: 0.00% | Actor Loss: 15.6134 | Entropy: 3.2563
+Epoch [8/2000] | Sampled: 1743.25 | Baseline: 685.38 | Improvement: -1057.88 | Win Rate: 0.00% | Actor Loss: 17.0916 | Entropy: 3.2489
+Epoch [9/2000] | Sampled: 1760.44 | Baseline: 723.88 | Improvement: -1036.56 | Win Rate: 0.00% | Actor Loss: 10.6784 | Entropy: 3.4040
+Epoch [10/2000] | Sampled: 1876.81 | Baseline: 742.19 | Improvement: -1134.62 | Win Rate: 0.00% | Actor Loss: 20.5548 | Entropy: 3.3746
+Epoch [11/2000] | Sampled: 1967.75 | Baseline: 760.94 | Improvement: -1206.81 | Win Rate: 0.00% | Actor Loss: 16.5073 | Entropy: 3.3418
+Epoch [12/2000] | Sampled: 1979.88 | Baseline: 761.31 | Improvement: -1218.56 | Win Rate: 0.00% | Actor Loss: 17.2080 | Entropy: 3.2845
+Epoch [13/2000] | Sampled: 1871.44 | Baseline: 752.06 | Improvement: -1119.38 | Win Rate: 0.00% | Actor Loss: 15.1186 | Entropy: 3.3466
+Epoch [14/2000] | Sampled: 1824.44 | Baseline: 716.12 | Improvement: -1108.31 | Win Rate: 0.00% | Actor Loss: 7.7755 | Entropy: 3.2583
+Epoch [15/2000] | Sampled: 1958.62 | Baseline: 807.75 | Improvement: -1150.88 | Win Rate: 0.00% | Actor Loss: 12.3328 | Entropy: 3.3088
+Epoch [16/2000] | Sampled: 1815.06 | Baseline: 743.25 | Improvement: -1071.81 | Win Rate: 0.00% | Actor Loss: 11.5444 | Entropy: 3.0979
+Epoch [17/2000] | Sampled: 1759.44 | Baseline: 726.25 | Improvement: -1033.19 | Win Rate: 0.00% | Actor Loss: 8.6182 | Entropy: 2.9132
+Epoch [18/2000] | Sampled: 1845.81 | Baseline: 752.56 | Improvement: -1093.25 | Win Rate: 0.00% | Actor Loss: 6.0666 | Entropy: 2.7577
+Epoch [19/2000] | Sampled: 1946.81 | Baseline: 758.31 | Improvement: -1188.50 | Win Rate: 0.00% | Actor Loss: 14.0988 | Entropy: 2.4672
+Epoch [20/2000] | Sampled: 2127.50 | Baseline: 820.00 | Improvement: -1307.50 | Win Rate: 0.00% | Actor Loss: 14.9912 | Entropy: 2.3456
+Epoch [21/2000] | Sampled: 1766.19 | Baseline: 717.44 | Improvement: -1048.75 | Win Rate: 0.00% | Actor Loss: 17.3295 | Entropy: 2.6293
+Epoch [22/2000] | Sampled: 1918.31 | Baseline: 780.31 | Improvement: -1138.00 | Win Rate: 0.00% | Actor Loss: 25.7995 | Entropy: 2.5353
+Epoch [23/2000] | Sampled: 1605.75 | Baseline: 613.75 | Improvement: -992.00 | Win Rate: 0.00% | Actor Loss: 5.3780 | Entropy: 2.3845
+Epoch [24/2000] | Sampled: 1815.81 | Baseline: 707.00 | Improvement: -1108.81 | Win Rate: 0.00% | Actor Loss: 12.7780 | Entropy: 2.3394
+Epoch [25/2000] | Sampled: 2021.38 | Baseline: 782.69 | Improvement: -1238.69 | Win Rate: 0.00% | Actor Loss: 17.6878 | Entropy: 2.2481
+Epoch [26/2000] | Sampled: 2256.81 | Baseline: 882.19 | Improvement: -1374.62 | Win Rate: 0.00% | Actor Loss: 22.4197 | Entropy: 2.3605
+Epoch [27/2000] | Sampled: 1819.88 | Baseline: 709.88 | Improvement: -1110.00 | Win Rate: 0.00% | Actor Loss: 20.1972 | Entropy: 2.4289
+Epoch [28/2000] | Sampled: 2058.38 | Baseline: 757.31 | Improvement: -1301.06 | Win Rate: 0.00% | Actor Loss: 19.9740 | Entropy: 2.3861
+Epoch [29/2000] | Sampled: 2206.69 | Baseline: 806.88 | Improvement: -1399.81 | Win Rate: 0.00% | Actor Loss: 20.7525 | Entropy: 2.5064
+Epoch [30/2000] | Sampled: 1747.50 | Baseline: 646.75 | Improvement: -1100.75 | Win Rate: 0.00% | Actor Loss: 18.1611 | Entropy: 2.2988
+Epoch [31/2000] | Sampled: 1665.81 | Baseline: 637.81 | Improvement: -1028.00 | Win Rate: 0.00% | Actor Loss: 16.2156 | Entropy: 2.2381
+Epoch [32/2000] | Sampled: 1782.12 | Baseline: 679.38 | Improvement: -1102.75 | Win Rate: 0.00% | Actor Loss: 12.7150 | Entropy: 2.2810
+Epoch [33/2000] | Sampled: 2126.00 | Baseline: 796.44 | Improvement: -1329.56 | Win Rate: 0.00% | Actor Loss: 11.7773 | Entropy: 2.2511
+Epoch [34/2000] | Sampled: 2051.00 | Baseline: 771.62 | Improvement: -1279.38 | Win Rate: 0.00% | Actor Loss: 13.6392 | Entropy: 2.3115
+Epoch [35/2000] | Sampled: 2201.88 | Baseline: 808.50 | Improvement: -1393.38 | Win Rate: 0.00% | Actor Loss: 16.9735 | Entropy: 2.2354
+Epoch [36/2000] | Sampled: 1348.69 | Baseline: 519.00 | Improvement: -829.69 | Win Rate: 0.00% | Actor Loss: 11.6125 | Entropy: 2.1387
+Epoch [37/2000] | Sampled: 1740.56 | Baseline: 643.81 | Improvement: -1096.75 | Win Rate: 0.00% | Actor Loss: 16.4714 | Entropy: 1.9686
+Epoch [38/2000] | Sampled: 2324.38 | Baseline: 842.62 | Improvement: -1481.75 | Win Rate: 0.00% | Actor Loss: 22.5789 | Entropy: 2.2049
+Epoch [39/2000] | Sampled: 2097.94 | Baseline: 782.81 | Improvement: -1315.12 | Win Rate: 0.00% | Actor Loss: 7.0527 | Entropy: 2.1668
+Epoch [40/2000] | Sampled: 2358.00 | Baseline: 844.69 | Improvement: -1513.31 | Win Rate: 0.00% | Actor Loss: 6.6319 | Entropy: 2.1376
+Epoch [41/2000] | Sampled: 2211.00 | Baseline: 801.38 | Improvement: -1409.62 | Win Rate: 0.00% | Actor Loss: 2.6309 | Entropy: 2.2196
+Epoch [42/2000] | Sampled: 1940.75 | Baseline: 712.44 | Improvement: -1228.31 | Win Rate: 0.00% | Actor Loss: 17.4497 | Entropy: 2.0646
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/Attention/train_precise.py", line 576, in <module>
