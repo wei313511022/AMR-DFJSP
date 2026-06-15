@@ -35,6 +35,14 @@ from reinforce_baseline import (
     load_training_events,
     normalize_advantage_batches,
 )
+from training_checkpoints import (
+    load_training_checkpoint,
+    save_model_weights,
+    save_training_checkpoint,
+)
+
+
+LEGACY_BEST_MODEL_PATH = "attention_precise_scheduler_best.pth"
 
 
 def _initial_precise_state(init_state=None):
@@ -121,8 +129,27 @@ def _apply_precise_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    amr_availabilities[chosen_amr] = process_end
-    amr_positions[chosen_amr] = target_station
+    return_start = process_end
+    base_pos = AMR_STARTS[chosen_amr]
+    return_path = find_dynamic_path(
+        target_station,
+        base_pos,
+        return_start,
+        reservations,
+        amr_states,
+        chosen_amr,
+    )
+    return_time = int(len(return_path) - 1)
+    if return_time == 0 and target_station != base_pos:
+        return_time = MAX_DEPTH
+    return_end = return_start + return_time
+
+    for t_offset, point in enumerate(return_path):
+        reservations[(point, int(return_start) + t_offset)] = chosen_amr
+
+    amr_states[chosen_amr] = (base_pos, return_end)
+    amr_availabilities[chosen_amr] = return_end
+    amr_positions[chosen_amr] = base_pos
 
 
 def action_sequence_from_individual(individual, jobs):
@@ -232,6 +259,21 @@ def _select_jobs(dispatch_events):
     return make_jobs()
 
 
+def assignment_load_stats(individual) -> tuple[int, int, float]:
+    counts = [sum(1 for amr in individual.amr_assignment if amr == key) for key in AMR_KEYS]
+    return max(counts), min(counts), max(counts) - min(counts)
+
+
+def load_balance_step_advantages(action_seq, num_jobs: int):
+    counts = [0 for _ in AMR_KEYS]
+    advantages = []
+    for chosen_action in action_seq:
+        chosen_amr_idx = chosen_action // num_jobs
+        advantages.append(float(min(counts) - counts[chosen_amr_idx]))
+        counts[chosen_amr_idx] += 1
+    return advantages
+
+
 def _save_reinforce_chart(
     chart_path: str,
     title_prefix: str,
@@ -327,6 +369,12 @@ def train_reinforce(args):
         amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2
     ).to(device)
     optimizer = optim.Adam(attention_model.parameters(), lr=args.lr)
+    load_training_checkpoint(
+        attention_model,
+        {"optimizer": optimizer},
+        args.init_checkpoint,
+        device,
+    )
 
     print(
         "Starting Attention Precise REINFORCE training "
@@ -349,6 +397,10 @@ def train_reinforce(args):
         batch_improvement = []
         batch_wins = []
         batch_advantages = []
+        batch_sampled_invalid = []
+        batch_baseline_invalid = []
+        batch_max_load = []
+        batch_load_gap = []
 
         for batch_idx in range(args.batch_size):
             jobs = _select_jobs(dispatch_events)
@@ -363,12 +415,24 @@ def train_reinforce(args):
                 seed=args.seed + batch_idx,
             )
 
-            trajectories.append((jobs, action_seq, comparison.step_advantages))
+            trajectories.append(
+                (
+                    jobs,
+                    action_seq,
+                    comparison.step_advantages,
+                    load_balance_step_advantages(action_seq, len(jobs)),
+                )
+            )
             batch_advantages.append(comparison.step_advantages)
             batch_sampled.append(comparison.sampled_makespan)
             batch_baseline.append(comparison.baseline_makespan)
             batch_improvement.append(comparison.improvement)
             batch_wins.append(1.0 if comparison.win else 0.0)
+            batch_sampled_invalid.append(comparison.sampled_invalid_jobs)
+            batch_baseline_invalid.append(comparison.baseline_invalid_jobs)
+            max_load, _, load_gap = assignment_load_stats(individual)
+            batch_max_load.append(max_load)
+            batch_load_gap.append(load_gap)
 
         normalized_advantages = normalize_advantage_batches(
             batch_advantages, enabled=args.normalize_advantage
@@ -378,14 +442,20 @@ def train_reinforce(args):
         epoch_actor_loss = 0.0
         epoch_entropy = 0.0
 
-        for (jobs, action_seq, _), advantages in zip(trajectories, normalized_advantages):
+        for (jobs, action_seq, _, load_advantages), advantages in zip(trajectories, normalized_advantages):
             step_log_probs, step_entropies, _ = evaluate_action_steps(jobs, attention_model, action_seq)
             advantage_tensor = torch.tensor(
                 advantages,
                 dtype=torch.float32,
                 device=step_log_probs.device,
             )
-            actor_loss = -(step_log_probs * advantage_tensor).sum()
+            load_advantage_tensor = torch.tensor(
+                load_advantages,
+                dtype=torch.float32,
+                device=step_log_probs.device,
+            )
+            action_advantage_tensor = advantage_tensor + args.load_balance_coef * load_advantage_tensor
+            actor_loss = -(step_log_probs * action_advantage_tensor).sum()
             entropy_bonus = step_entropies.sum()
             loss = (actor_loss - args.entropy_coef * entropy_bonus) / args.batch_size
             if not torch.isfinite(loss).item():
@@ -404,6 +474,10 @@ def train_reinforce(args):
         avg_improvement = sum(batch_improvement) / args.batch_size
         win_rate = sum(batch_wins) / args.batch_size
         avg_entropy = epoch_entropy / args.batch_size
+        avg_sampled_invalid = sum(batch_sampled_invalid) / args.batch_size
+        avg_baseline_invalid = sum(batch_baseline_invalid) / args.batch_size
+        avg_max_load = sum(batch_max_load) / args.batch_size
+        avg_load_gap = sum(batch_load_gap) / args.batch_size
 
         actor_losses.append(avg_actor_loss)
         sampled_makespans.append(avg_sampled)
@@ -415,13 +489,24 @@ def train_reinforce(args):
             f"Epoch [{epoch}/{args.epochs}] | Sampled: {avg_sampled:.2f} "
             f"| Baseline: {avg_baseline:.2f} | Improvement: {avg_improvement:.2f} "
             f"| Win Rate: {win_rate:.2%} | Actor Loss: {avg_actor_loss:.4f} "
-            f"| Entropy: {avg_entropy:.4f}"
+            f"| Entropy: {avg_entropy:.4f} "
+            f"| Invalid S/B: {avg_sampled_invalid:.2f}/{avg_baseline_invalid:.2f} "
+            f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
         )
 
         if avg_sampled < best_makespan:
             best_makespan = avg_sampled
-            torch.save(attention_model.state_dict(), "attention_precise_scheduler_best.pth")
+            save_model_weights(attention_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
             print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+
+        save_training_checkpoint(
+            args.latest_checkpoint_path,
+            attention_model,
+            {"optimizer": optimizer},
+            epoch,
+            best_makespan,
+            args,
+        )
 
         if epoch == 1 or epoch % 100 == 0 or epoch == args.epochs:
             _save_reinforce_chart(
@@ -448,6 +533,12 @@ def train_ppo(args):
         amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2
     ).to(device)
     optimizer = optim.Adam(attention_model.parameters(), lr=args.lr)
+    load_training_checkpoint(
+        attention_model,
+        {"optimizer": optimizer},
+        args.init_checkpoint,
+        device,
+    )
 
     print("Starting Attention Precise PPO training with critic-based advantage.")
 
@@ -524,8 +615,17 @@ def train_ppo(args):
 
         if avg_batch_makespan < best_makespan:
             best_makespan = avg_batch_makespan
-            torch.save(attention_model.state_dict(), "attention_precise_scheduler_best.pth")
+            save_model_weights(attention_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
             print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+
+        save_training_checkpoint(
+            args.latest_checkpoint_path,
+            attention_model,
+            {"optimizer": optimizer},
+            epoch,
+            best_makespan,
+            args,
+        )
 
         if epoch == 1 or epoch % 100 == 0 or epoch == args.epochs:
             _save_ppo_chart(
@@ -559,10 +659,19 @@ def build_parser():
     parser.add_argument("--batch_size", type=int, default=16, help="Schedules sampled per update")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--init_checkpoint", type=str, default="", help="Optional checkpoint or legacy weights to initialize from")
+    parser.add_argument("--latest_checkpoint_path", type=str, default="", help="Optional full training checkpoint path updated every epoch")
+    parser.add_argument("--best_model_path", type=str, default="", help="Optional best model weights path")
     parser.add_argument("--rl_method", choices=["reinforce", "ppo"], default="reinforce")
     parser.add_argument("--baseline_rule", type=str, default=DEFAULT_BASELINE_RULE)
     parser.add_argument("--baseline_mode", choices=["stepwise", "episode"], default="stepwise")
     parser.add_argument("--entropy_coef", type=float, default=0.01)
+    parser.add_argument(
+        "--load_balance_coef",
+        type=float,
+        default=0.1,
+        help="Joint action penalty for assigning jobs to already overloaded AMRs during REINFORCE replay",
+    )
     parser.add_argument("--normalize_advantage", dest="normalize_advantage", action="store_true", default=True)
     parser.add_argument("--no_normalize_advantage", dest="normalize_advantage", action="store_false")
     parser.add_argument("--grad_clip", type=float, default=1.0)

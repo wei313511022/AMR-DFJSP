@@ -38,6 +38,14 @@ from reinforce_baseline import (
     load_training_events,
     normalize_advantage_batches,
 )
+from training_checkpoints import (
+    load_training_checkpoint,
+    save_model_weights,
+    save_training_checkpoint,
+)
+
+
+LEGACY_BEST_MODEL_PATH = "gnn_mpn_scheduler_best.pth"
 
 
 def _initial_fast_state(init_state=None):
@@ -334,6 +342,12 @@ def train_reinforce(args):
     dispatch_events = load_training_events(args.inbox, args.inboxes)
     gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
+    load_training_checkpoint(
+        gnn_model,
+        {"optimizer_actor": optimizer_actor},
+        args.init_checkpoint,
+        device,
+    )
 
     print(
         "Starting GNN REINFORCE training "
@@ -458,8 +472,17 @@ def train_reinforce(args):
 
         if avg_sampled < best_makespan:
             best_makespan = avg_sampled
-            torch.save(gnn_model.state_dict(), "gnn_mpn_scheduler_best.pth")
+            save_model_weights(gnn_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
             print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+
+        save_training_checkpoint(
+            args.latest_checkpoint_path,
+            gnn_model,
+            {"optimizer_actor": optimizer_actor},
+            epoch,
+            best_makespan,
+            args,
+        )
 
         if epoch == 1 or epoch % 100 == 0 or epoch == args.epochs:
             _save_reinforce_chart(
@@ -486,6 +509,12 @@ def train_ppo(args):
     gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
     optimizer_critic = optim.Adam(gnn_model.critic.parameters(), lr=args.lr_critic)
+    load_training_checkpoint(
+        gnn_model,
+        {"optimizer_actor": optimizer_actor, "optimizer_critic": optimizer_critic},
+        args.init_checkpoint,
+        device,
+    )
 
     print("Starting GNN Multi-PPO training with critic-based advantage.")
 
@@ -602,8 +631,17 @@ def train_ppo(args):
 
         if avg_batch_makespan < best_makespan:
             best_makespan = avg_batch_makespan
-            torch.save(gnn_model.state_dict(), "gnn_mpn_scheduler_best.pth")
+            save_model_weights(gnn_model, args.best_model_path or LEGACY_BEST_MODEL_PATH)
             print(f"   -> Saved new best model (Makespan: {best_makespan:.2f})")
+
+        save_training_checkpoint(
+            args.latest_checkpoint_path,
+            gnn_model,
+            {"optimizer_actor": optimizer_actor, "optimizer_critic": optimizer_critic},
+            epoch,
+            best_makespan,
+            args,
+        )
 
         if epoch == 1 or epoch % 100 == 0 or epoch == args.epochs:
             _save_ppo_chart(chart_path, losses_job, losses_machine, losses_critic, makespans)
@@ -631,6 +669,9 @@ def build_parser():
     parser.add_argument("--lr_actor", type=float, default=1e-3, help="Actor learning rate")
     parser.add_argument("--lr_critic", type=float, default=1e-3, help="Critic learning rate for PPO")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--init_checkpoint", type=str, default="", help="Optional checkpoint or legacy weights to initialize from")
+    parser.add_argument("--latest_checkpoint_path", type=str, default="", help="Optional full training checkpoint path updated every epoch")
+    parser.add_argument("--best_model_path", type=str, default="", help="Optional best model weights path")
     parser.add_argument("--rl_method", choices=["reinforce", "ppo"], default="reinforce")
     parser.add_argument("--baseline_rule", type=str, default=DEFAULT_BASELINE_RULE)
     parser.add_argument("--baseline_mode", choices=["stepwise", "episode"], default="stepwise")

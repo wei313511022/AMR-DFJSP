@@ -10,6 +10,7 @@ Useful options:
     python train_all_models_parallel.py --inboxes test_case/static/dispatch_inbox_20.jsonl,test_case/static/dispatch_inbox_40.jsonl
     python train_all_models_parallel.py --epochs 2000
     python train_all_models_parallel.py --rl_method reinforce --baseline_rule earliest_completion_job+earliest_completion
+    python train_all_models_parallel.py --load_balance_coef 0
     python train_all_models_parallel.py --threads-per-process 2
     python train_all_models_parallel.py --models attention gnn_precise
 """
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -35,6 +37,7 @@ class TrainTarget:
     key: str
     script: Path
     description: str
+    legacy_best_model: str
 
 
 TARGETS = {
@@ -42,22 +45,35 @@ TARGETS = {
         key="attention",
         script=ROOT / "Static_alogorithm" / "Attention" / "train.py",
         description="Attention with fast heuristic rollout",
+        legacy_best_model="attention_scheduler_best.pth",
     ),
     "attention_precise": TrainTarget(
         key="attention_precise",
         script=ROOT / "Static_alogorithm" / "Attention" / "train_precise.py",
         description="Attention with dynamic pathfinding and reservations",
+        legacy_best_model="attention_precise_scheduler_best.pth",
     ),
     "gnn": TrainTarget(
         key="gnn",
         script=ROOT / "Static_alogorithm" / "GNN" / "train_gnn.py",
         description="GNN with fast heuristic rollout",
+        legacy_best_model="gnn_mpn_scheduler_best.pth",
     ),
     "gnn_precise": TrainTarget(
         key="gnn_precise",
         script=ROOT / "Static_alogorithm" / "GNN" / "train_gnn_precise.py",
         description="GNN with dynamic pathfinding and reservations",
+        legacy_best_model="gnn_precise_mpn_scheduler_best.pth",
     ),
+}
+
+BASELINE_CURRICULA = {
+    "gradual": [
+        "fifo+earliest_available",
+        "fifo+least_loaded",
+        "earliest_completion_job+least_loaded",
+        "earliest_completion_job+earliest_completion",
+    ],
 }
 
 ALIASES = {
@@ -128,6 +144,13 @@ def parse_args() -> argparse.Namespace:
         help="Dispatching-rule baseline used by REINFORCE training.",
     )
     parser.add_argument(
+        "--baseline_curriculum",
+        "--baseline-curriculum",
+        choices=sorted(BASELINE_CURRICULA),
+        default="",
+        help="Optional weak-to-strong baseline curriculum. When set, --epochs is total epochs split across phases.",
+    )
+    parser.add_argument(
         "--baseline_mode",
         "--baseline-mode",
         choices=["stepwise", "episode"],
@@ -140,6 +163,13 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.01,
         help="Entropy regularization coefficient passed to REINFORCE trainers.",
+    )
+    parser.add_argument(
+        "--load_balance_coef",
+        "--load-balance-coef",
+        type=float,
+        default=0.1,
+        help="Load-balance shaping coefficient passed to REINFORCE trainers; use 0 to disable.",
     )
     parser.add_argument(
         "--batch_size",
@@ -225,21 +255,38 @@ def make_env(args: argparse.Namespace) -> dict[str, str]:
     return env
 
 
-def command_for(target: TrainTarget, args: argparse.Namespace) -> list[str]:
+def command_for(
+    target: TrainTarget,
+    args: argparse.Namespace,
+    *,
+    epochs: int | None = None,
+    baseline_rule: str | None = None,
+    init_checkpoint: str = "",
+    latest_checkpoint_path: str = "",
+    best_model_path: str = "",
+) -> list[str]:
     cmd = [
         args.python,
         str(target.script),
         "--epochs",
-        str(args.epochs),
+        str(args.epochs if epochs is None else epochs),
         "--rl_method",
         args.rl_method,
         "--baseline_rule",
-        args.baseline_rule,
+        args.baseline_rule if baseline_rule is None else baseline_rule,
         "--baseline_mode",
         args.baseline_mode,
         "--entropy_coef",
         str(args.entropy_coef),
+        "--load_balance_coef",
+        str(args.load_balance_coef),
     ]
+    if init_checkpoint:
+        cmd.extend(["--init_checkpoint", init_checkpoint])
+    if latest_checkpoint_path:
+        cmd.extend(["--latest_checkpoint_path", latest_checkpoint_path])
+    if best_model_path:
+        cmd.extend(["--best_model_path", best_model_path])
     if args.inbox is not None:
         cmd.extend(["--inbox", str(args.inbox)])
     if args.inboxes:
@@ -251,12 +298,22 @@ def command_for(target: TrainTarget, args: argparse.Namespace) -> list[str]:
     return cmd
 
 
-def launch(target: TrainTarget, args: argparse.Namespace, env: dict[str, str]) -> RunningJob:
-    args.logs_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_path = args.logs_dir / f"{timestamp}_{target.key}.log"
+def launch(
+    target: TrainTarget,
+    args: argparse.Namespace,
+    env: dict[str, str],
+    cmd: list[str] | None = None,
+    log_path: Path | None = None,
+) -> RunningJob:
+    if log_path is None:
+        args.logs_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_path = args.logs_dir / f"{timestamp}_{target.key}.log"
+    else:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
     log_handle = log_path.open("w", encoding="utf-8", buffering=1)
-    cmd = command_for(target, args)
+    if cmd is None:
+        cmd = command_for(target, args)
 
     process = subprocess.Popen(
         cmd,
@@ -268,6 +325,58 @@ def launch(target: TrainTarget, args: argparse.Namespace, env: dict[str, str]) -
     )
     print(f"[start] {target.key:<17} pid={process.pid:<7} log={log_path}")
     return RunningJob(target, process, log_path, log_handle, time.time())
+
+
+def run_training_wave(
+    targets: list[TrainTarget],
+    args: argparse.Namespace,
+    env: dict[str, str],
+    commands: dict[str, list[str]],
+    log_paths: dict[str, Path],
+) -> tuple[int, list[RunningJob]]:
+    pending = list(targets)
+    running: list[RunningJob] = []
+    failures: list[RunningJob] = []
+
+    try:
+        while pending or running:
+            while pending and len(running) < args.max_concurrent:
+                target = pending.pop(0)
+                running.append(
+                    launch(
+                        target,
+                        args,
+                        env,
+                        commands[target.key],
+                        log_paths.get(target.key),
+                    )
+                )
+                if args.stagger_seconds > 0 and (pending or len(running) < len(targets)):
+                    time.sleep(args.stagger_seconds)
+
+            time.sleep(5)
+            still_running = []
+            for job in running:
+                code = job.process.poll()
+                if code is None:
+                    still_running.append(job)
+                    continue
+
+                elapsed = time.time() - job.started_at
+                job.log_handle.close()
+                status = "done" if code == 0 else "fail"
+                print(f"[{status}] {job.target.key:<17} exit={code:<4} elapsed={elapsed:,.1f}s log={job.log_path}")
+                if code != 0:
+                    failures.append(job)
+
+            running = still_running
+
+    except KeyboardInterrupt:
+        print("\nInterrupted. Stopping child training processes...")
+        terminate_all(running)
+        return 130, failures
+
+    return (1 if failures else 0), failures
 
 
 def terminate_all(running: list[RunningJob]) -> None:
@@ -321,6 +430,90 @@ def main() -> int:
 
     env = make_env(args)
 
+    if args.baseline_curriculum:
+        if args.rl_method != "reinforce":
+            raise SystemExit("--baseline_curriculum is only supported with --rl_method reinforce")
+        baselines = BASELINE_CURRICULA[args.baseline_curriculum]
+        if args.epochs % len(baselines) != 0:
+            raise SystemExit(
+                f"--epochs must be divisible by {len(baselines)} for curriculum '{args.baseline_curriculum}'"
+            )
+
+        phase_epochs = args.epochs // len(baselines)
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_dir = args.logs_dir / f"curriculum_{run_id}"
+        previous_latest: dict[str, Path] = {}
+        final_best: dict[str, Path] = {}
+
+        print(f"Project root: {ROOT}")
+        print(f"CPU cores detected: {os.cpu_count() or 1}")
+        print(f"Max concurrent jobs: {args.max_concurrent}")
+        print(f"Threads per process: {args.threads_per_process}")
+        print(f"Total epochs per model: {args.epochs}")
+        print(f"Epochs per phase: {phase_epochs}")
+        print(f"RL method: {args.rl_method}")
+        print(f"Baseline curriculum: {args.baseline_curriculum}")
+        print(f"Baseline mode: {args.baseline_mode}")
+        print(f"Load balance coef: {args.load_balance_coef}")
+        print(f"Curriculum run directory: {run_dir}")
+        print()
+
+        for phase_idx, baseline_rule in enumerate(baselines, start=1):
+            phase_name = f"phase_{phase_idx:02d}"
+            phase_logs_dir = run_dir / "logs" / phase_name
+            phase_checkpoint_dir = run_dir / "checkpoints" / phase_name
+            next_latest: dict[str, Path] = {}
+            commands: dict[str, list[str]] = {}
+            log_paths: dict[str, Path] = {}
+
+            print(f"=== {phase_name}: {baseline_rule} ({phase_epochs} epochs) ===")
+            for target in targets:
+                latest_checkpoint = phase_checkpoint_dir / f"{target.key}_latest.pth"
+                best_model = phase_checkpoint_dir / f"{target.key}_best.pth"
+                init_checkpoint = previous_latest.get(target.key)
+                commands[target.key] = command_for(
+                    target,
+                    args,
+                    epochs=phase_epochs,
+                    baseline_rule=baseline_rule,
+                    init_checkpoint=str(init_checkpoint) if init_checkpoint else "",
+                    latest_checkpoint_path=str(latest_checkpoint),
+                    best_model_path=str(best_model),
+                )
+                log_paths[target.key] = phase_logs_dir / f"{target.key}.log"
+                next_latest[target.key] = latest_checkpoint
+                final_best[target.key] = best_model
+                print(f"{target.key:<17} {' '.join(commands[target.key])}")
+            print()
+
+            if not args.dry_run:
+                code, failures = run_training_wave(targets, args, env, commands, log_paths)
+                if failures:
+                    print("\nOne or more training jobs failed:")
+                    for job in failures:
+                        print(f"  {job.target.key}: {job.log_path}")
+                    return code
+                if code != 0:
+                    return code
+
+            previous_latest = next_latest
+
+        if args.dry_run:
+            return 0
+
+        print("Promoting final-phase best models to legacy inference filenames...")
+        for target in targets:
+            src = final_best[target.key]
+            dst = ROOT / target.legacy_best_model
+            if not src.exists():
+                print(f"[warn] missing final best for {target.key}: {src}")
+                continue
+            shutil.copy2(src, dst)
+            print(f"[promote] {target.key:<17} {src} -> {dst}")
+
+        print("All requested curriculum training jobs completed successfully.")
+        return 0
+
     print(f"Project root: {ROOT}")
     print(f"CPU cores detected: {os.cpu_count() or 1}")
     print(f"Max concurrent jobs: {args.max_concurrent}")
@@ -329,6 +522,7 @@ def main() -> int:
     print(f"RL method: {args.rl_method}")
     print(f"Baseline rule: {args.baseline_rule}")
     print(f"Baseline mode: {args.baseline_mode}")
+    print(f"Load balance coef: {args.load_balance_coef}")
     print(f"Logs directory: {args.logs_dir}")
     print()
 
@@ -340,44 +534,16 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    pending = list(targets)
-    running: list[RunningJob] = []
-    failures: list[RunningJob] = []
-
-    try:
-        while pending or running:
-            while pending and len(running) < args.max_concurrent:
-                running.append(launch(pending.pop(0), args, env))
-                if args.stagger_seconds > 0 and (pending or len(running) < len(targets)):
-                    time.sleep(args.stagger_seconds)
-
-            time.sleep(5)
-            still_running = []
-            for job in running:
-                code = job.process.poll()
-                if code is None:
-                    still_running.append(job)
-                    continue
-
-                elapsed = time.time() - job.started_at
-                job.log_handle.close()
-                status = "done" if code == 0 else "fail"
-                print(f"[{status}] {job.target.key:<17} exit={code:<4} elapsed={elapsed:,.1f}s log={job.log_path}")
-                if code != 0:
-                    failures.append(job)
-
-            running = still_running
-
-    except KeyboardInterrupt:
-        print("\nInterrupted. Stopping child training processes...")
-        terminate_all(running)
-        return 130
+    command_map = {target.key: command_for(target, args) for target in targets}
+    code, failures = run_training_wave(targets, args, env, command_map, {})
 
     if failures:
         print("\nOne or more training jobs failed:")
         for job in failures:
             print(f"  {job.target.key}: {job.log_path}")
         return 1
+    if code != 0:
+        return code
 
     print("All requested training jobs completed successfully.")
     return 0
