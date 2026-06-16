@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env python3
-"""DPR-3 for route-aware FJSP: min average processing time."""
+"""DPR-3: Min average processing time."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import visualization
 from calcu_dist import make_calculate_distance
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = "../fjssp_training_dataset.jsonl"
+DATA_PATH = "../testdata.jsonl"
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-3_result.jsonl"
 FIG_OUT_PATH = "../results/dpr-3_result.html"
@@ -439,11 +439,9 @@ def main() -> None:
     )
 
     fig_msg = ""
-    visualization.save_dpr_schedule_image(
+    visualization.save_dpr_schedule_interactive(
         schedule,
         FIG_OUT_PATH,
-        instance_index=INSTANCE_INDEX,
-        makespan=makespan,
     )
     fig_msg = f"; figure={FIG_OUT_PATH}"
 

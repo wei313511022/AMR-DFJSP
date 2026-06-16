@@ -6,8 +6,8 @@ def generate_fjssp_instance():
     num_machines = 6
     
     # Rule 2: The number of jobs can be 10, 15, 20, 25, or 30
-    num_jobs = random.choice([10, 15, 20, 25, 30])
-    # num_jobs = random.choice([10])
+    #num_jobs = random.choice([10, 15, 20, 25, 30])
+    num_jobs = random.choice([10])
     
     jobs_list = []
     
@@ -69,7 +69,7 @@ def create_jsonl_dataset(filename, num_instances):
 # --- Execute the generation ---
 if __name__ == "__main__":
     # Specify how many training instances you want to generate
-    TOTAL_INSTANCES_TO_GENERATE = 100
-    OUTPUT_FILENAME = "fjssp_training_dataset.jsonl"
+    TOTAL_INSTANCES_TO_GENERATE = 1
+    OUTPUT_FILENAME = "testdata.jsonl"
     
     create_jsonl_dataset(OUTPUT_FILENAME, TOTAL_INSTANCES_TO_GENERATE)

@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env python3
-"""DPR-6 for route-aware FJSP: max processing time."""
+"""DPR-6: Max processing time."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import map as map_config
 import visualization
 from calcu_dist import make_calculate_distance
 
-DATA_PATH = "../fjssp_training_dataset.jsonl"
+DATA_PATH = "../testdata.jsonl"
 INSTANCE_INDEX = 0
 OUT_PATH = "../results/dpr-6_result.jsonl"
 FIG_OUT_PATH = "../results/dpr-6_result.html"
@@ -433,11 +433,9 @@ def main() -> None:
 
     fig_msg = ""
 
-    visualization.save_dpr_schedule_image(
+    visualization.save_dpr_schedule_interactive(
         schedule,
         FIG_OUT_PATH,
-        instance_index=INSTANCE_INDEX,
-        makespan=makespan,
     )
     fig_msg = f"; figure={FIG_OUT_PATH}"
 

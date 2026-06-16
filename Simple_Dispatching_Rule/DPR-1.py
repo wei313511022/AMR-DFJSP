@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env python3
-"""DPR-1 for route-aware FJSP: most remaining operations."""
+"""DPR-1: Most remaining operations."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import visualization
 from calcu_dist import make_calculate_distance
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = "../fjssp_training_dataset.jsonl"
+DATA_PATH = "../testdata.jsonl"
 _EPS = 1e-12
 
 INSTANCE_INDEX = 0
