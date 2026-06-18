@@ -38,6 +38,14 @@ from reinforce_baseline import (
     load_training_events,
     normalize_advantage_batches,
 )
+from operation_policy import (
+    action_mask,
+    apply_fast_action as apply_operation_action,
+    decode_action_id,
+    initial_operation_state,
+    load_balance_step_advantages_from_actions,
+    operation_sequence_from_individual,
+)
 from training_checkpoints import (
     evaluate_validation_events,
     load_training_checkpoint,
@@ -87,24 +95,12 @@ def _apply_fast_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    base_pos = AMR_STARTS[chosen_amr]
-    return_end = process_end + heuristic(target_station, base_pos)
-    amr_availabilities[chosen_amr] = return_end
-    amr_positions[chosen_amr] = base_pos
+    amr_availabilities[chosen_amr] = process_end
+    amr_positions[chosen_amr] = target_station
 
 
 def action_sequence_from_individual(individual, jobs):
-    job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
-    action_seq = []
-    for op in repair_operation_order(list(individual.order), list(jobs)):
-        if op.kind != PICKUP:
-            continue
-        job_id = op.job_idx
-        job_idx = job_id_to_list_idx[job_id]
-        amr = individual.amr_assignment[job_id]
-        amr_idx = AMR_KEYS.index(amr)
-        action_seq.append(amr_idx * len(jobs) + job_idx)
-    return action_seq
+    return operation_sequence_from_individual(individual, jobs)
 
 
 def finite_log_probs_and_entropy(logits, context: str):
@@ -123,9 +119,10 @@ def finite_log_probs_and_entropy(logits, context: str):
 
 
 def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_values: bool = False):
-    amr_positions, amr_availabilities, station_availabilities, amr_inventory = _initial_fast_state(init_state)
-    assigned_jobs_set = set()
-    amr_assignment_map = {}
+    amr_positions, amr_availabilities, station_availabilities, amr_inventory = initial_operation_state(init_state)
+    picked_jobs_set = set()
+    completed_jobs_set = set()
+    carrier_map = {}
     step_log_probs = []
     step_entropies = []
     values = []
@@ -136,20 +133,26 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
     for chosen_action in action_seq:
         amr_feat, job_feat, job_mask = extract_state(
             jobs,
-            assigned_jobs_set,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
             amr_positions,
             amr_availabilities,
             amr_inventory,
-            amr_assignment_map,
         )
         amr_feat = amr_feat.to(device)
         job_feat = job_feat.to(device)
         job_mask = job_mask.to(device)
+        op_mask = torch.tensor(
+            [action_mask(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_inventory)],
+            dtype=torch.bool,
+            device=device,
+        )
 
         if include_values:
             values.append(model.forward_critic(amr_feat, job_feat, job_mask).squeeze())
 
-        logits = model(amr_feat, job_feat, job_mask)
+        logits = model(amr_feat, job_feat, job_mask, op_mask)
         flat_logits = logits.view(-1)
         if not torch.isfinite(flat_logits[chosen_action]):
             raise RuntimeError("Chosen Attention action has a non-finite logit during replay.")
@@ -157,17 +160,13 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
         step_log_probs.append(log_probs[chosen_action])
         step_entropies.append(entropy)
 
-        num_jobs = len(jobs)
-        amr_idx = chosen_action // num_jobs
-        job_list_idx = chosen_action % num_jobs
-        chosen_amr = AMR_KEYS[amr_idx]
-        chosen_job = jobs[job_list_idx]
-
-        amr_assignment_map[chosen_job.idx] = chosen_amr
-        assigned_jobs_set.add(chosen_job.idx)
-        _apply_fast_action(
-            chosen_job,
-            chosen_amr,
+        action = decode_action_id(chosen_action, jobs)
+        apply_operation_action(
+            action,
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
             amr_positions,
             amr_availabilities,
             station_availabilities,
@@ -196,14 +195,8 @@ def assignment_load_stats(individual) -> tuple[int, int, float]:
     return max(counts), min(counts), max(counts) - min(counts)
 
 
-def load_balance_step_advantages(action_seq, num_jobs: int):
-    counts = [0 for _ in AMR_KEYS]
-    advantages = []
-    for chosen_action in action_seq:
-        chosen_amr_idx = chosen_action // num_jobs
-        advantages.append(float(min(counts) - counts[chosen_amr_idx]))
-        counts[chosen_amr_idx] += 1
-    return advantages
+def load_balance_step_advantages(action_seq, jobs):
+    return load_balance_step_advantages_from_actions(action_seq, jobs)
 
 
 def _load_validation_events(args):
@@ -368,7 +361,7 @@ def train_reinforce(args):
                     jobs,
                     action_seq,
                     comparison.step_advantages,
-                    load_balance_step_advantages(action_seq, len(jobs)),
+                    load_balance_step_advantages(action_seq, jobs),
                 )
             )
             batch_advantages.append(comparison.step_advantages)

@@ -306,22 +306,30 @@ def find_checkpoint(names: Sequence[str], search_dirs: Sequence[Path]) -> Path:
     return Path()
 
 
-def load_compatible_state_dict(model, checkpoint: Path, torch_module) -> str:
+def load_compatible_state_dict(model, checkpoint: Path, torch_module, required_keys: Sequence[str]) -> str:
     if not checkpoint:
-        return "missing"
+        raise RuntimeError("no operation-policy checkpoint found; retrain this model before benchmark inference")
 
     try:
         state_dict = torch_module.load(checkpoint, map_location="cpu")
+        if isinstance(state_dict, dict) and "model_state_dict" in state_dict:
+            state_dict = state_dict["model_state_dict"]
         model_state = model.state_dict()
         compatible = {
             key: value
             for key, value in state_dict.items()
             if key in model_state and tuple(value.shape) == tuple(model_state[key].shape)
         }
+        missing_required = [key for key in required_keys if key not in compatible]
+        if missing_required:
+            raise RuntimeError(
+                "checkpoint is not an operation-policy checkpoint; retrain after the pickup/unload "
+                f"conversion. Missing/incompatible tensors: {', '.join(missing_required)}"
+            )
         model.load_state_dict(compatible, strict=False)
         return f"loaded {len(compatible)}/{len(model_state)} tensors from {checkpoint}"
     except Exception as exc:
-        return f"failed to load {checkpoint}: {exc}"
+        raise RuntimeError(f"failed to load {checkpoint}: {exc}") from exc
 
 
 def build_attention_model(module, precise: bool, device):
@@ -334,7 +342,12 @@ def build_attention_model(module, precise: bool, device):
         else ["attention_scheduler_best.pth"]
     )
     checkpoint = find_checkpoint(checkpoint_names, [ROOT_DIR, ATTENTION_DIR])
-    status = load_compatible_state_dict(model, checkpoint, torch)
+    status = load_compatible_state_dict(
+        model,
+        checkpoint,
+        torch,
+        required_keys=("op_emb.weight", "policy_head.0.weight"),
+    )
     model.eval()
     print(f"Attention{' precise' if precise else ''}: {status}")
     return model
@@ -350,7 +363,12 @@ def build_gnn_model(module, precise: bool, device):
         else ["gnn_mpn_scheduler_best.pth", "gnn_scheduler_best.pth"]
     )
     checkpoint = find_checkpoint(checkpoint_names, [ROOT_DIR, GNN_DIR])
-    status = load_compatible_state_dict(model, checkpoint, torch)
+    status = load_compatible_state_dict(
+        model,
+        checkpoint,
+        torch,
+        required_keys=("op_emb.weight", "operation_actor.0.weight"),
+    )
     model.eval()
     print(f"GNN{' precise' if precise else ''}: {status}")
     return model

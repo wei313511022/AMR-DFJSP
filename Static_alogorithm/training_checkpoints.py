@@ -12,6 +12,23 @@ def _ensure_parent(path: str) -> None:
         os.makedirs(parent, exist_ok=True)
 
 
+def _load_partial_state_dict(model, state_dict, checkpoint_path: str) -> bool:
+    current = model.state_dict()
+    compatible = {
+        key: value
+        for key, value in state_dict.items()
+        if key in current and getattr(value, "shape", None) == current[key].shape
+    }
+    skipped = sorted(key for key in state_dict if key not in compatible)
+    current.update(compatible)
+    model.load_state_dict(current)
+    print(
+        f"Loaded {len(compatible)} compatible tensors from {checkpoint_path}"
+        + (f"; skipped {len(skipped)} incompatible tensors" if skipped else "")
+    )
+    return not skipped
+
+
 def load_training_checkpoint(model, optimizers: Mapping[str, object], checkpoint_path: str, device) -> None:
     if not checkpoint_path:
         return
@@ -20,25 +37,28 @@ def load_training_checkpoint(model, optimizers: Mapping[str, object], checkpoint
 
     checkpoint = torch.load(checkpoint_path, map_location=device)
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
-        model.load_state_dict(checkpoint["model_state_dict"])
+        fully_compatible = _load_partial_state_dict(model, checkpoint["model_state_dict"], checkpoint_path)
         loaded_optimizers = []
-        optimizer_map = checkpoint.get("optimizers", {})
-        for name, optimizer in optimizers.items():
-            state = optimizer_map.get(name)
-            if state is None:
-                state = checkpoint.get(f"{name}_state_dict")
-            if state is None and len(optimizers) == 1:
-                state = checkpoint.get("optimizer_state_dict")
-            if state is not None:
-                optimizer.load_state_dict(state)
+        if fully_compatible:
+            optimizer_payload = checkpoint.get("optimizers")
+            if isinstance(optimizer_payload, dict):
+                for name, optimizer in optimizers.items():
+                    if name in optimizer_payload:
+                        optimizer.load_state_dict(optimizer_payload[name])
+                        loaded_optimizers.append(name)
+            elif "optimizer_state_dict" in checkpoint and len(optimizers) == 1:
+                name, optimizer = next(iter(optimizers.items()))
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 loaded_optimizers.append(name)
+        elif optimizers:
+            print("Skipped optimizer state because model weights were only partially compatible.")
         print(
             f"Loaded training checkpoint from {checkpoint_path}"
             + (f" (optimizers: {', '.join(loaded_optimizers)})" if loaded_optimizers else "")
         )
         return
 
-    model.load_state_dict(checkpoint)
+    _load_partial_state_dict(model, checkpoint, checkpoint_path)
     print(f"Loaded legacy model weights from {checkpoint_path}")
 
 

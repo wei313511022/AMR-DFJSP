@@ -6,14 +6,17 @@ from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
 
 from GA.GA import (
+    AMR_KEYS,
     PICKUP,
+    UNLOAD,
     Individual,
     Job,
+    Operation,
     decode_schedule_tick_by_tick,
     load_dispatch_events,
-    paired_operation_order,
     repair_operation_order,
 )
+from operation_policy import OperationAction, action_id
 from dispatching_rules import dispatching_rules as dr
 
 
@@ -43,12 +46,8 @@ def parse_rule_name(rule_name: str) -> Tuple[str, str]:
     return job_rule, amr_rule
 
 
-def job_order_from_individual(individual: Individual, jobs: Sequence[Job]) -> List[int]:
-    return [
-        op.job_idx
-        for op in repair_operation_order(list(individual.order), list(jobs))
-        if op.kind == PICKUP
-    ]
+def operation_order_from_individual(individual: Individual, jobs: Sequence[Job]) -> List[Operation]:
+    return repair_operation_order(list(individual.order), list(jobs))
 
 
 def load_training_events(inbox: str = "", inboxes: str = ""):
@@ -86,7 +85,7 @@ def evaluate_makespan(
 
 def complete_with_dispatch_rule(
     jobs: Sequence[Job],
-    prefix_order: Sequence[int],
+    prefix_operations: Sequence[Operation],
     prefix_assignment: Dict[int, str],
     baseline_rule: str = DEFAULT_BASELINE_RULE,
     seed: int = 42,
@@ -95,37 +94,49 @@ def complete_with_dispatch_rule(
     rng = random.Random(seed)
     state = dr.initial_state()
     job_map = {job.idx: job for job in jobs}
-    unscheduled = list(jobs)
+    job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
     max_job_idx = max(job_map) if job_map else -1
     assignment = [""] * (max_job_idx + 1)
-    order: List[int] = []
+    order: List[Operation] = []
 
-    for job_idx in prefix_order:
+    for op in prefix_operations:
+        job_idx = op.job_idx
         if job_idx not in job_map:
             raise ValueError(f"Prefix contains unknown job id: {job_idx}")
-        if job_idx not in prefix_assignment:
+        if op.kind == PICKUP and job_idx not in prefix_assignment:
             raise ValueError(f"Prefix assignment missing AMR for job id: {job_idx}")
 
-        job = job_map[job_idx]
-        chosen_amr = prefix_assignment[job_idx]
+        if op.kind == PICKUP:
+            chosen_amr = prefix_assignment[job_idx]
+        elif op.kind == UNLOAD:
+            chosen_amr = state.carrier_map.get(job_idx)
+        else:
+            raise ValueError(f"Prefix contains unsupported operation kind: {op.kind}")
+
         if chosen_amr not in dr.AMR_KEYS:
             raise ValueError(f"Unknown AMR in prefix assignment: {chosen_amr}")
 
-        estimate = dr.estimate_assignment(job, chosen_amr, state)
-        dr.apply_assignment(job, estimate, state)
-        order.append(job_idx)
+        job_list_idx = job_id_to_list_idx[job_idx]
+        action = OperationAction(
+            kind=op.kind,
+            job_list_idx=job_list_idx,
+            job_id=job_idx,
+            amr=chosen_amr,
+            amr_idx=AMR_KEYS.index(chosen_amr),
+            action_id=action_id(op.kind, AMR_KEYS.index(chosen_amr), job_list_idx, len(jobs)),
+        )
+        dr.apply_operation(action, state, jobs)
+        order.append(Operation(job_idx, op.kind))
         assignment[job_idx] = chosen_amr
-        unscheduled = [remaining for remaining in unscheduled if remaining.idx != job_idx]
 
-    while unscheduled:
-        job = dr.choose_job(unscheduled, state, job_rule, rng)
-        estimate = dr.choose_amr(job, state, amr_rule, rng)
-        order.append(job.idx)
-        assignment[job.idx] = estimate.amr
-        dr.apply_assignment(job, estimate, state)
-        unscheduled.remove(job)
+    while len(state.completed_jobs) < len(jobs):
+        action, _ = dr.choose_operation(jobs, state, job_rule, amr_rule, rng)
+        order.append(Operation(action.job_id, action.kind))
+        if action.kind == PICKUP:
+            assignment[action.job_id] = action.amr
+        dr.apply_operation(action, state, jobs)
 
-    return Individual(order=paired_operation_order(order), amr_assignment=assignment)
+    return Individual(order=order, amr_assignment=assignment)
 
 
 def compute_dispatch_baseline_comparison(
@@ -141,7 +152,7 @@ def compute_dispatch_baseline_comparison(
 
     full_baseline = complete_with_dispatch_rule(
         jobs,
-        prefix_order=[],
+        prefix_operations=[],
         prefix_assignment={},
         baseline_rule=baseline_rule,
         seed=seed,
@@ -154,20 +165,18 @@ def compute_dispatch_baseline_comparison(
     )
 
     episode_advantage = baseline_makespan - sampled_makespan
-    sampled_job_order = job_order_from_individual(sampled_individual, jobs)
+    sampled_operation_order = operation_order_from_individual(sampled_individual, jobs)
     if baseline_mode == "episode":
-        step_advantages = [episode_advantage for _ in sampled_job_order]
+        step_advantages = [episode_advantage for _ in sampled_operation_order]
     else:
         step_advantages = []
-        prefix_order: List[int] = []
+        prefix_operations: List[Operation] = []
         prefix_assignment: Dict[int, str] = {}
 
-        for job_idx in sampled_job_order:
-            chosen_amr = sampled_individual.amr_assignment[job_idx]
-
+        for op in sampled_operation_order:
             rule_next_individual = complete_with_dispatch_rule(
                 jobs,
-                prefix_order=prefix_order,
+                prefix_operations=prefix_operations,
                 prefix_assignment=prefix_assignment,
                 baseline_rule=baseline_rule,
                 seed=seed,
@@ -177,10 +186,11 @@ def compute_dispatch_baseline_comparison(
             )
 
             sampled_prefix_assignment = dict(prefix_assignment)
-            sampled_prefix_assignment[job_idx] = chosen_amr
+            if op.kind == PICKUP:
+                sampled_prefix_assignment[op.job_idx] = sampled_individual.amr_assignment[op.job_idx]
             sampled_next_individual = complete_with_dispatch_rule(
                 jobs,
-                prefix_order=[*prefix_order, job_idx],
+                prefix_operations=[*prefix_operations, op],
                 prefix_assignment=sampled_prefix_assignment,
                 baseline_rule=baseline_rule,
                 seed=seed,
@@ -190,8 +200,9 @@ def compute_dispatch_baseline_comparison(
             )
 
             step_advantages.append(rule_next_makespan - sampled_next_makespan)
-            prefix_order.append(job_idx)
-            prefix_assignment[job_idx] = chosen_amr
+            prefix_operations.append(op)
+            if op.kind == PICKUP:
+                prefix_assignment[op.job_idx] = sampled_individual.amr_assignment[op.job_idx]
 
     return BaselineComparison(
         baseline_individual=full_baseline,

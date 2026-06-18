@@ -18,15 +18,25 @@ from GA.GA import (  # noqa: E402
     DISPATCH_EVENT_INDEX_ENV,
     Individual,
     Job,
+    Operation,
+    PICKUP,
     STATIONS,
     TYPE_DURATION,
+    UNLOAD,
     decode_schedule_tick_by_tick,
     heuristic,
     job_pickup_location,
     load_dispatch_events,
     make_jobs,
-    paired_operation_order,
     plot_gantt,
+)
+from operation_policy import (  # noqa: E402
+    OperationAction,
+    OperationEstimate,
+    apply_fast_action,
+    estimate_action,
+    legal_actions,
+    station_remaining_workload as active_station_workload,
 )
 
 
@@ -66,6 +76,9 @@ class RuleState:
     station_availabilities: Dict[str, float]
     inventory: Dict[str, Dict[str, int]]
     assigned_count: Dict[str, int]
+    picked_jobs: set
+    completed_jobs: set
+    carrier_map: Dict[int, str]
 
 
 @dataclass(frozen=True)
@@ -76,7 +89,7 @@ class AssignmentEstimate:
     travel_end: float
     process_start: float
     process_end: float
-    return_end: float
+    available_end: float
     completion_time: float
     travel_time: float
     supply_needed: bool
@@ -89,6 +102,9 @@ def initial_state() -> RuleState:
         station_availabilities={station: 0.0 for station in STATIONS.keys()},
         inventory={amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS},
         assigned_count={amr: 0 for amr in AMR_KEYS},
+        picked_jobs=set(),
+        completed_jobs=set(),
+        carrier_map={},
     )
 
 
@@ -106,9 +122,7 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     travel_end = pickup_end + to_station
     process_start = max(travel_end, state.station_availabilities[job.station])
     process_end = process_start + job.duration
-    to_base = heuristic(target_station, AMR_STARTS[amr])
-    return_end = process_end + to_base
-    travel_time = to_pickup + to_station + to_base
+    travel_time = to_pickup + to_station
 
     return AssignmentEstimate(
         amr=amr,
@@ -117,8 +131,8 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
         travel_end=travel_end,
         process_start=process_start,
         process_end=process_end,
-        return_end=return_end,
-        completion_time=return_end,
+        available_end=process_end,
+        completion_time=process_end,
         travel_time=travel_time,
         supply_needed=capacity_blocked,
     )
@@ -134,8 +148,8 @@ def apply_assignment(job: Job, estimate: AssignmentEstimate, state: RuleState) -
     )
     state.inventory[amr][material] -= 1
     state.station_availabilities[job.station] = estimate.process_end
-    state.amr_availabilities[amr] = estimate.return_end
-    state.amr_positions[amr] = AMR_STARTS[amr]
+    state.amr_availabilities[amr] = estimate.process_end
+    state.amr_positions[amr] = STATIONS[job.station]
     state.assigned_count[amr] += 1
 
 
@@ -144,6 +158,112 @@ def station_remaining_workload(jobs: Sequence[Job]) -> Dict[str, float]:
     for job in jobs:
         workload[job.station] += job.duration
     return workload
+
+
+def _job_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: Sequence[Job], state: RuleState, job_rule: str, rng: random.Random):
+    job = jobs[action.job_list_idx]
+    if job_rule == "fifo":
+        return (job.idx,)
+    if job_rule == "spt":
+        return (job.duration, job.idx)
+    if job_rule == "lpt":
+        return (-job.duration, job.idx)
+    if job_rule == "nearest_station":
+        distance = heuristic(state.amr_positions[action.amr], STATIONS[job.station])
+        return (distance, estimate.travel_time, job.duration, job.idx)
+    if job_rule in {"most_congested_station", "least_congested_station"}:
+        workload = estimate.station_workload
+        if job_rule == "most_congested_station":
+            return (-workload, -job.duration, job.idx)
+        return (workload, job.duration, job.idx)
+    if job_rule == "earliest_completion_job":
+        return (estimate.projected_completion, job.duration, job.idx)
+    if job_rule == "material_match":
+        return (estimate.material_match, estimate.projected_completion, job.idx)
+    if job_rule == "random":
+        return (rng.random(), job.idx)
+    raise ValueError(f"Unknown job rule: {job_rule}")
+
+
+def _amr_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: Sequence[Job], state: RuleState, amr_rule: str, rng: random.Random):
+    job = jobs[action.job_list_idx]
+    if amr_rule == "earliest_available":
+        return (state.amr_availabilities[action.amr], estimate.projected_completion, action.amr)
+    if amr_rule == "nearest_amr":
+        return (estimate.travel_time, estimate.projected_completion, action.amr)
+    if amr_rule == "material_match":
+        return (estimate.material_match, estimate.projected_completion, action.amr)
+    if amr_rule == "earliest_completion":
+        return (estimate.projected_completion, estimate.travel_time, action.amr)
+    if amr_rule == "least_loaded":
+        return (estimate.assigned_count, state.amr_availabilities[action.amr], estimate.projected_completion, action.amr)
+    if amr_rule == "home_material":
+        preferred = HOME_MATERIAL_AMR.get(job.type_)
+        return (0 if action.amr == preferred else 1, estimate.projected_completion, action.amr)
+    if amr_rule == "random":
+        return (rng.random(), action.amr)
+    raise ValueError(f"Unknown AMR rule: {amr_rule}")
+
+
+def choose_operation(
+    jobs: Sequence[Job],
+    state: RuleState,
+    job_rule: str,
+    amr_rule: str,
+    rng: random.Random,
+) -> Tuple[OperationAction, OperationEstimate]:
+    actions = legal_actions(
+        jobs,
+        state.picked_jobs,
+        state.completed_jobs,
+        state.carrier_map,
+        state.inventory,
+    )
+    if not actions:
+        raise RuntimeError("No legal dispatch operation is available before all jobs completed.")
+
+    workloads = active_station_workload(jobs, state.completed_jobs)
+    estimates = [
+        estimate_action(
+            action,
+            jobs,
+            state.amr_positions,
+            state.amr_availabilities,
+            state.station_availabilities,
+            state.inventory,
+            state.assigned_count,
+            workloads,
+        )
+        for action in actions
+    ]
+
+    def score(estimate):
+        action = estimate.action
+        return (
+            _job_rule_score(action, estimate, jobs, state, job_rule, rng),
+            _amr_rule_score(action, estimate, jobs, state, amr_rule, rng),
+            0 if action.kind == UNLOAD else 1,
+            action.job_id,
+            action.amr,
+        )
+
+    best = min(estimates, key=score)
+    return best.action, best
+
+
+def apply_operation(action: OperationAction, state: RuleState, jobs: Sequence[Job]) -> None:
+    apply_fast_action(
+        action,
+        jobs,
+        state.picked_jobs,
+        state.completed_jobs,
+        state.carrier_map,
+        state.amr_positions,
+        state.amr_availabilities,
+        state.station_availabilities,
+        state.inventory,
+        state.assigned_count,
+    )
 
 
 def best_estimate_for_job(job: Job, state: RuleState) -> AssignmentEstimate:
@@ -273,21 +393,18 @@ def solve_with_dispatching_rules(
     rng = random.Random(seed)
     state = initial_state()
 
-    unscheduled = list(jobs)
-    order: List[int] = []
+    order: List[Operation] = []
     amr_assignment = [""] * len(jobs)
 
-    while unscheduled:
-        job = choose_job(unscheduled, state, job_rule, rng)
-        estimate = choose_amr(job, state, amr_rule, rng)
-
-        order.append(job.idx)
-        amr_assignment[job.idx] = estimate.amr
-        apply_assignment(job, estimate, state)
-        unscheduled.remove(job)
+    while len(state.completed_jobs) < len(jobs):
+        action, _ = choose_operation(jobs, state, job_rule, amr_rule, rng)
+        order.append(Operation(action.job_id, action.kind))
+        if action.kind == PICKUP:
+            amr_assignment[action.job_id] = action.amr
+        apply_operation(action, state, jobs)
 
     solve_time = time.perf_counter() - start_time
-    return Individual(order=paired_operation_order(order), amr_assignment=amr_assignment), solve_time
+    return Individual(order=order, amr_assignment=amr_assignment), solve_time
 
 
 def evaluate_individual(individual: Individual, jobs: Sequence[Job]) -> Tuple[float, int]:
