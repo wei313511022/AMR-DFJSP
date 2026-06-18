@@ -21,6 +21,7 @@ from GNN import (
     solve_with_gnn,
 )
 from GA.GA import (
+    Operation,
     PICKUP,
     collision_routing_iters,
     empty_count_inventory,
@@ -37,6 +38,14 @@ from reinforce_baseline import (
     evaluate_makespan,
     load_training_events,
     normalize_advantage_batches,
+)
+from operation_policy import (
+    action_mask,
+    apply_fast_action as apply_operation_action,
+    decode_action_id,
+    initial_operation_state,
+    load_balance_step_advantages_from_actions,
+    operation_sequence_from_individual,
 )
 from training_checkpoints import (
     evaluate_validation_events,
@@ -87,24 +96,12 @@ def _apply_fast_action(
     amr_inventory[chosen_amr][material] -= 1
     station_availabilities[chosen_job.station] = process_end
 
-    base_pos = AMR_STARTS[chosen_amr]
-    return_end = process_end + heuristic(target_station, base_pos)
-    amr_availabilities[chosen_amr] = return_end
-    amr_positions[chosen_amr] = base_pos
+    amr_availabilities[chosen_amr] = process_end
+    amr_positions[chosen_amr] = target_station
 
 
 def action_sequences_from_individual(individual, jobs):
-    job_id_to_list_idx = {job.idx: idx for idx, job in enumerate(jobs)}
-    job_action_seq = []
-    machine_action_seq = []
-    for op in repair_operation_order(list(individual.order), list(jobs)):
-        if op.kind != PICKUP:
-            continue
-        job_id = op.job_idx
-        job_action_seq.append(job_id_to_list_idx[job_id])
-        amr = individual.amr_assignment[job_id]
-        machine_action_seq.append(AMR_KEYS.index(amr))
-    return job_action_seq, machine_action_seq
+    return operation_sequence_from_individual(individual, jobs)
 
 
 def finite_log_probs_and_entropy(logits, context: str):
@@ -125,33 +122,32 @@ def finite_log_probs_and_entropy(logits, context: str):
 def evaluate_action_steps_multi(
     jobs,
     model,
-    job_action_seq,
-    machine_action_seq,
+    action_seq,
     init_state=None,
     include_values: bool = False,
 ):
-    amr_positions, amr_availabilities, station_availabilities, amr_inventory = _initial_fast_state(init_state)
-    assigned_jobs_set = set()
-    amr_assignment_map = {}
+    amr_positions, amr_availabilities, station_availabilities, amr_inventory = initial_operation_state(init_state)
+    picked_jobs_set = set()
+    completed_jobs_set = set()
+    carrier_map = {}
     order_seq = []
 
-    job_log_probs = []
-    machine_log_probs = []
-    job_entropies = []
-    machine_entropies = []
+    step_log_probs = []
+    step_entropies = []
     values = []
 
     model.train()
     device = next(model.parameters()).device
 
-    for chosen_job_list_idx, chosen_amr_idx in zip(job_action_seq, machine_action_seq):
+    for chosen_action in action_seq:
         amr_feat, job_feat, job_mask, adj = extract_state_gnn(
             jobs,
-            assigned_jobs_set,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
             amr_positions,
             amr_availabilities,
             amr_inventory,
-            amr_assignment_map,
             station_availabilities,
             order_seq,
         )
@@ -159,6 +155,11 @@ def evaluate_action_steps_multi(
         job_feat = job_feat.to(device)
         job_mask = job_mask.to(device)
         adj = adj.to(device)
+        op_mask = torch.tensor(
+            [action_mask(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_inventory)],
+            dtype=torch.bool,
+            device=device,
+        )
 
         job_embeddings = model.encode_jobs(job_feat, adj)
         amr_embeddings = model.encode_amrs(amr_feat)
@@ -166,30 +167,21 @@ def evaluate_action_steps_multi(
         if include_values:
             values.append(model.forward_critic(job_embeddings, amr_embeddings, job_mask).squeeze())
 
-        job_logits = model.forward_job_actor(job_embeddings, job_mask).view(-1)
-        if not torch.isfinite(job_logits[chosen_job_list_idx]):
-            raise RuntimeError("Chosen GNN job action has a non-finite logit during replay.")
-        job_step_log_probs, job_entropy = finite_log_probs_and_entropy(job_logits, "GNN job replay")
-        job_log_probs.append(job_step_log_probs[chosen_job_list_idx])
-        job_entropies.append(job_entropy)
+        logits = model.forward_operation_actor(job_embeddings, amr_embeddings, op_mask).view(-1)
+        if not torch.isfinite(logits[chosen_action]):
+            raise RuntimeError("Chosen GNN operation action has a non-finite logit during replay.")
+        action_log_probs, entropy = finite_log_probs_and_entropy(logits, "GNN operation replay")
+        step_log_probs.append(action_log_probs[chosen_action])
+        step_entropies.append(entropy)
 
-        chosen_job = jobs[chosen_job_list_idx]
-        selected_job_emb = job_embeddings[:, chosen_job_list_idx, :]
-
-        machine_logits = model.forward_machine_actor(selected_job_emb, amr_embeddings).view(-1)
-        if not torch.isfinite(machine_logits[chosen_amr_idx]):
-            raise RuntimeError("Chosen GNN AMR action has a non-finite logit during replay.")
-        machine_step_log_probs, machine_entropy = finite_log_probs_and_entropy(machine_logits, "GNN AMR replay")
-        machine_log_probs.append(machine_step_log_probs[chosen_amr_idx])
-        machine_entropies.append(machine_entropy)
-
-        chosen_amr = AMR_KEYS[chosen_amr_idx]
-        order_seq.append(chosen_job.idx)
-        amr_assignment_map[chosen_job.idx] = chosen_amr
-        assigned_jobs_set.add(chosen_job.idx)
-        _apply_fast_action(
-            chosen_job,
-            chosen_amr,
+        action = decode_action_id(chosen_action, jobs)
+        order_seq.append(Operation(action.job_id, action.kind))
+        apply_operation_action(
+            action,
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
             amr_positions,
             amr_availabilities,
             station_availabilities,
@@ -197,25 +189,18 @@ def evaluate_action_steps_multi(
         )
 
     value_tensor = torch.stack(values) if values else None
-    return (
-        torch.stack(job_log_probs),
-        torch.stack(machine_log_probs),
-        torch.stack(job_entropies),
-        torch.stack(machine_entropies),
-        value_tensor,
-    )
+    return torch.stack(step_log_probs), torch.stack(step_entropies), value_tensor
 
 
-def evaluate_actions_multi_ppo(jobs, model, job_action_seq, machine_action_seq, init_state=None):
-    job_log_probs, machine_log_probs, _, _, values = evaluate_action_steps_multi(
+def evaluate_actions_multi_ppo(jobs, model, action_seq, init_state=None):
+    step_log_probs, _, values = evaluate_action_steps_multi(
         jobs,
         model,
-        job_action_seq,
-        machine_action_seq,
+        action_seq,
         init_state=init_state,
         include_values=True,
     )
-    return job_log_probs.sum(), machine_log_probs.sum(), values
+    return step_log_probs.sum(), values
 
 
 def _actor_params(model):
@@ -223,8 +208,8 @@ def _actor_params(model):
         list(model.job_emb.parameters())
         + list(model.gin_layers.parameters())
         + list(model.amr_emb.parameters())
-        + list(model.job_actor.parameters())
-        + list(model.machine_actor.parameters())
+        + list(model.op_emb.parameters())
+        + list(model.operation_actor.parameters())
     )
 
 
@@ -239,13 +224,8 @@ def assignment_load_stats(individual) -> tuple[int, int, float]:
     return max(counts), min(counts), max(counts) - min(counts)
 
 
-def load_balance_step_advantages(machine_action_seq):
-    counts = [0 for _ in AMR_KEYS]
-    advantages = []
-    for chosen_amr_idx in machine_action_seq:
-        advantages.append(float(min(counts) - counts[chosen_amr_idx]))
-        counts[chosen_amr_idx] += 1
-    return advantages
+def load_balance_step_advantages(action_seq, jobs):
+    return load_balance_step_advantages_from_actions(action_seq, jobs)
 
 
 def _load_validation_events(args):
@@ -266,8 +246,7 @@ def _should_validate(epoch: int, args, validation_events) -> bool:
 def _save_reinforce_chart(
     chart_path,
     title_prefix,
-    job_losses,
-    machine_losses,
+    actor_losses,
     sampled_makespans,
     baseline_makespans,
     improvements,
@@ -275,8 +254,7 @@ def _save_reinforce_chart(
 ):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    axes[0, 0].plot(job_losses, color="#e74c3c", linewidth=1.5, label="Job Actor Loss")
-    axes[0, 0].plot(machine_losses, color="#3498db", linewidth=1.5, label="AMR Actor Loss")
+    axes[0, 0].plot(actor_losses, color="#e74c3c", linewidth=1.5, label="Operation Actor Loss")
     axes[0, 0].set_title(f"{title_prefix} REINFORCE Actor Loss", fontsize=12, fontweight="bold")
     axes[0, 0].set_xlabel("Epoch")
     axes[0, 0].set_ylabel("Loss")
@@ -312,23 +290,17 @@ def _save_reinforce_chart(
     plt.close()
 
 
-def _save_ppo_chart(chart_path, losses_job, losses_machine, losses_critic, makespans):
+def _save_ppo_chart(chart_path, losses_actor, losses_critic, makespans):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    axes[0, 0].plot(losses_job, color="#e74c3c", linewidth=1.5, label="Job Actor Loss")
-    axes[0, 0].set_title("Job Actor Loss", fontsize=12, fontweight="bold")
+    axes[0, 0].plot(losses_actor, color="#e74c3c", linewidth=1.5, label="Operation Actor Loss")
+    axes[0, 0].set_title("Operation Actor Loss", fontsize=12, fontweight="bold")
     axes[0, 0].set_xlabel("Epoch")
     axes[0, 0].set_ylabel("Loss")
     axes[0, 0].grid(True, linestyle="--", alpha=0.5)
     axes[0, 0].legend()
 
-    axes[0, 1].plot(losses_machine, color="#3498db", linewidth=1.5, label="Machine Actor Loss")
-    axes[0, 1].set_title("Machine Actor Loss", fontsize=12, fontweight="bold")
-    axes[0, 1].set_xlabel("Epoch")
-    axes[0, 1].set_ylabel("Loss")
-    axes[0, 1].grid(True, linestyle="--", alpha=0.5)
-    axes[0, 1].legend()
-
+    axes[0, 1].axis("off")
     axes[1, 0].plot(losses_critic, color="#2ecc71", linewidth=1.5, label="Critic Loss")
     axes[1, 0].set_title("Joint Critic Loss", fontsize=12, fontweight="bold")
     axes[1, 0].set_xlabel("Epoch")
@@ -372,8 +344,7 @@ def train_reinforce(args):
     )
 
     best_makespan = float("inf")
-    losses_job = []
-    losses_machine = []
+    actor_losses = []
     sampled_makespans = []
     baseline_makespans = []
     improvements = []
@@ -396,7 +367,7 @@ def train_reinforce(args):
         for batch_idx in range(args.batch_size):
             jobs = _select_jobs(dispatch_events)
             individual, _, _ = solve_with_gnn(jobs, gnn_model, deterministic=False)
-            job_action_seq, machine_action_seq = action_sequences_from_individual(individual, jobs)
+            action_seq = action_sequences_from_individual(individual, jobs)
             comparison = compute_dispatch_baseline_comparison(
                 jobs,
                 individual,
@@ -408,10 +379,9 @@ def train_reinforce(args):
             trajectories.append(
                 (
                     jobs,
-                    job_action_seq,
-                    machine_action_seq,
+                    action_seq,
                     comparison.step_advantages,
-                    load_balance_step_advantages(machine_action_seq),
+                    load_balance_step_advantages(action_seq, jobs),
                 )
             )
             batch_advantages.append(comparison.step_advantages)
@@ -430,37 +400,31 @@ def train_reinforce(args):
         )
 
         optimizer_actor.zero_grad()
-        epoch_job_loss = 0.0
-        epoch_machine_loss = 0.0
+        epoch_actor_loss = 0.0
         epoch_entropy = 0.0
 
-        for (jobs, job_action_seq, machine_action_seq, _, load_advantages), advantages in zip(
+        for (jobs, action_seq, _, load_advantages), advantages in zip(
             trajectories, normalized_advantages
         ):
-            job_lp, machine_lp, job_entropy, machine_entropy, _ = evaluate_action_steps_multi(
-                jobs, gnn_model, job_action_seq, machine_action_seq
-            )
-            advantage_tensor = torch.tensor(advantages, dtype=torch.float32, device=job_lp.device)
-            load_advantage_tensor = torch.tensor(load_advantages, dtype=torch.float32, device=machine_lp.device)
-            machine_advantage_tensor = advantage_tensor + args.load_balance_coef * load_advantage_tensor
-            job_loss = -(job_lp * advantage_tensor).sum()
-            machine_loss = -(machine_lp * machine_advantage_tensor).sum()
-            entropy_bonus = job_entropy.sum() + machine_entropy.sum()
-            total_loss = (job_loss + machine_loss - args.entropy_coef * entropy_bonus) / args.batch_size
+            step_log_probs, step_entropies, _ = evaluate_action_steps_multi(jobs, gnn_model, action_seq)
+            advantage_tensor = torch.tensor(advantages, dtype=torch.float32, device=step_log_probs.device)
+            load_advantage_tensor = torch.tensor(load_advantages, dtype=torch.float32, device=step_log_probs.device)
+            action_advantage_tensor = advantage_tensor + args.load_balance_coef * load_advantage_tensor
+            actor_loss = -(step_log_probs * action_advantage_tensor).sum()
+            entropy_bonus = step_entropies.sum()
+            total_loss = (actor_loss - args.entropy_coef * entropy_bonus) / args.batch_size
             if not torch.isfinite(total_loss).item():
                 raise RuntimeError("Non-finite GNN REINFORCE loss before backward.")
             total_loss.backward()
 
-            epoch_job_loss += job_loss.item()
-            epoch_machine_loss += machine_loss.item()
-            epoch_entropy += (job_entropy.mean() + machine_entropy.mean()).item()
+            epoch_actor_loss += actor_loss.item()
+            epoch_entropy += step_entropies.mean().item()
 
         if args.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(_actor_params(gnn_model), args.grad_clip)
         optimizer_actor.step()
 
-        avg_job_loss = epoch_job_loss / args.batch_size
-        avg_machine_loss = epoch_machine_loss / args.batch_size
+        avg_actor_loss = epoch_actor_loss / args.batch_size
         avg_sampled = sum(batch_sampled) / args.batch_size
         avg_baseline = sum(batch_baseline) / args.batch_size
         avg_improvement = sum(batch_improvement) / args.batch_size
@@ -471,8 +435,7 @@ def train_reinforce(args):
         avg_max_load = sum(batch_max_load) / args.batch_size
         avg_load_gap = sum(batch_load_gap) / args.batch_size
 
-        losses_job.append(avg_job_loss)
-        losses_machine.append(avg_machine_loss)
+        actor_losses.append(avg_actor_loss)
         sampled_makespans.append(avg_sampled)
         baseline_makespans.append(avg_baseline)
         improvements.append(avg_improvement)
@@ -481,8 +444,8 @@ def train_reinforce(args):
         print(
             f"Epoch [{epoch}/{args.epochs}] | Sampled: {avg_sampled:.2f} "
             f"| Baseline: {avg_baseline:.2f} | Improvement: {avg_improvement:.2f} "
-            f"| Win Rate: {win_rate:.2%} | Job Loss: {avg_job_loss:.4f} "
-            f"| AMR Loss: {avg_machine_loss:.4f} | Entropy: {avg_entropy:.4f} "
+            f"| Win Rate: {win_rate:.2%} | Actor Loss: {avg_actor_loss:.4f} "
+            f"| Entropy: {avg_entropy:.4f} "
             f"| Invalid S/B: {avg_sampled_invalid:.2f}/{avg_baseline_invalid:.2f} "
             f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
         )
@@ -530,8 +493,7 @@ def train_reinforce(args):
             _save_reinforce_chart(
                 chart_path,
                 "GNN",
-                losses_job,
-                losses_machine,
+                actor_losses,
                 sampled_makespans,
                 baseline_makespans,
                 improvements,
@@ -562,8 +524,7 @@ def train_ppo(args):
     print("Starting GNN Multi-PPO training with critic-based advantage.")
 
     best_makespan = float("inf")
-    losses_job = []
-    losses_machine = []
+    losses_actor = []
     losses_critic = []
     makespans = []
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -575,10 +536,10 @@ def train_ppo(args):
 
         for _ in range(args.batch_size):
             jobs = _select_jobs(dispatch_events)
-            individual, (old_job_lp, old_machine_lp), solve_dur = solve_with_gnn(
+            individual, old_log_prob, solve_dur = solve_with_gnn(
                 jobs, gnn_model, deterministic=False
             )
-            job_action_seq, machine_action_seq = action_sequences_from_individual(individual, jobs)
+            action_seq = action_sequences_from_individual(individual, jobs)
 
             improve_start = time.perf_counter()
             individual = local_improve(individual, jobs, max_iters=routing_iters)
@@ -597,78 +558,61 @@ def train_ppo(args):
             trajectories.append(
                 (
                     jobs,
-                    job_action_seq,
-                    machine_action_seq,
-                    old_job_lp.detach(),
-                    old_machine_lp.detach(),
+                    action_seq,
+                    old_log_prob.detach(),
                     -stochastic_makespan,
                 )
             )
 
-        epoch_job_loss = 0.0
-        epoch_machine_loss = 0.0
+        epoch_actor_loss = 0.0
         epoch_critic_loss = 0.0
 
         for _ in range(args.ppo_epochs):
             optimizer_actor.zero_grad()
             optimizer_critic.zero_grad()
-            batch_job_loss = 0.0
-            batch_machine_loss = 0.0
+            batch_actor_loss = 0.0
             batch_critic_loss = 0.0
 
             for (
                 jobs,
-                job_action_seq,
-                machine_action_seq,
-                old_job_lp,
-                old_machine_lp,
+                action_seq,
+                old_log_prob,
                 value_target,
             ) in trajectories:
-                new_job_lp, new_machine_lp, values = evaluate_actions_multi_ppo(
-                    jobs, gnn_model, job_action_seq, machine_action_seq
-                )
+                new_log_prob, values = evaluate_actions_multi_ppo(jobs, gnn_model, action_seq)
                 value_target_tensor = torch.tensor(value_target, dtype=torch.float32, device=values.device)
                 value_targets = value_target_tensor.expand_as(values)
                 advantage = value_target_tensor - values.detach().mean()
 
-                job_ratio = torch.exp(new_job_lp - old_job_lp)
-                job_surr1 = job_ratio * advantage
-                job_surr2 = torch.clamp(job_ratio, 1.0 - args.clip_eps, 1.0 + args.clip_eps) * advantage
-                job_loss = -torch.min(job_surr1, job_surr2)
-
-                machine_ratio = torch.exp(new_machine_lp - old_machine_lp)
-                machine_surr1 = machine_ratio * advantage
-                machine_surr2 = torch.clamp(machine_ratio, 1.0 - args.clip_eps, 1.0 + args.clip_eps) * advantage
-                machine_loss = -torch.min(machine_surr1, machine_surr2)
+                ratio = torch.exp(new_log_prob - old_log_prob)
+                surr1 = ratio * advantage
+                surr2 = torch.clamp(ratio, 1.0 - args.clip_eps, 1.0 + args.clip_eps) * advantage
+                actor_loss = -torch.min(surr1, surr2)
 
                 critic_loss = F.mse_loss(values, value_targets)
-                total_loss = (job_loss + machine_loss + args.value_loss_coef * critic_loss) / args.batch_size
+                total_loss = (actor_loss + args.value_loss_coef * critic_loss) / args.batch_size
                 total_loss.backward()
 
-                batch_job_loss += job_loss.item()
-                batch_machine_loss += machine_loss.item()
+                batch_actor_loss += actor_loss.item()
                 batch_critic_loss += critic_loss.item()
 
             optimizer_actor.step()
             optimizer_critic.step()
 
-            epoch_job_loss += batch_job_loss / args.batch_size
-            epoch_machine_loss += batch_machine_loss / args.batch_size
+            epoch_actor_loss += batch_actor_loss / args.batch_size
             epoch_critic_loss += batch_critic_loss / args.batch_size
 
-        epoch_job_loss /= args.ppo_epochs
-        epoch_machine_loss /= args.ppo_epochs
+        epoch_actor_loss /= args.ppo_epochs
         epoch_critic_loss /= args.ppo_epochs
         avg_batch_makespan = sum(batch_makespans) / args.batch_size
 
-        losses_job.append(epoch_job_loss)
-        losses_machine.append(epoch_machine_loss)
+        losses_actor.append(epoch_actor_loss)
         losses_critic.append(epoch_critic_loss)
         makespans.append(avg_batch_makespan)
 
         print(
             f"Epoch [{epoch}/{args.epochs}] | Avg Makespan: {avg_batch_makespan:.2f} "
-            f"| Job Loss: {epoch_job_loss:.4f} | Machine Loss: {epoch_machine_loss:.4f} "
+            f"| Actor Loss: {epoch_actor_loss:.4f} "
             f"| Critic Loss: {epoch_critic_loss:.4f}"
         )
 
@@ -712,7 +656,7 @@ def train_ppo(args):
         )
 
         if epoch == 1 or epoch % 100 == 0 or epoch == args.epochs:
-            _save_ppo_chart(chart_path, losses_job, losses_machine, losses_critic, makespans)
+            _save_ppo_chart(chart_path, losses_actor, losses_critic, makespans)
             print(f"   -> Saved updated training chart to {chart_path}")
 
 

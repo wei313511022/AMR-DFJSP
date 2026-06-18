@@ -693,7 +693,14 @@ def decode_schedule_legacy(individual: Individual, jobs: List[Job], need_log: bo
         inventory[amr][material] -= 1
         station_available[job.station] = process_end # Occupy station
         
-        # Return home after each job to match the neural schedulers' scenario.
+        availability[amr] = process_end
+        future_work = any(
+            individual.amr_assignment[getattr(future_job, "job_idx", future_job)] == amr
+            for future_job in order[pos + 1:]
+        )
+        if future_work:
+            continue
+
         return_start = process_end
         next_dest = AMR_STARTS[amr]
 
@@ -1061,6 +1068,13 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
     station_available = {station: 0.0 for station in STATIONS}
     completed = set()
 
+    def has_future_work(amr: str) -> bool:
+        return any(
+            _operation_key(op) not in completed
+            and individual.amr_assignment[op.job_idx] == amr
+            for op in operations
+        )
+
     def reserve_wait(location: Tuple[int, int], amr: str, start: float, end: float) -> None:
         if not check_collision:
             return
@@ -1127,6 +1141,11 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             amr_states[amr] = (station_pos, process_end)
         completed.add(key)
 
+        if has_future_work(amr):
+            if check_collision:
+                amr_states[amr] = (station_pos, float("inf"))
+            return
+
         base_pos = AMR_STARTS[amr]
         if current_position[amr] != base_pos:
             return_start = availability[amr]
@@ -1169,9 +1188,9 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         availability[amr] = pickup_time
         current_position[amr] = dock_pos
         inventory[amr][job.type_].append(job.idx)
-        if check_collision:
-            amr_states[amr] = (dock_pos, pickup_time)
         completed.add(key)
+        if check_collision:
+            amr_states[amr] = (dock_pos, float("inf") if has_future_work(amr) else pickup_time)
 
     for op in operations:
         if _operation_key(op) in completed:

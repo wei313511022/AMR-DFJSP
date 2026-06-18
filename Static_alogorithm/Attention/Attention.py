@@ -21,15 +21,25 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from GA.GA import (
-    Job, Individual, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
+    Job, Individual, Operation, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
     JOB_COUNT, routing_iters, collision_routing_iters,
-    empty_count_inventory, job_pickup_location, normalize_count_inventory, paired_operation_order,
+    empty_count_inventory, job_pickup_location, normalize_count_inventory,
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness, local_improve,
     plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
+)
+from operation_policy import (
+    action_mask,
+    apply_fast_action,
+    carrier_feature,
+    completed_job_mask,
+    decode_action_id,
+    initial_operation_state,
+    job_status_value,
+    load_required_operation_checkpoint,
 )
 
 # Overwrite describe_solution locally to pass save_img
@@ -91,9 +101,11 @@ class SchedulerAttention(nn.Module):
             ) for _ in range(attention_layers)
         ])
 
-        # Policy Head: Takes concatenated (AMR, Job) embeddings and outputs logit
+        self.op_emb = nn.Embedding(2, hidden_dim)
+
+        # Policy Head: Takes concatenated (operation, AMR, Job) embeddings and outputs logit
         self.policy_head = nn.Sequential(
-            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.Linear(hidden_dim * 3, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1)
         )
@@ -105,14 +117,14 @@ class SchedulerAttention(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
-    def forward(self, amr_features, job_features, job_mask):
+    def forward(self, amr_features, job_features, job_mask, operation_mask=None):
         """
         amr_features: (batch, num_amrs, amr_in_dim)
         job_features: (batch, num_jobs, job_in_dim)
         job_mask: (batch, num_jobs) - True if job is ALREADY ASSIGNED (should be ignored)
         
-        Returns logits for each valid (amr, job) pair
-        Output shape: (batch, num_amrs, num_jobs)
+        Returns logits for each valid (operation, amr, job) action.
+        Output shape: (batch, 2, num_amrs, num_jobs)
         """
         # 1. Embeddings
         x_amr = self.amr_emb(amr_features) # (batch, num_amrs, hidden)
@@ -149,23 +161,16 @@ class SchedulerAttention(nn.Module):
             x_amr = x_amr + self.fc_amr[i](x_amr)
             x_job = x_job + self.fc_job[i](x_job)
             
-        # 3. Policy Head (Pairwise comparisons)
-        # We need an output for every combination of AMR and Job
-        # x_amr_expand: (batch, num_amrs, num_jobs, hidden)
-        x_amr_expand = x_amr.unsqueeze(2).expand(-1, -1, num_jobs, -1)
-        # x_job_expand: (batch, num_amrs, num_jobs, hidden)
-        x_job_expand = x_job.unsqueeze(1).expand(-1, num_amrs, -1, -1)
-        
-        # pairs: (batch, num_amrs, num_jobs, hidden * 2)
-        pairs = torch.cat([x_amr_expand, x_job_expand], dim=-1)
-        
-        # logits: (batch, num_amrs, num_jobs)
+        op_ids = torch.arange(2, device=x_amr.device)
+        x_op = self.op_emb(op_ids).view(1, 2, 1, 1, -1).expand(x_amr.size(0), -1, num_amrs, num_jobs, -1)
+        x_amr_expand = x_amr.unsqueeze(1).unsqueeze(3).expand(-1, 2, -1, num_jobs, -1)
+        x_job_expand = x_job.unsqueeze(1).unsqueeze(2).expand(-1, 2, num_amrs, -1, -1)
+
+        pairs = torch.cat([x_op, x_amr_expand, x_job_expand], dim=-1)
         logits = self.policy_head(pairs).squeeze(-1)
-        
-        # Mask out assigned jobs by setting their logits to -inf
-        # job_mask_expand: (batch, 1, num_jobs)
-        job_mask_expand = job_mask.unsqueeze(1)
-        logits = logits.masked_fill(job_mask_expand, float('-inf'))
+
+        if operation_mask is not None:
+            logits = logits.masked_fill(operation_mask.view_as(logits), float("-inf"))
         
         return logits
 
@@ -206,7 +211,7 @@ class SchedulerAttention(nn.Module):
         return self.critic(combined).squeeze(-1)
 
 
-def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory, amr_assignment_map=None):
+def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_positions, amr_availabilities, amr_inventory):
     """
     Constructs the tensor inputs for the Attention model.
     Returns amr_features, job_features, job_mask defined as:
@@ -232,7 +237,7 @@ def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, am
      7: type A flag (1.0 or 0.0)
      8: type B flag (1.0 or 0.0)
      9: type C flag (1.0 or 0.0)
-     10: job_status (1.0 if in assigned_jobs_set else 0.0)
+     10: job_status (0.0 unpicked, 0.5 onboard, 1.0 completed)
      
     Job Mask: boolean array of size len(jobs), True if job inside assigned_jobs
     """
@@ -249,10 +254,7 @@ def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, am
         status_val = 1.0 if avail > min_avail else 0.0
         rem = avail - min_avail
         
-        if amr_assignment_map is not None:
-            queue_depth = sum(1 for j_idx, a in amr_assignment_map.items() if a == amr) / 10.0
-        else:
-            queue_depth = 0.0
+        queue_depth = sum(1 for a in carrier_map.values() if a == amr) / 10.0
             
         feat = [
             status_val,
@@ -273,13 +275,13 @@ def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, am
         pos = STATIONS[job.station]
         supply_pos = job_pickup_location(job)
         
-        is_assigned = job.idx in assigned_jobs_set
-        job_status = 1.0 if is_assigned else 0.0
+        is_completed = job.idx in completed_jobs_set
+        job_status = job_status_value(job.idx, picked_jobs_set, completed_jobs_set)
         
         feat = [
             1.0,  # exist_flag
             job.duration / 25.0,
-            0.0,  # wait_time
+            carrier_feature(job.idx, carrier_map),
             pos[0] / 10.0,
             pos[1] / 10.0,
             supply_pos[0] / 10.0,
@@ -290,7 +292,7 @@ def extract_state(jobs, assigned_jobs_set, amr_positions, amr_availabilities, am
             job_status
         ]
         job_feat.append(feat)
-        job_mask.append(is_assigned)
+        job_mask.append(is_completed)
         
     return (
         torch.tensor([amr_feat], dtype=torch.float32), 
@@ -306,22 +308,13 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
     """
     start_time = time.perf_counter()
     
-    # Internal Simulator State (Tracking rough time/inventory during sequence building)
-    if init_state:
-        amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
-        amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
-        station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
-        amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
-    else:
-        amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
-        amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
-        station_availabilities = {s: 0.0 for s in STATIONS.keys()}
-        amr_inventory = empty_count_inventory()
-    
-    assigned_jobs_set = set()
+    amr_positions, amr_availabilities, station_availabilities, amr_inventory = initial_operation_state(init_state)
+    picked_jobs_set = set()
+    completed_jobs_set = set()
+    carrier_map = {}
     
     # Outputs to build the Individual
-    order_seq = []
+    operation_order = []
     amr_assignment_map = {} # job_idx -> amr
     
     total_log_prob = 0.0
@@ -332,10 +325,10 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
     else:
         model.train()
         
-    for step in range(len(jobs)):
+    for step in range(2 * len(jobs)):
         # 1. State Extraction
         amr_feat, job_feat, job_mask = extract_state(
-            jobs, assigned_jobs_set, amr_positions, amr_availabilities, amr_inventory, amr_assignment_map
+            jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_positions, amr_availabilities, amr_inventory
         )
         
         # Move tensors to the model's device
@@ -343,9 +336,14 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
         amr_feat = amr_feat.to(device)
         job_feat = job_feat.to(device)
         job_mask = job_mask.to(device)
+        op_mask = torch.tensor(
+            [action_mask(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_inventory)],
+            dtype=torch.bool,
+            device=device,
+        )
         
         # 2. Forward Pass
-        logits = model(amr_feat, job_feat, job_mask) # shape: (1, 3, num_jobs)
+        logits = model(amr_feat, job_feat, job_mask, op_mask)
         
         # 3. Action Selection
         flat_logits = logits.view(-1)
@@ -364,54 +362,28 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
             # Accumulate log probability of chosen action
             total_log_prob += log_probs[best_action]
             
-        # Decode action: amr_index and job_index
-        num_jobs = len(jobs)
-        amr_idx = best_action // num_jobs
-        job_list_idx = best_action % num_jobs
-        
-        chosen_amr = AMR_KEYS[amr_idx]
-        chosen_job = jobs[job_list_idx]
-        
-        # Record choice
-        order_seq.append(chosen_job.idx)
-        amr_assignment_map[chosen_job.idx] = chosen_amr
-        assigned_jobs_set.add(chosen_job.idx)
-        
-        # 4. Update Internal State (Fast Approximation for the next step of inference)
-        mat = chosen_job.type_
-        curr_pos = amr_positions[chosen_amr]
-        avail = amr_availabilities[chosen_amr]
-        
-        pickup_loc = job_pickup_location(chosen_job)
-        avail = max(avail + heuristic(curr_pos, pickup_loc), float(chosen_job.arrival_time))
-        curr_pos = pickup_loc
-        amr_inventory[chosen_amr][mat] = min(
-            amr_inventory[chosen_amr][mat] + 1,
-            3,
+        action = decode_action_id(best_action, jobs)
+        operation_order.append(Operation(action.job_id, action.kind))
+        if action.kind == "pickup":
+            amr_assignment_map[action.job_id] = action.amr
+        apply_fast_action(
+            action,
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
+            amr_positions,
+            amr_availabilities,
+            station_availabilities,
+            amr_inventory,
         )
-            
-        # Travel to station
-        target_station = STATIONS[chosen_job.station]
-        avail += heuristic(curr_pos, target_station)
-        
-        # Wait for station and process
-        process_start = max(avail, station_availabilities[chosen_job.station])
-        process_end = process_start + chosen_job.duration
-        amr_inventory[chosen_amr][mat] -= 1
-        
-        station_availabilities[chosen_job.station] = process_end
-
-        base_pos = AMR_STARTS[chosen_amr]
-        return_end = process_end + heuristic(target_station, base_pos)
-        amr_availabilities[chosen_amr] = return_end
-        amr_positions[chosen_amr] = base_pos
             
     # Finalize Individual (Order amr_assignment list by job_idx)
     final_assignment = []
     for i in range(len(jobs)):
         final_assignment.append(amr_assignment_map[i])
         
-    ind = Individual(order=paired_operation_order(order_seq), amr_assignment=final_assignment)
+    ind = Individual(order=operation_order, amr_assignment=final_assignment)
     
     solve_dur = time.perf_counter() - start_time
     return ind, total_log_prob, solve_dur
@@ -438,25 +410,14 @@ if __name__ == "__main__":
     attention_model = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
     
     weights_path = Path("attention_scheduler_best.pth")
-    if not weights_path.exists():
-        # Fallback support for loading old checkpoints if they exist
-        old_weights = Path("gnn_scheduler_best.pth")
-        if old_weights.exists():
-            weights_path = old_weights
-            
-    if weights_path.exists():
-        print(f"Loading trained weights from {weights_path}...")
-        try:
-            state_dict = torch.load(weights_path, map_location='cpu')
-            # Handle key renamings from SchedulerGNN checkpoints to SchedulerAttention
-            new_state_dict = {}
-            for k, v in state_dict.items():
-                new_key = k.replace("gnn_layers", "attention_layers")
-                new_state_dict[new_key] = v
-            attention_model.load_state_dict(new_state_dict, strict=False)
-        except Exception as e:
-            print(f"WARNING: Could not load weights from {weights_path} due to shape/feature mismatch: {e}")
-            print("Proceeding with randomly initialized weights (recommend retraining with train.py).")
+    print(f"Loading trained weights from {weights_path}...")
+    status = load_required_operation_checkpoint(
+        attention_model,
+        weights_path,
+        torch,
+        required_keys=("op_emb.weight", "policy_head.0.weight"),
+    )
+    print(f"Attention: {status}")
     
     # 3. Load Jobs
     if args.inbox:
