@@ -34,7 +34,6 @@ from GA.GA import (  # noqa: E402
     TYPE_DURATION,
     collision_routing_iters,
     decode_schedule_tick_by_tick,
-    local_improve,
     routing_iters,
     station_key_from_value,
 )
@@ -42,6 +41,7 @@ from GA.GA import (  # noqa: E402
 from GA import GA as ga_normal  # noqa: E402
 from GA.GA_precise import evolve_precise  # noqa: E402
 from dispatching_rules import dispatching_rules as dr  # noqa: E402
+from neural_local_improvement import apply_neural_local_improvement  # noqa: E402
 
 
 DEFAULT_JOB_COUNTS = (20, 40, 60, 80, 100)
@@ -444,25 +444,30 @@ def run_attention(jobs: Sequence[Job], args: argparse.Namespace, context: Dict) 
 
     start_time = time.perf_counter()
     individual, _, _ = module.solve_with_attention(list(jobs), model, deterministic=True)
-    if args.neural_local_iters > 0:
-        individual = local_improve(individual, list(jobs), max_iters=args.neural_local_iters)
-    if args.neural_collision_iters > 0:
-        individual = local_improve(
-            individual,
-            list(jobs),
-            max_iters=args.neural_collision_iters,
-            check_collision=True,
-        )
+    improvement = apply_neural_local_improvement(
+        individual,
+        list(jobs),
+        simplified_iters=args.neural_local_iters,
+        collision_iters=args.neural_collision_iters,
+    )
+    individual = improvement.individual
     solve_time = time.perf_counter() - start_time
     return individual, solve_time
 
 
-def run_attention_precise(jobs: Sequence[Job], context: Dict) -> Tuple[Individual, float]:
+def run_attention_precise(jobs: Sequence[Job], args: argparse.Namespace, context: Dict) -> Tuple[Individual, float]:
     module = require_nn_context(context, "attention_precise", "attention_precise_module")
     model = require_nn_context(context, "attention_precise", "attention_precise_model")
 
     start_time = time.perf_counter()
     individual, _, _ = module.solve_with_attention(list(jobs), model, deterministic=True)
+    improvement = apply_neural_local_improvement(
+        individual,
+        list(jobs),
+        simplified_iters=args.precise_neural_local_iters,
+        collision_iters=args.precise_neural_collision_iters,
+    )
+    individual = improvement.individual
     solve_time = time.perf_counter() - start_time
     return individual, solve_time
 
@@ -473,25 +478,30 @@ def run_gnn(jobs: Sequence[Job], args: argparse.Namespace, context: Dict) -> Tup
 
     start_time = time.perf_counter()
     individual, _, _ = module.solve_with_gnn(list(jobs), model, deterministic=True)
-    if args.neural_local_iters > 0:
-        individual = local_improve(individual, list(jobs), max_iters=args.neural_local_iters)
-    if args.neural_collision_iters > 0:
-        individual = local_improve(
-            individual,
-            list(jobs),
-            max_iters=args.neural_collision_iters,
-            check_collision=True,
-        )
+    improvement = apply_neural_local_improvement(
+        individual,
+        list(jobs),
+        simplified_iters=args.neural_local_iters,
+        collision_iters=args.neural_collision_iters,
+    )
+    individual = improvement.individual
     solve_time = time.perf_counter() - start_time
     return individual, solve_time
 
 
-def run_gnn_precise(jobs: Sequence[Job], context: Dict) -> Tuple[Individual, float]:
+def run_gnn_precise(jobs: Sequence[Job], args: argparse.Namespace, context: Dict) -> Tuple[Individual, float]:
     module = require_nn_context(context, "gnn_precise", "gnn_precise_module")
     model = require_nn_context(context, "gnn_precise", "gnn_precise_model")
 
     start_time = time.perf_counter()
     individual, _, _ = module.solve_with_gnn(list(jobs), model, deterministic=True)
+    improvement = apply_neural_local_improvement(
+        individual,
+        list(jobs),
+        simplified_iters=args.precise_neural_local_iters,
+        collision_iters=args.precise_neural_collision_iters,
+    )
+    individual = improvement.individual
     solve_time = time.perf_counter() - start_time
     return individual, solve_time
 
@@ -543,11 +553,11 @@ def run_algorithm(
     if algorithm == "attention":
         return run_attention(jobs, args, context)
     if algorithm == "attention_precise":
-        return run_attention_precise(jobs, context)
+        return run_attention_precise(jobs, args, context)
     if algorithm == "gnn":
         return run_gnn(jobs, args, context)
     if algorithm == "gnn_precise":
-        return run_gnn_precise(jobs, context)
+        return run_gnn_precise(jobs, args, context)
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
@@ -792,6 +802,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ga_collision_iters", type=int, default=collision_routing_iters)
     parser.add_argument("--neural_local_iters", type=int, default=routing_iters)
     parser.add_argument("--neural_collision_iters", type=int, default=collision_routing_iters)
+    parser.add_argument("--precise_neural_local_iters", type=int, default=0)
+    parser.add_argument("--precise_neural_collision_iters", type=int, default=0)
     parser.add_argument("--verbose_ga", action="store_true", help="Print GA precise generation logs")
     return parser
 

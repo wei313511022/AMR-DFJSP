@@ -39,6 +39,7 @@ from operation_policy import (
     job_status_value,
     load_required_operation_checkpoint,
 )
+from neural_local_improvement import apply_neural_local_improvement
 
 # Overwrite describe_solution locally to pass save_img
 def describe_solution_attention(individual: Individual, jobs: List[Job], solve_time: float = None, show_gantt: bool = False, save_img: str = None) -> Tuple[float, float]:
@@ -427,6 +428,8 @@ if __name__ == "__main__":
     parser.add_argument("--gantt", action="store_true", help="Plot Gantt Chart")
     parser.add_argument("--inbox", type=str, default="", help="Path to dispatch inbox JSONL file")
     parser.add_argument("--save_img", type=str, default="", help="Save the schedule Gantt chart to this file (e.g., schedule.png)")
+    parser.add_argument("--local_iters", type=int, default=0, help="Number of simplified local-improvement iterations")
+    parser.add_argument("--collision_iters", type=int, default=0, help="Number of collision-aware local-improvement iterations")
     parser.add_argument("--output_csv", type=str, default="attention_precise_summary_results.csv", help="Output CSV filename")
     args = parser.parse_args()
     
@@ -475,6 +478,15 @@ if __name__ == "__main__":
             # a. Run Attention Inference
             best_ind, _, solve_dur_ns = solve_with_attention(event["jobs"], attention_model)
 
+            improvement = apply_neural_local_improvement(
+                best_ind,
+                event["jobs"],
+                simplified_iters=args.local_iters,
+                collision_iters=args.collision_iters,
+            )
+            best_ind = improvement.individual
+            solve_dur_ns += improvement.postprocess_time
+
             # b. Evaluate with Exact GA routing logic. Precise rollout already uses dynamic pathfinding.
             img_path = f"{args.save_img.split('.')[0]}_{event['index']}.png" if args.save_img else None
             makespan, computation_time = describe_solution_attention(best_ind, event["jobs"], solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=img_path)
@@ -486,6 +498,15 @@ if __name__ == "__main__":
         
         # a. Run Attention Inference
         best_ind, _, solve_dur_ns = solve_with_attention(jobs, attention_model)
+
+        improvement = apply_neural_local_improvement(
+            best_ind,
+            jobs,
+            simplified_iters=args.local_iters,
+            collision_iters=args.collision_iters,
+        )
+        best_ind = improvement.individual
+        solve_dur_ns += improvement.postprocess_time
 
         # b. Evaluate with Exact GA routing logic. Precise rollout already uses dynamic pathfinding.
         makespan, computation_time = describe_solution_attention(best_ind, jobs, solve_time=solve_dur_ns, show_gantt=args.gantt, save_img=args.save_img)
