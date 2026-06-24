@@ -770,7 +770,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Generate deterministic static AMR-DFJSP samples and benchmark static algorithms."
     )
     parser.add_argument("--generate", action="store_true", help="Generate deterministic JSONL samples before benchmarking")
-    parser.add_argument("--samples", type=int, default=1, help="Samples per job count")
+    parser.add_argument("--samples", type=int, default=100, help="Samples per job count")
     parser.add_argument("--job_counts", type=str, default="20,40,60,80,100")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--case_dir", type=str, default=str(DEFAULT_CASE_DIR), help="Directory containing dispatch_inbox_<N>.jsonl cases")

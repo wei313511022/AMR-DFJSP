@@ -29,7 +29,7 @@ def generate_data(num_batches, batch_size):
     """
     import os
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    OUTPUT_FILE = os.path.join(SCRIPT_DIR, f"dispatch_validation_{batch_size}.jsonl")
+    OUTPUT_FILE = os.path.join(SCRIPT_DIR, f"dispatch_inbox_{batch_size}.jsonl")
     # Clear the file first
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         pass
