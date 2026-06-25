@@ -15,6 +15,7 @@ from GA.GA import (
     UNLOAD,
     Job,
     Operation,
+    dock_key_from_value,
     empty_count_inventory,
     heuristic,
     job_pickup_location,
@@ -78,12 +79,14 @@ def initial_operation_state(init_state: Optional[dict] = None, precise: bool = F
         amr_positions = {amr: init_state["positions"].get(amr, AMR_STARTS[amr]) for amr in AMR_KEYS}
         amr_availabilities = {amr: float(init_state["availability"].get(amr, 0.0)) for amr in AMR_KEYS}
         station_availabilities = {s: float(init_state["time"]) for s in STATIONS.keys()}
+        station_availabilities.update({dock: float(init_state["time"]) for dock in INBOUND_DOCK_LOCATIONS.keys()})
         amr_inventory = normalize_count_inventory(init_state.get("inventory", {}))
         current_time = float(init_state.get("time", 0.0))
     else:
         amr_positions = {amr: AMR_STARTS[amr] for amr in AMR_KEYS}
         amr_availabilities = {amr: 0.0 for amr in AMR_KEYS}
         station_availabilities = {s: 0.0 for s in STATIONS.keys()}
+        station_availabilities.update({dock: 0.0 for dock in INBOUND_DOCK_LOCATIONS.keys()})
         amr_inventory = empty_count_inventory()
         current_time = 0.0
 
@@ -198,11 +201,18 @@ def estimate_action(
     if action.kind == PICKUP:
         pickup_location = job_pickup_location(job)
         to_pickup = heuristic(amr_positions[action.amr], pickup_location)
-        pickup_end = max(start_time + to_pickup, float(job.arrival_time))
+        pickup_travel_end = start_time + to_pickup
+        inbound_dock = dock_key_from_value(job.inbound_dock)
+        pickup_start = max(
+            pickup_travel_end,
+            float(job.arrival_time),
+            station_availabilities.get(inbound_dock, 0.0),
+        )
+        pickup_end = pickup_start + job.duration
         target_station = STATIONS[job.station]
         to_station = heuristic(pickup_location, target_station)
         projected_travel_end = pickup_end + to_station
-        projected_process_start = max(projected_travel_end, station_availabilities[job.station])
+        projected_process_start = max(projected_travel_end, station_availabilities.get(job.station, 0.0))
         projected_completion = projected_process_start + job.duration
         return OperationEstimate(
             action=action,
@@ -218,7 +228,7 @@ def estimate_action(
     target_station = STATIONS[job.station]
     to_station = heuristic(amr_positions[action.amr], target_station)
     travel_end = start_time + to_station
-    process_start = max(travel_end, station_availabilities[job.station])
+    process_start = max(travel_end, station_availabilities.get(job.station, 0.0))
     process_end = process_start + job.duration
     return OperationEstimate(
         action=action,
@@ -250,12 +260,16 @@ def apply_fast_action(
     if action.kind == PICKUP:
         pickup_location = job_pickup_location(job)
         start_time = amr_availabilities[action.amr]
-        pickup_end = max(
+        inbound_dock = dock_key_from_value(job.inbound_dock)
+        pickup_start = max(
             start_time + heuristic(amr_positions[action.amr], pickup_location),
             float(job.arrival_time),
+            station_availabilities.get(inbound_dock, 0.0),
         )
+        pickup_end = pickup_start + job.duration
         amr_availabilities[action.amr] = pickup_end
         amr_positions[action.amr] = pickup_location
+        station_availabilities[inbound_dock] = pickup_end
         amr_inventory[action.amr][material] += 1
         picked_jobs_set.add(job.idx)
         carrier_map[job.idx] = action.amr
@@ -266,7 +280,7 @@ def apply_fast_action(
     target_station = STATIONS[job.station]
     start_time = amr_availabilities[action.amr]
     travel_end = start_time + heuristic(amr_positions[action.amr], target_station)
-    process_start = max(travel_end, station_availabilities[job.station])
+    process_start = max(travel_end, station_availabilities.get(job.station, 0.0))
     process_end = process_start + job.duration
     amr_availabilities[action.amr] = process_end
     amr_positions[action.amr] = target_station

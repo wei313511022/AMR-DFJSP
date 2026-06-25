@@ -30,6 +30,7 @@ import numpy as np
 from Attention_DDQN_V7 import (
     GridEnv, SchedulerAgent, CONFIG, STATIONS, JOB_PROPS,
 )
+from GA.GA import AMR_KEYS
 import random
 def set_seed(seed=42):
     random.seed(seed)
@@ -77,7 +78,7 @@ AX_Y_MIN, AX_Y_MAX = 0.0, 2.0
 TOP_Y_CENTER  = 1.25
 TOP_LANE_H    = 0.5
 
-AMR_COUNT     = 3
+AMR_COUNT     = len(AMR_KEYS)
 BOTTOM_MIN    = 0.0
 BOTTOM_HEIGHT = (AX_Y_MAX - AX_Y_MIN) / 2.0
 AMR_Y_CENTERS = [BOTTOM_MIN + (i + 0.5) * (BOTTOM_HEIGHT / AMR_COUNT)

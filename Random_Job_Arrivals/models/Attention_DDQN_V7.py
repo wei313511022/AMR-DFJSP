@@ -148,7 +148,7 @@ JOB_PROPS = {
 @dataclass
 class Job:
     jid: int; jtype: str; material: str; arrival_ts: float; proc_time: float
-    dest_pos: tuple; supply_pos: tuple; status: int = 0
+    dest_pos: tuple; supply_pos: tuple; inbound_dock: str = "dock1"; status: int = 0
     finish_ts: float = -1.0
 
 @dataclass
@@ -170,7 +170,7 @@ class AMR:
 # ==========================================
 class TickSimulator:
     def __init__(self):
-        from GA.GA import AMR_STARTS, TYPE_DURATION, STATIONS, SUPPLY_LOCATIONS
+        from GA.GA import AMR_STARTS, TYPE_DURATION, STATIONS, INBOUND_DOCK_LOCATIONS
         self.t = 0
         self.positions = {amr: AMR_STARTS[amr] for amr in AMR_STARTS}
         self.inventory = {amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_STARTS}
@@ -179,8 +179,110 @@ class TickSimulator:
         if "AMR3" in self.inventory: self.inventory["AMR3"]["C"] = 3
         self.amr_states = {amr: {'mode': 'idle', 'goal': None, 'job': None, 'proc_ticks': 0} for amr in AMR_STARTS}
         self.amr_queues = {amr: deque() for amr in AMR_STARTS}
+        self.inbound_dock_occupied = {dock: False for dock in INBOUND_DOCK_LOCATIONS}
         self.station_occupied = {s: False for s in STATIONS}
+        self.dock_queues = {dock: deque() for dock in INBOUND_DOCK_LOCATIONS}
+        self.dock_queues.update({station: deque() for station in STATIONS})
+        self.wait_slot_owner = {}
         self.completed_jobs_jids = []
+
+    def _dock_info_for_job(self, job, inbound: bool):
+        from GA.GA import INBOUND_DOCK_LOCATIONS, STATIONS, dock_key_from_value
+
+        if inbound:
+            dock_id = dock_key_from_value(job.inbound_dock)
+            return dock_id, INBOUND_DOCK_LOCATIONS[dock_id]
+        return job.station, STATIONS[job.station]
+
+    def _dock_is_occupied(self, dock_id: str) -> bool:
+        if dock_id in self.inbound_dock_occupied:
+            return self.inbound_dock_occupied[dock_id]
+        return self.station_occupied[dock_id]
+
+    def _set_dock_occupied(self, dock_id: str, occupied: bool) -> None:
+        if dock_id in self.inbound_dock_occupied:
+            self.inbound_dock_occupied[dock_id] = occupied
+        else:
+            self.station_occupied[dock_id] = occupied
+
+    def _enqueue_for_dock(self, dock_id: str, amr: str) -> None:
+        queue = self.dock_queues[dock_id]
+        if amr not in queue:
+            queue.append(amr)
+
+    def _release_wait_slot(self, amr: str) -> None:
+        for slot, owner in list(self.wait_slot_owner.items()):
+            if owner == amr:
+                del self.wait_slot_owner[slot]
+
+    def _available_wait_slot(self, dock_pos, amr: str):
+        from GA.GA import dock_waiting_slots
+
+        occupied_positions = {pos for other, pos in self.positions.items() if other != amr}
+        for slot in dock_waiting_slots(dock_pos):
+            owner = self.wait_slot_owner.get(slot)
+            if owner is not None and owner != amr:
+                continue
+            if slot in occupied_positions:
+                continue
+            return slot
+        return None
+
+    def _route_or_queue_for_dock(self, amr: str, inbound: bool) -> None:
+        s = self.amr_states[amr]
+        if s.get('job') is None:
+            return
+
+        dock_id, dock_pos = self._dock_info_for_job(s['job'], inbound)
+        dock_kind = 'inbound' if inbound else 'outbound'
+        queue = self.dock_queues[dock_id]
+
+        s['dock_id'] = dock_id
+        s['dock_kind'] = dock_kind
+        if not self._dock_is_occupied(dock_id) and len(queue) == 0:
+            self._enqueue_for_dock(dock_id, amr)
+            s['mode'] = 'moving_supply' if inbound else 'moving_station'
+            s['goal'] = dock_pos
+            self._release_wait_slot(amr)
+            return
+        if not self._dock_is_occupied(dock_id) and len(queue) > 0 and queue[0] == amr:
+            self._release_wait_slot(amr)
+            s['wait_slot'] = None
+            s['mode'] = 'moving_dock_from_line'
+            s['goal'] = dock_pos
+            return
+
+        self._enqueue_for_dock(dock_id, amr)
+        slot = s.get('wait_slot')
+        if slot is None or self.wait_slot_owner.get(slot) not in (None, amr):
+            slot = self._available_wait_slot(dock_pos, amr)
+
+        if slot is None:
+            s['mode'] = 'holding_upstream'
+            s['goal'] = self.positions[amr]
+            s['wait_slot'] = None
+            return
+
+        self.wait_slot_owner[slot] = amr
+        s['wait_slot'] = slot
+        s['mode'] = 'waiting_in_line' if self.positions[amr] == slot else 'moving_wait_slot'
+        s['goal'] = slot
+
+    def _try_advance_waiting_line(self, amr: str) -> None:
+        s = self.amr_states[amr]
+        dock_id = s.get('dock_id')
+        if dock_id not in self.dock_queues:
+            return
+        queue = self.dock_queues[dock_id]
+        if len(queue) == 0 or queue[0] != amr or self._dock_is_occupied(dock_id):
+            return
+
+        inbound = s.get('dock_kind') == 'inbound'
+        _, dock_pos = self._dock_info_for_job(s['job'], inbound)
+        self._release_wait_slot(amr)
+        s['wait_slot'] = None
+        s['mode'] = 'moving_dock_from_line'
+        s['goal'] = dock_pos
 
     def assign_schedules(self, order, amr_assignment, job_map):
         # Clear queues (but leave the ACTIVE job alone!)
@@ -190,16 +292,30 @@ class TickSimulator:
             if active_job is not None:
                 self.amr_queues[amr].append(active_job)
             
-        for job_idx in order:
+        import GA.GA as GA
+
+        seen_jobs = set()
+        for scheduled_op in order:
+            if hasattr(scheduled_op, "kind") and scheduled_op.kind != GA.PICKUP:
+                continue
+            job_idx = scheduled_op.job_idx if hasattr(scheduled_op, "job_idx") else int(scheduled_op)
+            if job_idx in seen_jobs:
+                continue
+            seen_jobs.add(job_idx)
             amr = amr_assignment[job_idx]
-            jdata = job_map[job_idx] # {'jid', 'jtype', 'time', 'station'}
+            jdata = job_map[job_idx] # {'jid', 'jtype', 'time', 'station', 'inbound_dock'}
             # Map into a Job-like object
-            import GA.GA as GA
-            ga_job = GA.Job(idx=jdata['jid'], type_=jdata['jtype'], station=f"station{jdata['station']}", duration=jdata['time'])
+            ga_job = GA.Job(
+                idx=jdata['jid'],
+                type_=jdata['jtype'],
+                station=f"station{jdata['station']}",
+                duration=jdata['time'],
+                inbound_dock=jdata.get('inbound_dock', 'dock1'),
+            )
             self.amr_queues[amr].append(ga_job)
 
     def get_attention_init_state(self) -> dict:
-        from GA.GA import STATIONS, SUPPLY_LOCATIONS, shortest_path, TYPE_DURATION
+        from GA.GA import STATIONS, shortest_path, TYPE_DURATION, job_pickup_location
         state = {
             "time": self.t,
             "positions": {},
@@ -215,26 +331,37 @@ class TickSimulator:
                 if s['mode'] in ['processing', 'processing_old']:
                     time_left = s['proc_ticks']
                 elif s['mode'] == 'loading_dock':
-                    mat = s['job'].type_
-                    sup = SUPPLY_LOCATIONS[mat]
+                    sup = job_pickup_location(s['job'])
                     path = shortest_path(sup, dest)
                     time_left = s['proc_ticks'] + (len(path) - 1) + s['job'].duration
                 elif s['mode'] == 'moving_station':
                     path = shortest_path(self.positions[amr], dest)
                     time_left = len(path) - 1 + s['job'].duration
+                elif s['mode'] in ['moving_wait_slot', 'waiting_in_line', 'holding_upstream', 'moving_dock_from_line']:
+                    if s.get('dock_kind') == 'inbound':
+                        sup = job_pickup_location(s['job'])
+                        path1 = shortest_path(self.positions[amr], sup)
+                        path2 = shortest_path(sup, dest)
+                        time_left = (len(path1) - 1) + s['job'].duration + (len(path2) - 1) + s['job'].duration
+                    else:
+                        path = shortest_path(self.positions[amr], dest)
+                        time_left = len(path) - 1 + s['job'].duration
                 elif s['mode'] == 'moving_supply':
                     mat = s['job'].type_
-                    sup = SUPPLY_LOCATIONS[mat]
+                    sup = job_pickup_location(s['job'])
                     path1 = shortest_path(self.positions[amr], sup)
                     path2 = shortest_path(sup, dest)
-                    time_left = (len(path1) - 1) + TYPE_DURATION[mat] + (len(path2) - 1) + s['job'].duration
+                    time_left = (len(path1) - 1) + s['job'].duration + (len(path2) - 1) + s['job'].duration
                 else:
                     time_left = 0
 
                 state['availability'][amr] = self.t + time_left
                 
                 # Inventory projection
-                if s['mode'] in ['moving_supply', 'loading_dock']:
+                if s['mode'] in ['moving_supply', 'loading_dock'] or (
+                    s['mode'] in ['moving_wait_slot', 'waiting_in_line', 'holding_upstream', 'moving_dock_from_line']
+                    and s.get('dock_kind') == 'inbound'
+                ):
                     state['inventory'][amr][s['job'].type_] = 2
                 else:
                     state['inventory'][amr][s['job'].type_] = max(0, state['inventory'][amr][s['job'].type_] - 1)
@@ -244,7 +371,7 @@ class TickSimulator:
         return state
 
     def step(self, dt: int):
-        from GA.GA import AMR_KEYS, SUPPLY_LOCATIONS, STATIONS, AMR_STARTS, shortest_path, shortest_path_avoiding, OBSTACLES, _is_within_bounds
+        from GA.GA import AMR_KEYS, STATIONS, AMR_STARTS, shortest_path, shortest_path_avoiding, OBSTACLES, _is_within_bounds, job_pickup_location
         import random
         # Extrapolate forward by exactly dt ticks
         for _ in range(dt):
@@ -256,11 +383,9 @@ class TickSimulator:
                         s['job'] = self.amr_queues[amr][0]
                         mat = s['job'].type_
                         if self.inventory[amr][mat] == 0:
-                            s['mode'] = 'moving_supply'
-                            s['goal'] = SUPPLY_LOCATIONS[mat]
+                            self._route_or_queue_for_dock(amr, inbound=True)
                         else:
-                            s['mode'] = 'moving_station'
-                            s['goal'] = STATIONS[s['job'].station]
+                            self._route_or_queue_for_dock(amr, inbound=False)
                     else:
                         if self.positions[amr] != AMR_STARTS[amr]:
                             s['mode'] = 'moving_base'
@@ -271,7 +396,7 @@ class TickSimulator:
                     if s['proc_ticks'] <= 0:
                         mat = s['job'].type_
                         self.inventory[amr][mat] -= 1
-                        self.station_occupied[s['job'].station] = False
+                        self._set_dock_occupied(s.get('dock_id', s['job'].station), False)
                         self.completed_jobs_jids.append(s['job'].idx)
                         self.amr_queues[amr].popleft()
                         s['mode'] = 'idle'
@@ -282,8 +407,16 @@ class TickSimulator:
                     if s['proc_ticks'] <= 0:
                         mat = s['job'].type_
                         self.inventory[amr][mat] = 3
+                        dock_id = s.get('dock_id')
+                        if dock_id is not None:
+                            self._set_dock_occupied(dock_id, False)
                         s['mode'] = 'idle'
                         s['goal'] = None
+                elif s['mode'] == 'waiting_in_line':
+                    self._try_advance_waiting_line(amr)
+                elif s['mode'] == 'holding_upstream':
+                    if s.get('job') is not None:
+                        self._route_or_queue_for_dock(amr, inbound=s.get('dock_kind') == 'inbound')
             
             # Additional Transition hook for immediately queued items
             for amr in AMR_KEYS:
@@ -293,16 +426,19 @@ class TickSimulator:
                         s['job'] = self.amr_queues[amr][0]
                         mat = s['job'].type_
                         if self.inventory[amr][mat] == 0:
-                            s['mode'] = 'moving_supply'
-                            s['goal'] = SUPPLY_LOCATIONS[mat]
+                            self._route_or_queue_for_dock(amr, inbound=True)
                         else:
-                            s['mode'] = 'moving_station'
-                            s['goal'] = STATIONS[s['job'].station]
+                            self._route_or_queue_for_dock(amr, inbound=False)
                     else:
                         if self.positions[amr] != AMR_STARTS[amr]:
                             s['mode'] = 'moving_base'
                             s['goal'] = AMR_STARTS[amr]
                             s['job'] = None
+                elif s['mode'] == 'waiting_in_line':
+                    self._try_advance_waiting_line(amr)
+                elif s['mode'] == 'holding_upstream':
+                    if s.get('job') is not None:
+                        self._route_or_queue_for_dock(amr, inbound=s.get('dock_kind') == 'inbound')
             
             # 2. Movement — priority: processing > lexicographical
             from GA.GA import shortest_path_avoiding
@@ -312,6 +448,7 @@ class TickSimulator:
             def get_prio(amr_id):
                 m = self.amr_states[amr_id]['mode']
                 if m in ['processing', 'processing_old', 'loading_dock']: return 0
+                if m in ['waiting_in_line', 'holding_upstream']: return 1
                 return 1
             
             ordered_amrs = sorted(AMR_KEYS, key=lambda a: (get_prio(a), a))
@@ -321,7 +458,7 @@ class TickSimulator:
                 p = self.positions[amr]
 
                 # Stationary modes: reserve position and skip
-                if s['mode'] in ['processing', 'processing_old', 'loading_dock']:
+                if s['mode'] in ['processing', 'processing_old', 'loading_dock', 'waiting_in_line', 'holding_upstream']:
                     moves[amr] = p
                     occupied.add(p)
                     continue
@@ -350,6 +487,9 @@ class TickSimulator:
                 #   (prevents swapping into where they came from)
                 extra_blocked = occupied.copy()
                 extra_blocked.discard(p)
+                for slot, owner in self.wait_slot_owner.items():
+                    if owner != amr:
+                        extra_blocked.add(slot)
                 for o_amr in ordered_amrs:
                     if o_amr == amr:
                         break
@@ -427,7 +567,7 @@ class TickSimulator:
                 # Wait patiently if blocked, unless returning to base
                 if moves[amr] == p and g != p:
                     s['blocked_ticks'] = s.get('blocked_ticks', 0) + 1
-                    if s['blocked_ticks'] > 5 and s['mode'] in ['moving_base', 'moving_station', 'moving_supply']:
+                    if s['blocked_ticks'] > 5 and s['mode'] in ['moving_base', 'moving_station', 'moving_supply', 'moving_wait_slot', 'moving_dock_from_line']:
                         possible_dodges = []
                         for dy in [0, 1, 8, 9]:
                             for dx in range(0, 10):
@@ -451,15 +591,46 @@ class TickSimulator:
                 s = self.amr_states[amr]
                 p = self.positions[amr]
                 if s['mode'] == 'moving_supply' and p == s['goal']:
-                    from GA.GA import TYPE_DURATION
-                    mat = s['job'].type_
-                    s['mode'] = 'loading_dock'
-                    s['proc_ticks'] = TYPE_DURATION[mat]
+                    dock_id = s.get('dock_id') or self._dock_info_for_job(s['job'], inbound=True)[0]
+                    queue = self.dock_queues[dock_id]
+                    if not self._dock_is_occupied(dock_id) and queue and queue[0] == amr:
+                        queue.popleft()
+                        self._set_dock_occupied(dock_id, True)
+                        s['dock_id'] = dock_id
+                        s['dock_kind'] = 'inbound'
+                        s['mode'] = 'loading_dock'
+                        s['proc_ticks'] = s['job'].duration
+                    else:
+                        self._route_or_queue_for_dock(amr, inbound=True)
                 elif s['mode'] == 'moving_station' and p == s['goal']:
-                    if not self.station_occupied[s['job'].station]:
-                        self.station_occupied[s['job'].station] = True
+                    dock_id = s.get('dock_id') or s['job'].station
+                    queue = self.dock_queues[dock_id]
+                    if not self._dock_is_occupied(dock_id) and queue and queue[0] == amr:
+                        queue.popleft()
+                        self._set_dock_occupied(dock_id, True)
+                        s['dock_id'] = dock_id
+                        s['dock_kind'] = 'outbound'
                         s['mode'] = 'processing'
                         s['proc_ticks'] = s['job'].duration
+                    else:
+                        self._route_or_queue_for_dock(amr, inbound=False)
+                elif s['mode'] == 'moving_wait_slot' and p == s['goal']:
+                    s['mode'] = 'waiting_in_line'
+                    self._try_advance_waiting_line(amr)
+                elif s['mode'] == 'moving_dock_from_line' and p == s['goal']:
+                    dock_id = s.get('dock_id')
+                    queue = self.dock_queues.get(dock_id)
+                    if dock_id is not None and queue and queue[0] == amr and not self._dock_is_occupied(dock_id):
+                        queue.popleft()
+                        self._set_dock_occupied(dock_id, True)
+                        if s.get('dock_kind') == 'inbound':
+                            s['mode'] = 'loading_dock'
+                            s['proc_ticks'] = s['job'].duration
+                        else:
+                            s['mode'] = 'processing'
+                            s['proc_ticks'] = s['job'].duration
+                    else:
+                        s['mode'] = 'waiting_in_line'
                 elif s['mode'] == 'moving_base' and p == s['goal']:
                     s['mode'] = 'idle'
                     
@@ -495,14 +666,17 @@ class GridEnv:
         
         self.queue = deque()
         for raw in data['jobs']:
-            props = JOB_PROPS[raw['type']]
+            from GA.GA import INBOUND_DOCK_LOCATIONS, dock_key_from_value
+
             # Randomly choose processing time from [5, 10, 15] deterministically using the job ID
             jid = raw.get("id", raw.get("jid", 0))
             duration = float(random.Random(jid).choice([5, 10, 15]))
+            inbound_dock = dock_key_from_value(raw.get("inbound_dock", raw['type']))
             self.queue.append(Job(
                 jid=jid, jtype=raw['type'], material=raw['type'],
                 arrival_ts=raw['arrival_time'], proc_time=duration,
-                supply_pos=STATIONS[props['supply']], 
+                supply_pos=INBOUND_DOCK_LOCATIONS[inbound_dock],
+                inbound_dock=inbound_dock,
                 dest_pos=STATIONS[raw['dest_station_id']]
             ))
         
@@ -642,9 +816,21 @@ class GridEnv:
                     for i, j in enumerate(unstarted):
                         st_name = pos_to_station.get((int(j.dest_pos[0]), int(j.dest_pos[1])), "M1_1")
                         from GA.GA import Job as GAJob
-                        ga_j = GAJob(idx=i, type_=j.material, station=st_name, duration=j.proc_time)
+                        ga_j = GAJob(
+                            idx=i,
+                            type_=j.material,
+                            station=st_name,
+                            duration=j.proc_time,
+                            inbound_dock=j.inbound_dock,
+                        )
                         ga_jobs.append(ga_j)
-                        job_map[ga_j.idx] = {'jid': j.jid, 'jtype': j.material, 'time': j.proc_time, 'station': st_name.replace('station', '')}
+                        job_map[ga_j.idx] = {
+                            'jid': j.jid,
+                            'jtype': j.material,
+                            'time': j.proc_time,
+                            'station': st_name.replace('station', ''),
+                            'inbound_dock': j.inbound_dock,
+                        }
                     
                     import time
                     start_cpu_time = time.perf_counter()
@@ -767,7 +953,7 @@ class GridEnv:
         for amr in AMR_KEYS:
             s = self.sim.amr_states[amr]
             status_val = 0.0 if s['mode'] == 'idle' else 1.0
-            rem = s['proc_ticks'] if s['mode'] in ['processing', 'processing_old'] else 0.0
+            rem = s['proc_ticks'] if s['mode'] in ['processing', 'processing_old', 'loading_dock'] else 0.0
             # S2: Use queue depth instead of wasted 0.0
             queue_depth = len(self.sim.amr_queues[amr]) / 10.0
             a_data.append([

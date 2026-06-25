@@ -16,6 +16,7 @@ from GA.GA import (  # noqa: E402
     AMR_LOAD_CAPACITY,
     AMR_STARTS,
     DISPATCH_EVENT_INDEX_ENV,
+    INBOUND_DOCK_LOCATIONS,
     Individual,
     Job,
     Operation,
@@ -24,6 +25,7 @@ from GA.GA import (  # noqa: E402
     TYPE_DURATION,
     UNLOAD,
     decode_schedule_tick_by_tick,
+    dock_key_from_value,
     heuristic,
     job_pickup_location,
     load_dispatch_events,
@@ -96,10 +98,12 @@ class AssignmentEstimate:
 
 
 def initial_state() -> RuleState:
+    dock_availabilities = {station: 0.0 for station in STATIONS.keys()}
+    dock_availabilities.update({dock: 0.0 for dock in INBOUND_DOCK_LOCATIONS.keys()})
     return RuleState(
         amr_positions={amr: AMR_STARTS[amr] for amr in AMR_KEYS},
         amr_availabilities={amr: 0.0 for amr in AMR_KEYS},
-        station_availabilities={station: 0.0 for station in STATIONS.keys()},
+        station_availabilities=dock_availabilities,
         inventory={amr: {mat: 0 for mat in TYPE_DURATION.keys()} for amr in AMR_KEYS},
         assigned_count={amr: 0 for amr in AMR_KEYS},
         picked_jobs=set(),
@@ -115,12 +119,18 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     capacity_blocked = state.inventory[amr].get(material, 0) >= AMR_LOAD_CAPACITY
     pickup_location = job_pickup_location(job)
     to_pickup = heuristic(curr_pos, pickup_location)
-    pickup_end = max(avail + to_pickup, float(job.arrival_time))
+    inbound_dock = dock_key_from_value(job.inbound_dock)
+    pickup_start = max(
+        avail + to_pickup,
+        float(job.arrival_time),
+        state.station_availabilities.get(inbound_dock, 0.0),
+    )
+    pickup_end = pickup_start + job.duration
 
     target_station = STATIONS[job.station]
     to_station = heuristic(pickup_location, target_station)
     travel_end = pickup_end + to_station
-    process_start = max(travel_end, state.station_availabilities[job.station])
+    process_start = max(travel_end, state.station_availabilities.get(job.station, 0.0))
     process_end = process_start + job.duration
     travel_time = to_pickup + to_station
 
@@ -147,6 +157,7 @@ def apply_assignment(job: Job, estimate: AssignmentEstimate, state: RuleState) -
         state.inventory[amr].get(material, 0) + 1,
     )
     state.inventory[amr][material] -= 1
+    state.station_availabilities[dock_key_from_value(job.inbound_dock)] = estimate.supply_end
     state.station_availabilities[job.station] = estimate.process_end
     state.amr_availabilities[amr] = estimate.process_end
     state.amr_positions[amr] = STATIONS[job.station]

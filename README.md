@@ -1,4 +1,6 @@
-6 stations
+Current cross-docking default: 5 AMRs, 5 inbound docks, and 5 outbound/processing stations.
+
+Legacy FJSP generator default: 6 stations
 
 10, 15, 20, 25, 30 jobs per instance
 

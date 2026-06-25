@@ -18,7 +18,7 @@ JOB_TYPES = {
     "C": {"time": 15.0},
 }
 JOB_TYPE_KEYS = list(JOB_TYPES.keys())
-INBOUND_DOCKS = ["dock1", "dock2", "dock3"]
+INBOUND_DOCKS = ["dock1", "dock2", "dock3", "dock4", "dock5"]
 
 # --------------------------- Logic ---------------------------
 

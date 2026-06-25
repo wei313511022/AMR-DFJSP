@@ -19,9 +19,11 @@ from functools import lru_cache
 
 # Constants Setup
 AMR_STARTS = {
-    "AMR1": (2, 8),
-    "AMR2": (2, 5),
-    "AMR3": (2, 2),
+    "AMR1": (2, 9),
+    "AMR2": (2, 7),
+    "AMR3": (2, 5),
+    "AMR4": (2, 3),
+    "AMR5": (2, 1),
 }
 AMR_KEYS = list(AMR_STARTS.keys())
 STATIONS = {
@@ -37,22 +39,38 @@ TYPE_DURATION = {"A": 5, "B": 10, "C": 15}
 PROCESSING_TIMES = [float(v) for v in TYPE_DURATION.values()]
 PROCESSING_TIME_TO_TYPE = {float(v): k for k, v in TYPE_DURATION.items()}
 JOB_TYPE_KEYS = list(TYPE_DURATION.keys())
-INBOUND_DOCK_LOCATIONS = {"dock1": (0, 8), "dock2": (0, 5), "dock3": (0, 2)}
+INBOUND_DOCK_LOCATIONS = {
+    "dock1": (0, 9),
+    "dock2": (0, 7),
+    "dock3": (0, 5),
+    "dock4": (0, 3),
+    "dock5": (0, 1),
+}
 INBOUND_DOCK_KEYS = list(INBOUND_DOCK_LOCATIONS.keys())
 DOCK_ALIASES = {
-    "1": "dock1", "dock1": "dock1", "A": "dock1",
-    "2": "dock2", "dock2": "dock2", "B": "dock2",
-    "3": "dock3", "dock3": "dock3", "C": "dock3",
+    **{str(i): f"dock{i}" for i in range(1, 6)},
+    **{f"dock{i}": f"dock{i}" for i in range(1, 6)},
+    **{f"DOCK{i}": f"dock{i}" for i in range(1, 6)},
+    "A": "dock1",
+    "B": "dock2",
+    "C": "dock3",
 }
-SUPPLY_LOCATIONS = INBOUND_DOCK_LOCATIONS
+SUPPLY_LOCATIONS = {
+    **INBOUND_DOCK_LOCATIONS,
+    "A": INBOUND_DOCK_LOCATIONS["dock1"],
+    "B": INBOUND_DOCK_LOCATIONS["dock2"],
+    "C": INBOUND_DOCK_LOCATIONS["dock3"],
+}
 AMR_LOAD_CAPACITY = 3
 PICKUP = "pickup"
 UNLOAD = "unload"
+WAIT_LINE_DEPTH = 3
 _GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(INBOUND_DOCK_LOCATIONS.values())
 GRID_MIN_X = min(p[0] for p in _GRID_POINTS)
 GRID_MAX_X = max(p[0] for p in _GRID_POINTS)
 GRID_MIN_Y = min(p[1] for p in _GRID_POINTS)
 GRID_MAX_Y = max(p[1] for p in _GRID_POINTS)
+DOCK_SERVICE_CELLS = set(INBOUND_DOCK_LOCATIONS.values()) | set(STATIONS.values())
 
 SCHEDULE_OUTBOX = Path("schedule_outbox.jsonl")
 DISPATCH_INBOX = Path("../../test_case/static/dispatch_inbox_60.jsonl")
@@ -112,6 +130,45 @@ def _adjacent_points(point: Tuple[int, int]) -> List[Tuple[int, int]]:
             continue
         neighbors.append(candidate)
     return neighbors #return legal can move adjacent_points
+
+
+def _dock_inward_direction(dock_pos: Tuple[int, int]) -> Tuple[int, int]:
+    x, y = dock_pos
+    if x == GRID_MIN_X:
+        return (1, 0)
+    if x == GRID_MAX_X:
+        return (-1, 0)
+    if y == GRID_MIN_Y:
+        return (0, 1)
+    if y == GRID_MAX_Y:
+        return (0, -1)
+    return (0, 0)
+
+
+@lru_cache(maxsize=None)
+def dock_waiting_slots(dock_pos: Tuple[int, int], depth: int = WAIT_LINE_DEPTH) -> Tuple[Tuple[int, int], ...]:
+    inward_dx, inward_dy = _dock_inward_direction(dock_pos)
+    if inward_dx != 0:
+        lateral_dirs = ((0, 1), (0, -1))
+    else:
+        lateral_dirs = ((1, 0), (-1, 0))
+
+    slots: List[Tuple[int, int]] = []
+    seen = set()
+    dock_x, dock_y = dock_pos
+    for line_depth in range(depth + 1):
+        base = (dock_x + inward_dx * line_depth, dock_y + inward_dy * line_depth)
+        for lat_dx, lat_dy in lateral_dirs:
+            candidate = (base[0] + lat_dx, base[1] + lat_dy)
+            if candidate in seen:
+                continue
+            if not _is_within_bounds(candidate):
+                continue
+            if candidate in OBSTACLES or candidate in DOCK_SERVICE_CELLS:
+                continue
+            seen.add(candidate)
+            slots.append(candidate)
+    return tuple(slots)
 
 #Tracing back the complete path from parents
 def _build_path(parents: Dict[Tuple[int, int], Optional[Tuple[int, int]]], end: Tuple[int, int]) -> List[Tuple[int, int]]:
@@ -1065,7 +1122,9 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
     amr_states = {amr: (current_position[amr], availability[amr]) for amr in AMR_STARTS}
     path_logs = {amr: [current_position[amr]] for amr in AMR_STARTS} if need_log else {}
     reservations: Dict[Tuple[Tuple[int, int], int], str] = {}
-    station_available = {station: 0.0 for station in STATIONS}
+    dock_available = {dock: 0.0 for dock in INBOUND_DOCK_LOCATIONS}
+    dock_available.update({station: 0.0 for station in STATIONS})
+    wait_slot_reservations: Dict[Tuple[int, int], List[Tuple[float, float, str]]] = {}
     completed = set()
 
     def has_future_work(amr: str) -> bool:
@@ -1080,6 +1139,32 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             return
         for tick in range(int(start), int(end) + 1):
             reservations[(location, tick)] = amr
+
+    def intervals_overlap(start_a: float, end_a: float, start_b: float, end_b: float) -> bool:
+        return start_a < end_b and start_b < end_a
+
+    def wait_slot_is_free(slot: Tuple[int, int], start: float, end: float) -> bool:
+        if end <= start:
+            return True
+        for reserved_start, reserved_end, _ in wait_slot_reservations.get(slot, []):
+            if intervals_overlap(start, end, reserved_start, reserved_end):
+                return False
+        return True
+
+    def reserve_wait_slot(slot: Tuple[int, int], amr: str, start: float, end: float) -> None:
+        if end <= start:
+            return
+        wait_slot_reservations.setdefault(slot, []).append((start, end, amr))
+        reserve_wait(slot, amr, start, end)
+
+    def next_wait_slot_release(slots: Tuple[Tuple[int, int], ...], after_time: float) -> Optional[float]:
+        releases = [
+            reserved_end
+            for slot in slots
+            for _, reserved_end, _ in wait_slot_reservations.get(slot, [])
+            if reserved_end > after_time
+        ]
+        return min(releases) if releases else None
 
     def move_amr(amr: str, destination: Tuple[int, int], start_time: float, job_id: int, path_type: str, label: str) -> float:
         nonlocal invalid_jobs_count
@@ -1107,6 +1192,136 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         current_position[amr] = destination
         return end_time
 
+    def hold_upstream(amr: str, job_id: int, until_time: float, reason: str) -> None:
+        start_time = availability[amr]
+        if until_time <= start_time:
+            until_time = start_time + 1
+
+        if current_position[amr] in DOCK_SERVICE_CELLS and current_position[amr] != AMR_STARTS[amr]:
+            move_amr(
+                amr,
+                AMR_STARTS[amr],
+                start_time,
+                job_id,
+                "return",
+                f"Clear Dock {int(grid_distance(current_position[amr], AMR_STARTS[amr]))}s",
+            )
+            start_time = availability[amr]
+            if until_time <= start_time:
+                until_time = start_time + 1
+
+        if need_log:
+            timelines.append((amr, start_time, until_time, "hold_upstream", reason))
+        reserve_wait(current_position[amr], amr, start_time, until_time)
+        availability[amr] = until_time
+        if check_collision:
+            amr_states[amr] = (current_position[amr], until_time)
+
+    def choose_wait_slot(
+        dock_pos: Tuple[int, int],
+        dock_ready_time: float,
+        service_ready_time: float,
+        amr: str,
+    ) -> Optional[Tuple[Tuple[int, int], float, float, float]]:
+        best_choice = None
+        for slot in dock_waiting_slots(dock_pos):
+            slot_arrival = availability[amr] + grid_distance(current_position[amr], slot)
+            slot_to_dock = grid_distance(slot, dock_pos)
+            service_start = max(slot_arrival + slot_to_dock, dock_ready_time, service_ready_time)
+            leave_slot = service_start - slot_to_dock
+            if leave_slot <= slot_arrival:
+                continue
+            if not wait_slot_is_free(slot, slot_arrival, leave_slot):
+                continue
+            score = (service_start, slot_arrival, grid_distance(current_position[amr], slot), slot)
+            if best_choice is None or score < best_choice[0]:
+                best_choice = (score, slot, slot_arrival, leave_slot, service_start)
+        if best_choice is None:
+            return None
+        _, slot, slot_arrival, leave_slot, service_start = best_choice
+        return slot, slot_arrival, leave_slot, service_start
+
+    def execute_dock_service(
+        amr: str,
+        job: Job,
+        dock_id: str,
+        dock_pos: Tuple[int, int],
+        service_ready_time: float,
+        service_duration: float,
+        dock_kind: str,
+        path_type: str,
+        direct_label: str,
+        wait_kind: str,
+        wait_label: str,
+        service_kind: str,
+        service_label: str,
+    ) -> float:
+        nonlocal invalid_jobs_count
+        slots = dock_waiting_slots(dock_pos)
+
+        while True:
+            travel_start = availability[amr]
+            direct_travel_time = grid_distance(current_position[amr], dock_pos)
+            direct_arrival_est = travel_start + direct_travel_time
+            direct_service_start = max(direct_arrival_est, dock_available[dock_id], service_ready_time)
+
+            if direct_service_start <= direct_arrival_est:
+                dock_arrival = move_amr(amr, dock_pos, travel_start, job.idx, path_type, direct_label)
+                process_start = max(dock_arrival, dock_available[dock_id], service_ready_time)
+                if need_log and process_start > dock_arrival:
+                    timelines.append((amr, dock_arrival, process_start, wait_kind, wait_label))
+                reserve_wait(dock_pos, amr, dock_arrival, process_start)
+                break
+
+            slot_choice = choose_wait_slot(dock_pos, dock_available[dock_id], service_ready_time, amr)
+            if slot_choice is not None:
+                slot, _, planned_leave_slot, _ = slot_choice
+                line_start = availability[amr]
+                line_arrival = move_amr(
+                    amr,
+                    slot,
+                    line_start,
+                    job.idx,
+                    f"{dock_kind}_line",
+                    f"Job{job.idx} to {dock_kind} line {int(grid_distance(current_position[amr], slot))}s",
+                )
+                slot_to_dock = grid_distance(slot, dock_pos)
+                process_start_est = max(line_arrival + slot_to_dock, dock_available[dock_id], service_ready_time)
+                leave_slot = max(planned_leave_slot, process_start_est - slot_to_dock)
+                if need_log and leave_slot > line_arrival:
+                    timelines.append((amr, line_arrival, leave_slot, wait_kind, wait_label))
+                reserve_wait_slot(slot, amr, line_arrival, leave_slot)
+                dock_arrival = move_amr(
+                    amr,
+                    dock_pos,
+                    leave_slot,
+                    job.idx,
+                    path_type,
+                    f"Job{job.idx} line to {dock_kind} dock {int(grid_distance(current_position[amr], dock_pos))}s",
+                )
+                process_start = max(dock_arrival, dock_available[dock_id], service_ready_time)
+                if need_log and process_start > dock_arrival:
+                    timelines.append((amr, dock_arrival, process_start, wait_kind, wait_label))
+                reserve_wait(dock_pos, amr, dock_arrival, process_start)
+                break
+
+            release_time = next_wait_slot_release(slots, travel_start)
+            dock_depart_time = max(dock_available[dock_id], service_ready_time) - direct_travel_time
+            hold_candidates = [t for t in (release_time, dock_depart_time, dock_available[dock_id], service_ready_time) if t is not None and t > travel_start]
+            hold_until = min(hold_candidates) if hold_candidates else travel_start + 1
+            hold_upstream(amr, job.idx, hold_until, f"Hold before {dock_kind} dock")
+
+        service_end = process_start + service_duration
+        if need_log:
+            timelines.append((amr, process_start, service_end, service_kind, service_label))
+        reserve_wait(dock_pos, amr, process_start, service_end)
+        dock_available[dock_id] = service_end
+        availability[amr] = service_end
+        current_position[amr] = dock_pos
+        if check_collision:
+            amr_states[amr] = (dock_pos, service_end)
+        return service_end
+
     def execute_unload(op: Operation) -> None:
         nonlocal invalid_jobs_count
         key = _operation_key(op)
@@ -1120,25 +1335,24 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             completed.add(key)
             return
 
-        travel_start = availability[amr]
         station_pos = STATIONS[job.station]
-        travel_end = move_amr(amr, station_pos, travel_start, job.idx, "unload", f"Job{job.idx} unload trans {int(grid_distance(current_position[amr], station_pos))}s")
-        earliest_start = max(travel_end, station_available[job.station])
-        if need_log and earliest_start > travel_end:
-            timelines.append((amr, travel_end, earliest_start, "wait", "Wait Stn"))
-        reserve_wait(station_pos, amr, travel_end, earliest_start)
-
-        process_start = earliest_start
-        process_end = process_start + job.duration
-        if need_log:
-            timelines.append((amr, process_start, process_end, f"process_{job.type_}", f"Job{job.idx} {job.type_}({int(job.duration)}s)"))
-        reserve_wait(station_pos, amr, process_start, process_end)
+        execute_dock_service(
+            amr,
+            job,
+            job.station,
+            station_pos,
+            0.0,
+            job.duration,
+            "outbound",
+            "unload",
+            f"Job{job.idx} unload trans {int(grid_distance(current_position[amr], station_pos))}s",
+            "wait_outbound_line",
+            "Wait Outbound Dock",
+            f"process_{job.type_}",
+            f"Job{job.idx} {job.type_}({int(job.duration)}s)",
+        )
         inventory[amr][job.type_].remove(job.idx)
-        station_available[job.station] = process_end
-        availability[amr] = process_end
         current_position[amr] = station_pos
-        if check_collision:
-            amr_states[amr] = (station_pos, process_end)
         completed.add(key)
 
         if has_future_work(amr):
@@ -1179,18 +1393,26 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         dock_pos = INBOUND_DOCK_LOCATIONS[dock_key]
         if need_log:
             queue_infos.append((job.idx, availability[amr]))
-        travel_start = availability[amr]
-        travel_end = move_amr(amr, dock_pos, travel_start, job.idx, "pickup", f"Job{job.idx} pickup trans {int(grid_distance(current_position[amr], dock_pos))}s")
-        pickup_time = max(travel_end, float(job.arrival_time))
-        if need_log and pickup_time > travel_end:
-            timelines.append((amr, travel_end, pickup_time, "wait", "Wait Arrival"))
-        reserve_wait(dock_pos, amr, travel_end, pickup_time)
-        availability[amr] = pickup_time
+        pickup_end = execute_dock_service(
+            amr,
+            job,
+            dock_key,
+            dock_pos,
+            float(job.arrival_time),
+            job.duration,
+            "inbound",
+            "pickup",
+            f"Job{job.idx} pickup trans {int(grid_distance(current_position[amr], dock_pos))}s",
+            "wait_inbound_line",
+            "Wait Inbound Dock",
+            "load_inbound",
+            f"Job{job.idx} inbound {job.type_}({int(job.duration)}s)",
+        )
         current_position[amr] = dock_pos
         inventory[amr][job.type_].append(job.idx)
         completed.add(key)
         if check_collision:
-            amr_states[amr] = (dock_pos, float("inf") if has_future_work(amr) else pickup_time)
+            amr_states[amr] = (dock_pos, float("inf") if has_future_work(amr) else pickup_end)
 
     for op in operations:
         if _operation_key(op) in completed:

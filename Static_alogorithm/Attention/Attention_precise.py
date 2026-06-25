@@ -29,7 +29,7 @@ from GA.GA import (
     _is_within_bounds, _DELTAS, _adjacent_points, _build_path, _manhattan_path,
     heuristic, shortest_path, find_dynamic_path, _extend_path_log, grid_distance,
     nearest_base_to_station, _diagnose_and_print_failure, decode_schedule, decode_schedule_tick_by_tick, fitness,
-    plot_gantt, station_key_from_value, load_dispatch_events, make_jobs
+    plot_gantt, station_key_from_value, dock_key_from_value, load_dispatch_events, make_jobs
 )
 from operation_policy import (
     action_mask,
@@ -376,7 +376,13 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
             pickup_time = int(len(pickup_path) - 1)
             if pickup_time == 0 and amr_positions[chosen_amr] != pickup_location:
                 pickup_time = MAX_DEPTH
-            pickup_end = max(start_time + pickup_time, float(chosen_job.arrival_time))
+            inbound_dock = dock_key_from_value(chosen_job.inbound_dock)
+            pickup_start = max(
+                start_time + pickup_time,
+                float(chosen_job.arrival_time),
+                station_availabilities.get(inbound_dock, 0.0),
+            )
+            pickup_end = pickup_start + chosen_job.duration
             for t_offset, pt in enumerate(pickup_path):
                 reservations[(pt, int(start_time) + t_offset)] = chosen_amr
             for t_wait in range(int(start_time) + pickup_time, int(pickup_end) + 1):
@@ -384,6 +390,7 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
             amr_states[chosen_amr] = (pickup_location, pickup_end)
             amr_availabilities[chosen_amr] = pickup_end
             amr_positions[chosen_amr] = pickup_location
+            station_availabilities[inbound_dock] = pickup_end
             amr_inventory[chosen_amr][chosen_job.type_] += 1
             picked_jobs_set.add(chosen_job.idx)
             carrier_map[chosen_job.idx] = chosen_amr

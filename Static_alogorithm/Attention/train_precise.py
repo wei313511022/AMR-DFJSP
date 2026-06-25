@@ -21,6 +21,7 @@ from Attention_precise import (
 from GA.GA import (
     PICKUP,
     MAX_DEPTH,
+    dock_key_from_value,
     empty_count_inventory,
     find_dynamic_path,
     job_pickup_location,
@@ -88,7 +89,13 @@ def _apply_precise_action(
         pickup_time = int(len(pickup_path) - 1)
         if pickup_time == 0 and amr_positions[chosen_amr] != pickup_location:
             pickup_time = MAX_DEPTH
-        pickup_end = max(start_time + pickup_time, float(chosen_job.arrival_time))
+        inbound_dock = dock_key_from_value(chosen_job.inbound_dock)
+        pickup_start = max(
+            start_time + pickup_time,
+            float(chosen_job.arrival_time),
+            station_availabilities.get(inbound_dock, 0.0),
+        )
+        pickup_end = pickup_start + chosen_job.duration
 
         for t_offset, point in enumerate(pickup_path):
             reservations[(point, int(start_time) + t_offset)] = chosen_amr
@@ -98,6 +105,7 @@ def _apply_precise_action(
         amr_states[chosen_amr] = (pickup_location, pickup_end)
         amr_availabilities[chosen_amr] = pickup_end
         amr_positions[chosen_amr] = pickup_location
+        station_availabilities[inbound_dock] = pickup_end
         amr_inventory[chosen_amr][material] += 1
         picked_jobs_set.add(chosen_job.idx)
         carrier_map[chosen_job.idx] = chosen_amr

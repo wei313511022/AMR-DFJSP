@@ -15,7 +15,7 @@ JOB_PROCESSING_TIMES = {
     "B": 10.0,
     "C": 15.0,
 }
-INBOUND_DOCKS = ["dock1", "dock2", "dock3"]
+INBOUND_DOCKS = ["dock1", "dock2", "dock3", "dock4", "dock5"]
 # Station IDs for Work Stations (Where the job needs to go)
 # Assuming 5 stations labeled 1 to 5 as per your visualizer
 DESTINATION_STATION_IDS = [1, 2, 3, 4, 5] 

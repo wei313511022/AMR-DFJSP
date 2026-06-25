@@ -26,9 +26,11 @@ AMR_STATE_FILE = "../Random_Job_Arrivals/models/dynamic_amr_state.json"
 GRID_W, GRID_H = 10, 11
 
 START_POS: Dict[int, Tuple[int, int]] = {
-    3: (2, 2),
-    2: (2, 5),
-    1: (2, 8),
+    1: (2, 9),
+    2: (2, 7),
+    3: (2, 5),
+    4: (2, 3),
+    5: (2, 1),
 }
 
 # Production stations (right side).
@@ -40,11 +42,13 @@ STATION_POS: Dict[int, Tuple[int, int]] = {
     1: (9, 9),
 }
 
-# Material stations (left side) by job type
-MAT_POS: Dict[str, Tuple[int, int]] = {
-    "C": (0, 2),
-    "B": (0, 5),
-    "A": (0, 8),
+# Inbound docks (left side).
+DOCK_POS: Dict[int, Tuple[int, int]] = {
+    1: (0, 9),
+    2: (0, 7),
+    3: (0, 5),
+    4: (0, 3),
+    5: (0, 1),
 }
 
 # Static obstacles
@@ -53,7 +57,7 @@ OBSTACLES: Set[Tuple[int, int]] = set()
 # ---------- Config ----------
 UPDATE_INTERVAL_MS = 200   # poll rate in ms
 MATERIAL_CAPACITY = 3
-AMR_COUNT = 3
+AMR_COUNT = 5
 
 # ---------- AMR Visual State ----------
 class AMRVisual:
@@ -112,8 +116,8 @@ def draw_static(ax):
             fontsize=9, color="tab:red", weight="bold", zorder=3,
         )
 
-    # material stations (blue)
-    for jt, (mx, my) in MAT_POS.items():
+    # inbound docks (blue)
+    for dock_id, (mx, my) in DOCK_POS.items():
         ax.add_patch(
             Rectangle(
                 (mx - 0.5, my - 0.5), 1, 1,
@@ -122,7 +126,7 @@ def draw_static(ax):
             )
         )
         ax.text(
-            mx - 0.45, my + 0.15, f"Dock {jt}",
+            mx - 0.45, my + 0.15, f"D{dock_id}",
             fontsize=9, color="tab:blue", weight="bold", zorder=3,
         )
 
@@ -134,6 +138,8 @@ def create_amrs(ax) -> Dict[int, AMRVisual]:
         1: "tab:red",
         2: "tab:green",
         3: "tab:purple",
+        4: "tab:orange",
+        5: "tab:blue",
     }
 
     for i in range(1, AMR_COUNT + 1):
