@@ -139,6 +139,7 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
             amr_positions,
             amr_availabilities,
             amr_inventory,
+            station_availabilities,
         )
         amr_feat = amr_feat.to(device)
         job_feat = job_feat.to(device)
@@ -307,7 +308,7 @@ def train_reinforce(args):
     dispatch_events = load_training_events(args.inbox, args.inboxes)
     validation_events = _load_validation_events(args)
     attention_model = SchedulerAttention(
-        amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2
+        amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2
     ).to(device)
     optimizer = optim.Adam(attention_model.parameters(), lr=args.lr)
     load_training_checkpoint(
@@ -497,7 +498,7 @@ def train_ppo(args):
     dispatch_events = load_training_events(args.inbox, args.inboxes)
     validation_events = _load_validation_events(args)
     attention_model = SchedulerAttention(
-        amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2
+        amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2
     ).to(device)
     optimizer = optim.Adam(attention_model.parameters(), lr=args.lr)
     load_training_checkpoint(

@@ -26,6 +26,9 @@ OPERATION_KINDS = (PICKUP, UNLOAD)
 PICKUP_OP = 0
 UNLOAD_OP = 1
 NUM_OPERATION_TYPES = 2
+DOCK_DELAY_SCALE = 100.0
+DOCK_QUEUE_SCALE = float(max(len(AMR_KEYS), 1))
+LOWER_BOUND_SCALE = 500.0
 
 
 @dataclass(frozen=True)
@@ -182,6 +185,85 @@ def action_mask(
 
 def completed_job_mask(jobs: Sequence[Job], completed_jobs_set: set) -> List[bool]:
     return [job.idx in completed_jobs_set for job in jobs]
+
+
+def decision_time(amr_availabilities: Dict[str, float]) -> float:
+    return min(amr_availabilities.values()) if amr_availabilities else 0.0
+
+
+def completion_time_lower_bound(
+    job: Job,
+    amr_positions: Dict[str, Tuple[int, int]],
+    amr_availabilities: Dict[str, float],
+    station_availabilities: Dict[str, float],
+) -> float:
+    if not amr_positions:
+        return 0.0
+
+    pickup_location = job_pickup_location(job)
+    target_station = STATIONS[job.station]
+    inbound_dock = dock_key_from_value(job.inbound_dock)
+    lower_bounds = []
+
+    for amr in AMR_KEYS:
+        if amr not in amr_positions or amr not in amr_availabilities:
+            continue
+        pickup_travel = heuristic(amr_positions[amr], pickup_location)
+        pickup_start = max(
+            amr_availabilities[amr] + pickup_travel,
+            float(job.arrival_time),
+            station_availabilities.get(inbound_dock, 0.0),
+        )
+        pickup_end = pickup_start + job.duration
+        outbound_travel_end = pickup_end + heuristic(pickup_location, target_station)
+        completion = max(
+            outbound_travel_end,
+            station_availabilities.get(job.station, 0.0),
+        ) + job.duration
+        lower_bounds.append(completion)
+
+    return min(lower_bounds) if lower_bounds else 0.0
+
+
+def dock_congestion_features(
+    job: Job,
+    jobs: Sequence[Job],
+    picked_jobs_set: set,
+    completed_jobs_set: set,
+    station_availabilities: Dict[str, float],
+    current_time: float,
+) -> Tuple[float, float, float, float]:
+    inbound_dock = dock_key_from_value(job.inbound_dock)
+    inbound_delay = max(
+        0.0,
+        station_availabilities.get(inbound_dock, 0.0) - current_time,
+    ) / DOCK_DELAY_SCALE
+    outbound_delay = max(
+        0.0,
+        station_availabilities.get(job.station, 0.0) - current_time,
+    ) / DOCK_DELAY_SCALE
+
+    inbound_committed = sum(
+        1
+        for other in jobs
+        if other.idx in picked_jobs_set
+        and other.idx not in completed_jobs_set
+        and dock_key_from_value(other.inbound_dock) == inbound_dock
+    )
+    outbound_committed = sum(
+        1
+        for other in jobs
+        if other.idx in picked_jobs_set
+        and other.idx not in completed_jobs_set
+        and other.station == job.station
+    )
+
+    return (
+        inbound_delay,
+        outbound_delay,
+        inbound_committed / DOCK_QUEUE_SCALE,
+        outbound_committed / DOCK_QUEUE_SCALE,
+    )
 
 
 def estimate_action(
