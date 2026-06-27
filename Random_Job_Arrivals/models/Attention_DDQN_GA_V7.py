@@ -427,7 +427,7 @@ class GridEnv:
         self.scheduled_queue = deque() # Stores the result of GA
         
         # Load the pretrained heuristic Attention model
-        self.heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
+        self.heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2)
         weights_path = os.path.join(os.path.dirname(__file__), '../../Static_alogorithm/Attention/attention_scheduler_best.pth')
         if os.path.exists(weights_path):
             self.heuristic_attention.load_state_dict(torch.load(weights_path, map_location=CONFIG['DEVICE']))

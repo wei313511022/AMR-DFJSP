@@ -158,7 +158,7 @@ def _mp_bg_worker(ga_jobs, init_state, job_map, attention_state_dict, device, ro
 
         start = _time.perf_counter()
         
-        heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
+        heuristic_attention = SchedulerAttention(amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2)
         if attention_state_dict:
             heuristic_attention.load_state_dict(attention_state_dict)
         heuristic_attention.to(device)

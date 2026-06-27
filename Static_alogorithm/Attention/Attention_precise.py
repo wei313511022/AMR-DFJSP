@@ -34,10 +34,14 @@ from GA.GA import (
 from operation_policy import (
     action_mask,
     carrier_feature,
+    completion_time_lower_bound,
     decode_action_id,
+    decision_time,
+    dock_congestion_features,
     initial_operation_state,
     job_status_value,
     load_required_operation_checkpoint,
+    LOWER_BOUND_SCALE,
 )
 from neural_local_improvement import apply_neural_local_improvement
 
@@ -57,7 +61,7 @@ def describe_solution_attention(individual: Individual, jobs: List[Job], solve_t
 
 # ===== Attention Architecture =====
 class SchedulerAttention(nn.Module):
-    def __init__(self, amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2):
+    def __init__(self, amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2):
         super().__init__()
         self.amr_emb = nn.Linear(amr_in_dim, hidden_dim)
         self.job_emb = nn.Linear(job_in_dim, hidden_dim)
@@ -210,7 +214,16 @@ class SchedulerAttention(nn.Module):
         return self.critic(combined).squeeze(-1)
 
 
-def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_positions, amr_availabilities, amr_inventory):
+def extract_state(
+    jobs,
+    picked_jobs_set,
+    completed_jobs_set,
+    carrier_map,
+    amr_positions,
+    amr_availabilities,
+    amr_inventory,
+    station_availabilities,
+):
     """
     Constructs the tensor inputs for the Attention model.
     Returns amr_features, job_features, job_mask defined as:
@@ -225,7 +238,7 @@ def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_po
      6: pos_y / 10.0
      7: queue_depth (jobs assigned to this AMR / 10.0)
      
-    Job Features (11):
+    Job Features (16):
      0: exist_flag (1.0)
      1: duration / 25.0
      2: carrier AMR index proxy
@@ -237,6 +250,11 @@ def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_po
      8: type B flag (1.0 or 0.0)
      9: type C flag (1.0 or 0.0)
      10: job_status (0.0 unpicked, 0.5 onboard, 1.0 completed)
+     11: completion_time_lower_bound / 500.0
+     12: inbound_dock_available_delay / 100.0
+     13: outbound_dock_available_delay / 100.0
+     14: inbound_dock_queue_length / num_amrs
+     15: outbound_dock_queue_length / num_amrs
      
     Job Mask: boolean array of size len(jobs), True if job completed
     """
@@ -270,12 +288,27 @@ def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_po
     # Job Features
     job_feat = []
     job_mask = []
+    current_time = decision_time(amr_availabilities)
     for job in jobs:
         pos = STATIONS[job.station]
         supply_pos = job_pickup_location(job)
         
         is_completed = job.idx in completed_jobs_set
         job_status = job_status_value(job.idx, picked_jobs_set, completed_jobs_set)
+        lb_val = 0.0 if is_completed else completion_time_lower_bound(
+            job,
+            amr_positions,
+            amr_availabilities,
+            station_availabilities,
+        )
+        dock_features = dock_congestion_features(
+            job,
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            station_availabilities,
+            current_time,
+        )
         
         feat = [
             1.0,  # exist_flag
@@ -288,7 +321,9 @@ def extract_state(jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_po
             1.0 if job.type_ == "A" else 0.0,
             1.0 if job.type_ == "B" else 0.0,
             1.0 if job.type_ == "C" else 0.0,
-            job_status
+            job_status,
+            lb_val / LOWER_BOUND_SCALE,
+            *dock_features,
         ]
         job_feat.append(feat)
         job_mask.append(is_completed)
@@ -330,7 +365,14 @@ def solve_with_attention(jobs, model, deterministic=True, init_state: dict = Non
     for step in range(2 * len(jobs)):
         # 1. State Extraction
         amr_feat, job_feat, job_mask = extract_state(
-            jobs, picked_jobs_set, completed_jobs_set, carrier_map, amr_positions, amr_availabilities, amr_inventory
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            carrier_map,
+            amr_positions,
+            amr_availabilities,
+            amr_inventory,
+            station_availabilities,
         )
         
         # Move tensors to the model's device
@@ -446,7 +488,7 @@ if __name__ == "__main__":
     np.random.seed(42)
     
     # 2. Create Model
-    attention_model = SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2)
+    attention_model = SchedulerAttention(amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2)
     
     weights_path = Path("attention_precise_scheduler_best.pth")
     if not weights_path.exists():

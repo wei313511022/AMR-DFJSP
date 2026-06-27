@@ -34,10 +34,14 @@ from GA.GA import (
 from operation_policy import (
     action_mask,
     carrier_feature,
+    completion_time_lower_bound,
     decode_action_id,
+    decision_time,
+    dock_congestion_features,
     initial_operation_state,
     job_status_value,
     load_required_operation_checkpoint,
+    LOWER_BOUND_SCALE,
 )
 from neural_local_improvement import apply_neural_local_improvement
 
@@ -96,7 +100,7 @@ class SchedulerGNN(nn.Module):
     - Machine Actor: MLP decoder selecting the AMR/machine for the chosen job
     - Joint Critic: Shared value network estimating V(s_t)
     """
-    def __init__(self, job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3):
+    def __init__(self, job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3):
         super().__init__()
         self.hidden_dim = hidden_dim
 
@@ -200,7 +204,7 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
     Constructs the tensor inputs for the GNN model.
     Returns: amr_features, job_features, job_mask, adj_matrix
 
-    Job Features (12):
+    Job Features (16):
      0:  exist_flag (1.0)
      1:  duration / 25.0
      2:  carrier AMR index proxy
@@ -213,6 +217,10 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
      9:  type C flag
      10: job_status (0.0 unpicked, 0.5 onboard, 1.0 completed)
      11: completion_time_lower_bound / 500.0
+     12: inbound_dock_available_delay / 100.0
+     13: outbound_dock_available_delay / 100.0
+     14: inbound_dock_queue_length / num_amrs
+     15: outbound_dock_queue_length / num_amrs
 
     AMR Features (8):
      0: status_val
@@ -259,28 +267,28 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
     # --- Job Features ---
     job_feat = []
     job_mask = []
+    current_time = decision_time(amr_availabilities)
 
-    # Compute simple completion time lower bounds for each job
     for job in jobs:
         pos = STATIONS[job.station]
         supply_pos = job_pickup_location(job)
 
         is_completed = job.idx in completed_jobs_set
         job_status = job_status_value(job.idx, picked_jobs_set, completed_jobs_set)
-
-        # LB: minimum travel from closest idle AMR + processing time
-        if not is_completed:
-            lb_candidates = []
-            for amr in AMR_KEYS:
-                pickup_est = heuristic(amr_positions[amr], supply_pos)
-                travel_est = heuristic(supply_pos, pos)
-                arrival_wait = max(0.0, float(job.arrival_time) - (amr_availabilities[amr] + pickup_est))
-                lb = max(amr_availabilities[amr] + pickup_est + arrival_wait + travel_est,
-                         station_availabilities.get(job.station, 0.0)) + job.duration
-                lb_candidates.append(lb)
-            lb_val = min(lb_candidates) if lb_candidates else 0.0
-        else:
-            lb_val = 0.0
+        lb_val = 0.0 if is_completed else completion_time_lower_bound(
+            job,
+            amr_positions,
+            amr_availabilities,
+            station_availabilities,
+        )
+        dock_features = dock_congestion_features(
+            job,
+            jobs,
+            picked_jobs_set,
+            completed_jobs_set,
+            station_availabilities,
+            current_time,
+        )
 
         feat = [
             1.0,
@@ -294,7 +302,8 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
             1.0 if job.type_ == "B" else 0.0,
             1.0 if job.type_ == "C" else 0.0,
             job_status,
-            lb_val / 500.0,
+            lb_val / LOWER_BOUND_SCALE,
+            *dock_features,
         ]
         job_feat.append(feat)
         job_mask.append(is_completed)
@@ -489,7 +498,7 @@ if __name__ == "__main__":
     np.random.seed(42)
 
     # 2. Create Model
-    gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3)
+    gnn_model = SchedulerGNN(job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3)
 
     weights_path = Path("gnn_precise_mpn_scheduler_best.pth")
     if not weights_path.exists():

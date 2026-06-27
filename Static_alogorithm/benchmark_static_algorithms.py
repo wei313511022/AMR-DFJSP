@@ -335,7 +335,7 @@ def load_compatible_state_dict(model, checkpoint: Path, torch_module, required_k
 def build_attention_model(module, precise: bool, device):
     import torch
 
-    model = module.SchedulerAttention(amr_in_dim=8, job_in_dim=11, hidden_dim=128, attention_layers=2).to(device)
+    model = module.SchedulerAttention(amr_in_dim=8, job_in_dim=16, hidden_dim=128, attention_layers=2).to(device)
     checkpoint_names = (
         ["attention_precise_scheduler_best.pth", "attention_scheduler_best.pth"]
         if precise
@@ -356,7 +356,7 @@ def build_attention_model(module, precise: bool, device):
 def build_gnn_model(module, precise: bool, device):
     import torch
 
-    model = module.SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
+    model = module.SchedulerGNN(job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     checkpoint_names = (
         ["gnn_precise_mpn_scheduler_best.pth", "gnn_mpn_scheduler_best.pth", "gnn_scheduler_best.pth"]
         if precise

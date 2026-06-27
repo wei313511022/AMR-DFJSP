@@ -387,7 +387,7 @@ def train_reinforce(args):
 
     dispatch_events = load_training_events(args.inbox, args.inboxes)
     validation_events = _load_validation_events(args)
-    gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
+    gnn_model = SchedulerGNN(job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
     load_training_checkpoint(
         gnn_model,
@@ -569,7 +569,7 @@ def train_ppo(args):
 
     dispatch_events = load_training_events(args.inbox, args.inboxes)
     validation_events = _load_validation_events(args)
-    gnn_model = SchedulerGNN(job_in_dim=12, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
+    gnn_model = SchedulerGNN(job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3).to(device)
     optimizer_actor = optim.Adam(_actor_params(gnn_model), lr=args.lr_actor)
     optimizer_critic = optim.Adam(gnn_model.critic.parameters(), lr=args.lr_critic)
     load_training_checkpoint(
