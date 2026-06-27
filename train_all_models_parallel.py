@@ -13,6 +13,7 @@ Useful options:
     python train_all_models_parallel.py --load_balance_coef 0
     python train_all_models_parallel.py --threads-per-process 2
     python train_all_models_parallel.py --models attention gnn_precise
+    python train_all_models_parallel.py   --inboxes "test_case/static/dispatch_inbox_60.jsonl"   --validation_inboxes "test_case/static/dispatch_validation_60.jsonl"   --epochs 1000   --batch_size 16   --max-concurrent 4   --threads-per-process 2 --load_balance_coef 0 --baseline_rule "fifo+earliest_available"
 """
 
 from __future__ import annotations

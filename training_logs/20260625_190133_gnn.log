@@ -1,0 +1,17 @@
+Training on: cuda
+Loaded 1000 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 50 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_validation_60.jsonl
+Loaded 50 validation event(s).
+Starting GNN REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 717, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 669, in train
+    train_reinforce(args)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 371, in train_reinforce
+    comparison = compute_dispatch_baseline_comparison(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 198, in compute_dispatch_baseline_comparison
+    sampled_next_makespan, _ = evaluate_makespan(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 77, in evaluate_makespan
+    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GA/GA.py", line 1429, in decode_schedule_tick_by_tick

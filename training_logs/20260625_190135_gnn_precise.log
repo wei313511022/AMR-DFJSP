@@ -1,0 +1,17 @@
+Training on: cuda
+Loaded 1000 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 50 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_validation_60.jsonl
+Loaded 50 validation event(s).
+Starting GNN Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 762, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 714, in train
+    train_reinforce(args)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn_precise.py", line 427, in train_reinforce
+    individual, _, _ = solve_with_gnn(jobs, gnn_model, deterministic=False)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/GNN_precise.py", line 418, in solve_with_gnn
+    pickup_path = find_dynamic_path(amr_positions[chosen_amr], pickup_location, start_time, reservations, amr_states, chosen_amr)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GA/GA.py", line 308, in find_dynamic_path
+    if other_amr == active_amr: continue
+KeyboardInterrupt

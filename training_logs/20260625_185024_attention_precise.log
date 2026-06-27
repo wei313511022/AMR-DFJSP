@@ -1,0 +1,24 @@
+Training on: cuda
+Starting Attention Precise REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
+Epoch [1/2000] | Sampled: 792.38 | Baseline: 556.12 | Improvement: -236.25 | Win Rate: 0.00% | Actor Loss: -36.3387 | Entropy: 4.0624 | Invalid S/B: 0.31/0.00 | Max Load: 14.5 | Load Gap: 4.4
+   -> Saved new best model (Makespan: 792.38)
+   -> Saved updated training chart to /home/wei/AMR-DFJSP/Static_alogorithm/Attention/attention_precise_training_metrics.png
+Epoch [2/2000] | Sampled: 771.94 | Baseline: 559.25 | Improvement: -212.69 | Win Rate: 0.00% | Actor Loss: -35.6548 | Entropy: 3.9742 | Invalid S/B: 0.25/0.00 | Max Load: 13.9 | Load Gap: 3.6
+   -> Saved new best model (Makespan: 771.94)
+Epoch [3/2000] | Sampled: 775.69 | Baseline: 556.56 | Improvement: -219.12 | Win Rate: 0.00% | Actor Loss: -43.3762 | Entropy: 4.0460 | Invalid S/B: 0.38/0.00 | Max Load: 14.4 | Load Gap: 5.0
+Epoch [4/2000] | Sampled: 844.12 | Baseline: 552.38 | Improvement: -291.75 | Win Rate: 0.00% | Actor Loss: -44.4098 | Entropy: 4.0196 | Invalid S/B: 0.44/0.00 | Max Load: 14.8 | Load Gap: 5.5
+Epoch [5/2000] | Sampled: 798.00 | Baseline: 555.56 | Improvement: -242.44 | Win Rate: 0.00% | Actor Loss: -50.2357 | Entropy: 4.0265 | Invalid S/B: 0.19/0.00 | Max Load: 14.8 | Load Gap: 5.4
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/Attention/train_precise.py", line 744, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/Attention/train_precise.py", line 697, in train
+    train_reinforce(args)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/Attention/train_precise.py", line 408, in train_reinforce
+    comparison = compute_dispatch_baseline_comparison(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 184, in compute_dispatch_baseline_comparison
+    rule_next_makespan, _ = evaluate_makespan(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 77, in evaluate_makespan
+    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GA/GA.py", line 1429, in decode_schedule_tick_by_tick
+    return decode_schedule(individual, jobs, need_log=need_log, check_collision=check_collision, init_state=init_state)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GA/GA.py", line 1423, in decode_schedule

@@ -1,0 +1,26 @@
+Training on: cuda
+Loaded 1000 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 50 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_validation_60.jsonl
+Loaded 50 validation event(s).
+Starting GNN REINFORCE training with dispatch baseline 'fifo+earliest_available' (stepwise).
+Epoch [1/1000] | Sampled: 794.31 | Baseline: 616.94 | Improvement: -177.38 | Win Rate: 0.00% | Actor Loss: -3.0869 | Entropy: 4.1032 | Invalid S/B: 0.25/0.00 | Max Load: 15.1 | Load Gap: 5.5
+   -> Validation | Samples: 50 | Makespan: 626.96 | Invalid Jobs: 0.00
+   -> Saved new best model (Val Makespan: 626.96)
+   -> Saved updated training chart to /home/wei/AMR-DFJSP/Static_alogorithm/GNN/gnn_training_metrics.png
+Epoch [2/1000] | Sampled: 816.81 | Baseline: 625.19 | Improvement: -191.62 | Win Rate: 0.00% | Actor Loss: -8.9895 | Entropy: 4.1313 | Invalid S/B: 0.12/0.00 | Max Load: 15.5 | Load Gap: 6.2
+Epoch [3/1000] | Sampled: 836.94 | Baseline: 620.38 | Improvement: -216.56 | Win Rate: 0.00% | Actor Loss: -16.6247 | Entropy: 3.8322 | Invalid S/B: 0.12/0.00 | Max Load: 15.4 | Load Gap: 6.9
+Epoch [4/1000] | Sampled: 886.25 | Baseline: 622.94 | Improvement: -263.31 | Win Rate: 0.00% | Actor Loss: -22.4193 | Entropy: 3.5057 | Invalid S/B: 0.12/0.00 | Max Load: 15.1 | Load Gap: 6.2
+Epoch [5/1000] | Sampled: 896.06 | Baseline: 619.81 | Improvement: -276.25 | Win Rate: 0.00% | Actor Loss: -30.6906 | Entropy: 2.9429 | Invalid S/B: 0.12/0.00 | Max Load: 15.2 | Load Gap: 5.9
+Epoch [6/1000] | Sampled: 926.50 | Baseline: 616.38 | Improvement: -310.12 | Win Rate: 0.00% | Actor Loss: -34.3488 | Entropy: 2.6197 | Invalid S/B: 0.00/0.00 | Max Load: 14.7 | Load Gap: 5.1
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 717, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 669, in train
+    train_reinforce(args)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 371, in train_reinforce
+    comparison = compute_dispatch_baseline_comparison(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 198, in compute_dispatch_baseline_comparison
+    sampled_next_makespan, _ = evaluate_makespan(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 77, in evaluate_makespan
+    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GA/GA.py", line 1429, in decode_schedule_tick_by_tick
