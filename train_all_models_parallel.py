@@ -142,6 +142,13 @@ def parse_args() -> argparse.Namespace:
         help="Epoch interval for fixed validation scoring in every training script.",
     )
     parser.add_argument(
+        "--validation_invalid_penalty",
+        "--validation-invalid-penalty",
+        type=float,
+        default=1000.0,
+        help="Penalty added per average invalid validation job when selecting best checkpoints.",
+    )
+    parser.add_argument(
         "--python",
         default=sys.executable,
         help="Python executable used to launch child training processes.",
@@ -318,6 +325,7 @@ def command_for(
     if args.validation_inboxes:
         cmd.extend(["--validation_inboxes", args.validation_inboxes])
     cmd.extend(["--validation_interval", str(args.validation_interval)])
+    cmd.extend(["--validation_invalid_penalty", str(args.validation_invalid_penalty)])
     if args.batch_size is not None:
         cmd.extend(["--batch_size", str(args.batch_size)])
     if not args.normalize_advantage:
@@ -464,6 +472,8 @@ def main() -> int:
         raise SystemExit("--batch_size must be at least 1")
     if args.validation_interval < 1:
         raise SystemExit("--validation_interval must be at least 1")
+    if args.validation_invalid_penalty < 0:
+        raise SystemExit("--validation_invalid_penalty must be non-negative")
 
     missing = [target.script for target in targets if not target.script.exists()]
     if missing:
@@ -498,6 +508,7 @@ def main() -> int:
         print(f"Baseline mode: {args.baseline_mode}")
         print(f"Load balance coef: {args.load_balance_coef}")
         print(f"Validation interval: {args.validation_interval}")
+        print(f"Validation invalid penalty: {args.validation_invalid_penalty}")
         if args.validation_inbox is not None:
             print(f"Validation inbox: {args.validation_inbox}")
         if args.validation_inboxes:
@@ -571,6 +582,7 @@ def main() -> int:
     print(f"Baseline mode: {args.baseline_mode}")
     print(f"Load balance coef: {args.load_balance_coef}")
     print(f"Validation interval: {args.validation_interval}")
+    print(f"Validation invalid penalty: {args.validation_invalid_penalty}")
     if args.validation_inbox is not None:
         print(f"Validation inbox: {args.validation_inbox}")
     if args.validation_inboxes:

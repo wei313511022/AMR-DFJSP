@@ -67,7 +67,7 @@ def save_training_checkpoint(
     model,
     optimizers: Mapping[str, object],
     epoch: int,
-    best_makespan: float,
+    best_metric: float,
     args,
 ) -> None:
     if not checkpoint_path:
@@ -78,7 +78,8 @@ def save_training_checkpoint(
         "model_state_dict": model.state_dict(),
         "optimizers": optimizer_states,
         "epoch": epoch,
-        "best_makespan": best_makespan,
+        "best_metric": best_metric,
+        "best_makespan": best_metric,
         "args": vars(args),
     }
     if len(optimizer_states) == 1:
@@ -120,6 +121,10 @@ def evaluate_validation_events(events, model, solve_fn, evaluate_makespan_fn) ->
         "invalid_jobs": sum(invalid_counts) / len(invalid_counts),
         "samples": len(makespans),
     }
+
+
+def validation_checkpoint_score(validation: Mapping[str, float], invalid_penalty: float) -> float:
+    return float(validation["makespan"]) + float(invalid_penalty) * float(validation["invalid_jobs"])
 
 
 def maybe_save_best_model(

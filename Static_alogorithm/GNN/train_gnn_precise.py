@@ -49,6 +49,7 @@ from training_checkpoints import (
     load_training_checkpoint,
     maybe_save_best_model,
     save_training_checkpoint,
+    validation_checkpoint_score,
 )
 
 
@@ -515,18 +516,20 @@ def train_reinforce(args):
                 solve_with_gnn,
                 evaluate_makespan,
             )
+            validation_score = validation_checkpoint_score(validation, args.validation_invalid_penalty)
             print(
                 f"   -> Validation | Samples: {validation['samples']} "
                 f"| Makespan: {validation['makespan']:.2f} "
-                f"| Invalid Jobs: {validation['invalid_jobs']:.2f}"
+                f"| Invalid Jobs: {validation['invalid_jobs']:.2f} "
+                f"| Score: {validation_score:.2f}"
             )
             best_makespan = maybe_save_best_model(
                 model=gnn_model,
                 best_model_path=args.best_model_path,
                 fallback_model_path=LEGACY_BEST_MODEL_PATH,
-                current_metric=validation["makespan"],
+                current_metric=validation_score,
                 best_metric=best_makespan,
-                metric_label="Val Makespan",
+                metric_label="Val Score",
             )
         elif not validation_events:
             best_makespan = maybe_save_best_model(
@@ -668,18 +671,20 @@ def train_ppo(args):
                 solve_with_gnn,
                 evaluate_makespan,
             )
+            validation_score = validation_checkpoint_score(validation, args.validation_invalid_penalty)
             print(
                 f"   -> Validation | Samples: {validation['samples']} "
                 f"| Makespan: {validation['makespan']:.2f} "
-                f"| Invalid Jobs: {validation['invalid_jobs']:.2f}"
+                f"| Invalid Jobs: {validation['invalid_jobs']:.2f} "
+                f"| Score: {validation_score:.2f}"
             )
             best_makespan = maybe_save_best_model(
                 model=gnn_model,
                 best_model_path=args.best_model_path,
                 fallback_model_path=LEGACY_BEST_MODEL_PATH,
-                current_metric=validation["makespan"],
+                current_metric=validation_score,
                 best_metric=best_makespan,
-                metric_label="Val Makespan",
+                metric_label="Val Score",
             )
         elif not validation_events:
             best_makespan = maybe_save_best_model(
@@ -708,6 +713,8 @@ def train_ppo(args):
 def train(args):
     if args.validation_interval < 1:
         raise ValueError("--validation_interval must be at least 1")
+    if args.validation_invalid_penalty < 0:
+        raise ValueError("--validation_invalid_penalty must be non-negative")
     if args.rl_method == "ppo":
         train_ppo(args)
     else:
@@ -731,6 +738,12 @@ def build_parser():
         help="Comma-separated fixed validation dispatch JSONL files",
     )
     parser.add_argument("--validation_interval", type=int, default=50, help="Epoch interval for fixed validation scoring")
+    parser.add_argument(
+        "--validation_invalid_penalty",
+        type=float,
+        default=1000.0,
+        help="Penalty added per average invalid validation job when selecting the best checkpoint",
+    )
     parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="Schedules sampled per update")
     parser.add_argument("--lr_actor", type=float, default=1e-3, help="Actor learning rate")
