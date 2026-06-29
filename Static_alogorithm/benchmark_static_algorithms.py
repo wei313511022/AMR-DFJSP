@@ -17,9 +17,10 @@ STATIC_DIR = Path(__file__).resolve().parent
 GA_DIR = STATIC_DIR / "GA"
 ATTENTION_DIR = STATIC_DIR / "Attention"
 GNN_DIR = STATIC_DIR / "GNN"
+EXTEND_GNN_DIR = STATIC_DIR / "extend_GNN"
 DEFAULT_CASE_DIR = STATIC_DIR / "benchmark_cases"
 
-for path in (STATIC_DIR, ATTENTION_DIR, GNN_DIR):
+for path in (STATIC_DIR, ATTENTION_DIR, GNN_DIR, EXTEND_GNN_DIR):
     path_str = str(path)
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
@@ -45,7 +46,7 @@ from neural_local_improvement import apply_neural_local_improvement  # noqa: E40
 
 
 DEFAULT_JOB_COUNTS = (20, 40, 60, 80, 100)
-NN_ALGORITHMS = {"attention", "attention_precise", "gnn", "gnn_precise"}
+NN_ALGORITHMS = {"attention", "attention_precise", "gnn", "gnn_precise", "extend_gnn"}
 SEARCH_ALGORITHMS = {"ga", "ga_precise"}
 SPECIAL_ALGORITHMS = SEARCH_ALGORITHMS | NN_ALGORITHMS | {"dispatching_rules"}
 BENCHMARK_SCHEMA = "static_benchmark_v1"
@@ -374,6 +375,22 @@ def build_gnn_model(module, precise: bool, device):
     return model
 
 
+def build_extend_gnn_model(module, device):
+    import torch
+
+    model = module.ExtendSchedulerGNN(hidden_dim=128, gin_layers=3).to(device)
+    checkpoint = find_checkpoint(["extend_gnn_scheduler_best.pth"], [ROOT_DIR, EXTEND_GNN_DIR])
+    status = load_compatible_state_dict(
+        model,
+        checkpoint,
+        torch,
+        required_keys=("op_emb.weight", "operation_actor.0.weight"),
+    )
+    model.eval()
+    print(f"extend_GNN: {status}")
+    return model
+
+
 def load_nn_context(selected_algorithms: Sequence[str], device_name: str):
     selected_nn_algorithms = set(selected_algorithms) & NN_ALGORITHMS
     if not selected_nn_algorithms:
@@ -425,6 +442,14 @@ def load_nn_context(selected_algorithms: Sequence[str], device_name: str):
             context["gnn_precise_model"] = build_gnn_model(module, precise=True, device=device)
         except Exception as exc:
             context["gnn_precise_load_error"] = exc
+
+    if "extend_gnn" in selected_algorithms:
+        try:
+            module = import_module_from_path("benchmark_extend_gnn", EXTEND_GNN_DIR / "extend_GNN.py")
+            context["extend_gnn_module"] = module
+            context["extend_gnn_model"] = build_extend_gnn_model(module, device=device)
+        except Exception as exc:
+            context["extend_gnn_load_error"] = exc
 
     return context
 
@@ -506,6 +531,23 @@ def run_gnn_precise(jobs: Sequence[Job], args: argparse.Namespace, context: Dict
     return individual, solve_time
 
 
+def run_extend_gnn(jobs: Sequence[Job], args: argparse.Namespace, context: Dict) -> Tuple[Individual, float]:
+    module = require_nn_context(context, "extend_gnn", "extend_gnn_module")
+    model = require_nn_context(context, "extend_gnn", "extend_gnn_model")
+
+    start_time = time.perf_counter()
+    individual, _, _ = module.solve_with_extend_gnn(list(jobs), model, deterministic=True)
+    improvement = apply_neural_local_improvement(
+        individual,
+        list(jobs),
+        simplified_iters=args.neural_local_iters,
+        collision_iters=args.neural_collision_iters,
+    )
+    individual = improvement.individual
+    solve_time = time.perf_counter() - start_time
+    return individual, solve_time
+
+
 def selected_dispatch_rules(args: argparse.Namespace) -> List[str]:
     job_rules = dr.parse_rule_list(args.job_rules, dr.JOB_RULES, "job")
     amr_rules = dr.parse_rule_list(args.amr_rules, dr.AMR_RULES, "AMR")
@@ -517,7 +559,7 @@ def expand_algorithms(raw_algorithms: Sequence[str], dispatch_rule_names: Sequen
     for algorithm in raw_algorithms:
         if algorithm == "all":
             selected.extend(list(dispatch_rule_names))
-            selected.extend(["ga", "attention", "attention_precise", "gnn", "gnn_precise"])
+            selected.extend(["ga", "attention", "attention_precise", "gnn", "gnn_precise", "extend_gnn"])
         elif algorithm == "dispatching_rules":
             selected.extend(list(dispatch_rule_names))
         else:
@@ -558,6 +600,8 @@ def run_algorithm(
         return run_gnn(jobs, args, context)
     if algorithm == "gnn_precise":
         return run_gnn_precise(jobs, args, context)
+    if algorithm == "extend_gnn":
+        return run_extend_gnn(jobs, args, context)
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
@@ -788,7 +832,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--algorithms",
         type=str,
         default="all",
-        help="Comma list: all, dispatching_rules, ga, ga_precise, attention, attention_precise, gnn, gnn_precise.",
+        help="Comma list: all, dispatching_rules, ga, ga_precise, attention, attention_precise, gnn, gnn_precise, extend_gnn.",
     )
     parser.add_argument("--job_rules", type=str, default="all", help=f"Dispatch job rules: all or comma list from {', '.join(dr.JOB_RULES)}")
     parser.add_argument("--amr_rules", type=str, default="all", help=f"Dispatch AMR rules: all or comma list from {', '.join(dr.AMR_RULES)}")

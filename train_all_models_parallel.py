@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launch Attention, Attention_precise, GNN, and GNN_precise training in parallel.
+Launch Attention, Attention_precise, GNN, GNN_precise, and extend_GNN training in parallel.
 
 Run from the AMR-DFJSP root:
     python train_all_models_parallel.py
@@ -12,7 +12,7 @@ Useful options:
     python train_all_models_parallel.py --rl_method reinforce --baseline_rule earliest_completion_job+earliest_completion
     python train_all_models_parallel.py --load_balance_coef 0
     python train_all_models_parallel.py --threads-per-process 2
-    python train_all_models_parallel.py --models attention gnn_precise
+    python train_all_models_parallel.py --models attention gnn_precise extend_gnn
     python train_all_models_parallel.py   --inboxes "test_case/static/dispatch_inbox_60.jsonl"   --validation_inboxes "test_case/static/dispatch_validation_60.jsonl"   --epochs 1000   --batch_size 16   --max-concurrent 4   --threads-per-process 2 --load_balance_coef 0 --baseline_rule "fifo+earliest_available"
 """
 
@@ -66,6 +66,12 @@ TARGETS = {
         description="GNN with dynamic pathfinding and reservations",
         legacy_best_model="gnn_precise_mpn_scheduler_best.pth",
     ),
+    "extend_gnn": TrainTarget(
+        key="extend_gnn",
+        script=ROOT / "Static_alogorithm" / "extend_GNN" / "train_extend_gnn.py",
+        description="Hybrid dock-aware GNN with fast heuristic rollout",
+        legacy_best_model="extend_gnn_scheduler_best.pth",
+    ),
 }
 
 BASELINE_CURRICULA = {
@@ -82,6 +88,8 @@ ALIASES = {
     "attension_precise": "attention_precise",
     "attention-precise": "attention_precise",
     "gnn-precise": "gnn_precise",
+    "extend-gnn": "extend_gnn",
+    "extended_gnn": "extend_gnn",
 }
 
 
@@ -106,7 +114,7 @@ def parse_args() -> argparse.Namespace:
         "--models",
         nargs="+",
         default=list(TARGETS.keys()),
-        help="Models to train. Choices: attention, attention_precise, gnn, gnn_precise.",
+        help="Models to train. Choices: attention, attention_precise, gnn, gnn_precise, extend_gnn.",
     )
     parser.add_argument(
         "--inbox",
