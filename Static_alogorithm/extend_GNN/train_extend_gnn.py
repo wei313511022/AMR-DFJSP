@@ -437,6 +437,9 @@ def train_ppo(args):
                 batch_actor_loss += actor_loss.item()
                 batch_critic_loss += critic_loss.item()
 
+            if args.grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(_actor_params(model), args.grad_clip)
+                torch.nn.utils.clip_grad_norm_(model.critic.parameters(), args.grad_clip)
             optimizer_actor.step()
             optimizer_critic.step()
             epoch_actor_loss += batch_actor_loss / args.batch_size
@@ -521,8 +524,8 @@ def build_parser():
     parser.add_argument("--validation_invalid_penalty", type=float, default=1000.0)
     parser.add_argument("--epochs", type=int, default=2000)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--lr_actor", type=float, default=1e-3)
-    parser.add_argument("--lr_critic", type=float, default=1e-3)
+    parser.add_argument("--lr_actor", type=float, default=3e-4)
+    parser.add_argument("--lr_critic", type=float, default=3e-4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--init_checkpoint", type=str, default="")
     parser.add_argument("--latest_checkpoint_path", type=str, default="extend_gnn_training_checkpoint.pth")

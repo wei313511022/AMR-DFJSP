@@ -424,7 +424,10 @@ class GINConv(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x, adj):
-        agg = torch.bmm(adj, x)
+        # Shared-dock edges can form dense cliques; mean aggregation keeps
+        # message scale stable as job count and dock contention grow.
+        degree = adj.sum(dim=-1, keepdim=True).clamp(min=1.0)
+        agg = torch.bmm(adj, x) / degree
         return self.norm(self.mlp((1.0 + self.eps) * x + agg))
 
 
