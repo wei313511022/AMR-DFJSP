@@ -71,25 +71,46 @@ def decode_dock_busy(state_vec: np.ndarray, num_docks: int = 5) -> Dict[str, flo
 #build the action of AMR list
 def build_actions_for_tasks(
     tasks: List[dict],  #the available task
-    inventory: Dict[str, int],  #kept for signature compatibility (unused)
-    capacity_per_type: int,  #kept for signature compatibility (unused)
-    allow_proactive_replenish: bool = False,  #kept for signature compatibility (unused)
-) -> List[Tuple[int, Dict[str, int]]]:
+    inventory: Dict[str, int],  #usable onboard stock per material
+    capacity_per_type: int,
+    allow_proactive_replenish: bool = True,
+) -> List[Tuple[int, Optional[Dict[str, int]]]]:
     """
-    Dock-per-job action space (Phase III contract): one action per available
-    task. Each task always performs exactly one pickup at its own dock, so the
-    replenish plan carries a single unit of the task's material.
+    Batch-pickup action space (proactive replenishment restored, adapted to
+    the material-dock field):
+
+      - transfer operations (op_index > 0) fetch a specific part at the
+        previous station: exactly one action, no replenish choice.
+      - dock operations (op_index == 0) choose how many units of the job's
+        material to pick up at its dock (Score(i) = Q + cover/load/wait bonuses
+        compares these quantity options):
+          inventory == 0 -> add in 1..(cap - inv)   (must visit the dock)
+          inventory >  0 -> add = 0 (deliver from onboard stock, skip the dock)
+                            plus add in 1..(cap - inv) when proactive top-up
+                            is enabled (visit the dock on the way).
     """
-    _ = inventory, capacity_per_type, allow_proactive_replenish
     mat_types = ["A", "B", "C"]
-    actions: List[Tuple[int, Dict[str, int]]] = []
+    actions: List[Tuple[int, Optional[Dict[str, int]]]] = []
     for idx, task in enumerate(tasks):
+        if int(task.get("op_index", 0)) > 0:
+            actions.append((idx, None))
+            continue
         jtype = str(task.get("type", "")).upper()
         if jtype not in mat_types:
             continue
-        plan = {t: 0 for t in mat_types}
-        plan[jtype] = 1
-        actions.append((idx, plan))
+        inv = int(inventory.get(jtype, 0))
+        headroom = max(0, int(capacity_per_type) - inv)
+        adds: List[int] = []
+        if inv > 0:
+            adds.append(0)
+            if allow_proactive_replenish:
+                adds.extend(range(1, headroom + 1))
+        else:
+            adds.extend(range(1, headroom + 1))
+        for add in adds:
+            plan = {t: 0 for t in mat_types}
+            plan[jtype] = int(add)
+            actions.append((idx, plan))
     return actions
 
 
@@ -152,13 +173,27 @@ def q_values_batch(
 
 
 def _same_type_remaining(tasks: List[dict], task_idx: int, jtype: str) -> int:
-    cnt = 0
+    """Count other pending dock operations (op_index == 0) of the same material.
+    Machine-choice siblings (same op_uid) count once; transfer operations are
+    excluded because they never consume dock material."""
+    chosen_uid = (
+        tasks[task_idx].get("op_uid") if 0 <= task_idx < len(tasks) else None
+    )
+    seen = set()
     for i, t in enumerate(tasks):
         if i == task_idx:
             continue
-        if str(t.get("type", "")).upper() == jtype:
-            cnt += 1
-    return cnt
+        if int(t.get("op_index", 0)) > 0:
+            continue
+        if str(t.get("type", "")).upper() != jtype:
+            continue
+        uid = t.get("op_uid")
+        if uid is None:
+            uid = ("idx", i)
+        if uid == chosen_uid:
+            continue
+        seen.add(uid)
+    return len(seen)
 
 
 def proactive_replenish_coverage_gain(

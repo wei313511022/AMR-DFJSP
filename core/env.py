@@ -104,12 +104,17 @@ class TaskSchedulingEnv:
             raise ValueError("env_spec: amrs.count must match len(amrs.start_positions)")
         self.capacity_per_type = int(amr_cfg.get("capacity_per_type", 3))
 
-        # Legacy replenishment knobs. With dock-per-job semantics every task performs
-        # exactly one pickup at its own dock, so proactive replenishment is disabled.
-        self.allow_proactive_replenish = False
-        self.proactive_replenish_bias_weight = 0.0
-        self.proactive_full_load_bias_weight = 0.0
-        self.proactive_waiting_replenish_bias_weight = 0.0
+        # Batch pickup / proactive replenishment: dock operations may pick up
+        # extra units of the job's material (up to capacity_per_type) so later
+        # same-material jobs can be served from onboard stock without a dock
+        # trip. Score(i) = Q(i) + cover/load/wait bonuses (see features.py).
+        self.allow_proactive_replenish = True
+        self.proactive_replenish_bias_weight = 1.5
+        self.proactive_full_load_bias_weight = 0.8
+        self.proactive_waiting_replenish_bias_weight = 1.2
+        # If False, stock provided via init_state is shown as zero and cannot be
+        # consumed (inference: the integrator replays every job's own pickup).
+        self.consume_initial_inventory = True
         # If True, AMRs use time-aware collision avoidance; if False, route overlap is allowed.
         self.enable_collision_avoidance = True
 
@@ -578,12 +583,14 @@ class TaskSchedulingEnv:
     def _estimate_action_plan(
         self, robot_id: int, task: dict, replenish: Union[int, Dict[str, int], None]
     ) -> dict:
-        # Dock-per-job timeline (Phase III contract):
-        #   start_t -> travel to dock -> (wait for dock) -> pickup (= duration)
-        #           -> travel to station -> (wait for station) -> process (= duration)
-        # Dock waiting and pickup service are embedded into transport_path as hold
-        # steps so collision reservations naturally keep the dock exclusive.
-        _ = replenish  # legacy argument; every task performs exactly one dock pickup
+        # Batch-pickup timeline:
+        #   dock op, add>=1 : travel to dock -> (wait for dock) -> pick `add`
+        #                     units (add x unit duration) -> travel to station
+        #                     -> (wait) -> process
+        #   dock op, add==0 : deliver from onboard stock, straight to station
+        #   transfer op     : fetch the part at the previous station (0 service)
+        # Dock waiting and pickup service are embedded into transport_path as
+        # hold steps so collision reservations naturally keep the dock exclusive.
         pos = self._to_coord(self.robot_positions[robot_id])
         dock = self._to_coord(task["pickup"])
         dock_key = str(task.get("dock", self._dock_by_coord.get(dock, str(dock))))
@@ -591,38 +598,57 @@ class TaskSchedulingEnv:
         station = str(task["station"])
         jtype = str(task["type"]).upper()
         proc = float(task["proc_time"])
-        # Pickup service time: material-dock pickups cost time (contract: =
-        # material duration); part transfers between stations cost 0.
-        pickup_service = float(task.get("pickup_service", proc))
+
+        op_index = int(task.get("op_index", 0))
+        replenish_plan = self._normalize_replenish_plan(task, replenish)
+        add_units = int(replenish_plan.get(jtype, 0)) if op_index == 0 else 0
+        need_pickup = (op_index > 0) or (add_units > 0)
+        unit_service = float(task.get("pickup_service", proc))
+        pickup_service = float(add_units) * unit_service if op_index == 0 else unit_service
         pickup_steps = int(math.ceil(pickup_service - 1e-9))
 
         start_t = max(self.t, self.robot_free_times[robot_id])
         station_free = float(self.station_busy_until[station])
-        dock_free = float(self.dock_busy_until.get(dock_key, 0.0))
+        dock_free = float(self.dock_busy_until.get(dock_key, 0.0)) if need_pickup else 0.0
 
-        replenish_plan = {t: 0 for t in self.material_types}
-        pickup_types = [jtype]
+        pickup_types = [jtype] if need_pickup else []
 
         if not self.enable_collision_avoidance:
-            leg1 = [self._to_coord(p) for p in self._path(pos, dock)]
-            if (not leg1) or (leg1[-1] != dock):
-                raise RuntimeError(
-                    f"No path for AMR{robot_id+1}: {pos}->{dock} at t={start_t:.3f}"
+            if need_pickup:
+                leg1 = [self._to_coord(p) for p in self._path(pos, dock)]
+                if (not leg1) or (leg1[-1] != dock):
+                    raise RuntimeError(
+                        f"No path for AMR{robot_id+1}: {pos}->{dock} at t={start_t:.3f}"
+                    )
+                arrive_dock_t = start_t + float(max(0, len(leg1) - 1))
+                dock_wait_steps = int(
+                    math.ceil(max(0.0, dock_free - arrive_dock_t) - 1e-9)
                 )
-            arrive_dock_t = start_t + float(max(0, len(leg1) - 1))
-            dock_wait_steps = int(math.ceil(max(0.0, dock_free - arrive_dock_t) - 1e-9))
-            if dock_wait_steps > 0:
-                leg1 = self._delay_before_goal(leg1, dock_wait_steps)
-            pickup_start_t = start_t + float(max(0, len(leg1) - 1))
-            pickup_end_t = pickup_start_t + float(pickup_steps)
+                if dock_wait_steps > 0:
+                    leg1 = self._delay_before_goal(leg1, dock_wait_steps)
+                pickup_start_t = start_t + float(max(0, len(leg1) - 1))
+                pickup_end_t = pickup_start_t + float(pickup_steps)
 
-            leg2 = [self._to_coord(p) for p in self._path(dock, drop)]
-            if (not leg2) or (leg2[-1] != drop):
-                raise RuntimeError(
-                    f"No path for AMR{robot_id+1}: {dock}->{drop} at t={start_t:.3f}"
+                leg2 = [self._to_coord(p) for p in self._path(dock, drop)]
+                if (not leg2) or (leg2[-1] != drop):
+                    raise RuntimeError(
+                        f"No path for AMR{robot_id+1}: {dock}->{drop} at t={start_t:.3f}"
+                    )
+                transport_path: List[Coord] = (
+                    list(leg1) + [dock] * pickup_steps + leg2[1:]
                 )
+                dock_wait = float(max(0.0, pickup_start_t - arrive_dock_t))
+            else:
+                # Deliver from onboard stock: straight to the station.
+                transport_path = [self._to_coord(p) for p in self._path(pos, drop)]
+                if (not transport_path) or (transport_path[-1] != drop):
+                    raise RuntimeError(
+                        f"No path for AMR{robot_id+1}: {pos}->{drop} at t={start_t:.3f}"
+                    )
+                pickup_start_t = start_t
+                pickup_end_t = start_t
+                dock_wait = 0.0
 
-            transport_path: List[Coord] = list(leg1) + [dock] * pickup_steps + leg2[1:]
             travel = float(max(0, len(transport_path) - 1))
             arrive_t = start_t + travel
             process_start_t = max(arrive_t, station_free)
@@ -643,20 +669,23 @@ class TaskSchedulingEnv:
                 "arrive_t": float(arrive_t),
                 "process_start_t": float(process_start_t),
                 "transport_path": [self._to_coord(p) for p in transport_path],
-                "need_pickup": True,
+                "need_pickup": bool(need_pickup),
                 "replenish_plan": dict(replenish_plan),
                 "pickup_types": list(pickup_types),
                 "dock": dock_key,
-                "dock_wait": float(max(0.0, pickup_start_t - arrive_dock_t)),
+                "dock_wait": dock_wait,
                 "pickup_start_t": float(pickup_start_t),
                 "pickup_end_t": float(pickup_end_t),
             }
 
-        base_dist = (
-            float(self._dist(pos, dock))
-            + float(pickup_steps)
-            + float(self._dist(dock, drop))
-        )
+        if need_pickup:
+            base_dist = (
+                float(self._dist(pos, dock))
+                + float(pickup_steps)
+                + float(self._dist(dock, drop))
+            )
+        else:
+            base_dist = float(self._dist(pos, drop))
 
         future_work_after_dispatch = (len(self.available_tasks) > 1) or math.isfinite(
             self._next_release_time()
@@ -730,41 +759,57 @@ class TaskSchedulingEnv:
                     future_work_after_dispatch=tail_mode,
                 )
 
-                # Leg 1: to the job's dock; block arrival until the dock is free.
-                leg1 = plan_leg(
-                    pos,
-                    dock,
-                    start_t,
-                    dock_free,
-                    True,
-                    reservations,
-                    horizon_end,
-                )
-                if not leg1:
-                    continue
-                candidate: List[Coord] = [self._to_coord(p) for p in leg1]
-                t_arr_dock = start_t + float(max(0, len(leg1) - 1))
-                # Pickup service: hold at the dock cell for `duration` ticks.
-                candidate.extend([dock] * pickup_steps)
-                t_after_pickup = t_arr_dock + float(pickup_steps)
+                if need_pickup:
+                    # Leg 1: to the pickup point; block arrival until it is free.
+                    leg1 = plan_leg(
+                        pos,
+                        dock,
+                        start_t,
+                        dock_free,
+                        True,
+                        reservations,
+                        horizon_end,
+                    )
+                    if not leg1:
+                        continue
+                    candidate: List[Coord] = [self._to_coord(p) for p in leg1]
+                    t_arr_dock = start_t + float(max(0, len(leg1) - 1))
+                    # Pickup service: hold at the dock for add x unit duration.
+                    candidate.extend([dock] * pickup_steps)
+                    t_after_pickup = t_arr_dock + float(pickup_steps)
 
-                # Leg 2: dock -> station; block arrival until the station is free.
-                tail = plan_leg(
-                    dock,
-                    drop,
-                    t_after_pickup,
-                    station_free,
-                    True,
-                    reservations,
-                    horizon_end,
-                )
-                if not tail:
-                    continue
-                candidate.extend([self._to_coord(p) for p in tail[1:]])
-
-                transport_path = candidate
-                pickup_start_t = t_arr_dock
-                pickup_end_t = t_after_pickup
+                    # Leg 2: dock -> station; block arrival until it is free.
+                    tail = plan_leg(
+                        dock,
+                        drop,
+                        t_after_pickup,
+                        station_free,
+                        True,
+                        reservations,
+                        horizon_end,
+                    )
+                    if not tail:
+                        continue
+                    candidate.extend([self._to_coord(p) for p in tail[1:]])
+                    transport_path = candidate
+                    pickup_start_t = t_arr_dock
+                    pickup_end_t = t_after_pickup
+                else:
+                    # Deliver from onboard stock: straight to the station.
+                    candidate = plan_leg(
+                        pos,
+                        drop,
+                        start_t,
+                        station_free,
+                        True,
+                        reservations,
+                        horizon_end,
+                    )
+                    if not candidate:
+                        continue
+                    transport_path = [self._to_coord(p) for p in candidate]
+                    pickup_start_t = start_t
+                    pickup_end_t = start_t
                 break
 
             if transport_path:
@@ -796,12 +841,14 @@ class TaskSchedulingEnv:
             "arrive_t": float(arrive_t),
             "process_start_t": float(process_start_t),
             "transport_path": [self._to_coord(p) for p in transport_path],
-            "need_pickup": True,
+            "need_pickup": bool(need_pickup),
             "replenish_plan": dict(replenish_plan),
             "pickup_types": list(pickup_types),
             "dock": dock_key,
-            "dock_wait": float(
-                max(0.0, pickup_start_t - (start_t + float(self._dist(pos, dock))))
+            "dock_wait": (
+                float(max(0.0, pickup_start_t - (start_t + float(self._dist(pos, dock)))))
+                if need_pickup
+                else 0.0
             ),
             "pickup_start_t": float(pickup_start_t),
             "pickup_end_t": float(pickup_end_t),
@@ -948,7 +995,10 @@ class TaskSchedulingEnv:
                     "op_uid": self._next_op_uid(),
                     "dock": dock_key,
                     "pickup": dock_coord,
-                    "pickup_service": proc_time,
+                    # Per-unit pickup time is a property of the material, so
+                    # batched units for other jobs cost the same regardless of
+                    # this job's processing time (contract jobs: identical).
+                    "pickup_service": float(self.material_durations[jtype]),
                     "drop": self.station_locs[s_key],
                     "station": s_key,
                     "release_time": float(release_time),
@@ -1034,6 +1084,24 @@ class TaskSchedulingEnv:
                     {t: int(inv.get(t, 0)) for t in self.material_types}
                     for inv in inventory
                 ]
+
+        # Onboard-stock unit events (FIFO per robot per material). Each unit
+        # remembers the dock-visit sub-interval that produced it, so the job
+        # that eventually consumes it can attribute its "pickup" to that visit
+        # (needed for the contract plan's order).
+        if not self.consume_initial_inventory:
+            self.robot_inventory = [
+                {t: 0 for t in self.material_types} for _ in range(self.num_robots)
+            ]
+        self._stock_events: List[Dict[str, deque]] = [
+            {t: deque() for t in self.material_types} for _ in range(self.num_robots)
+        ]
+        for rid in range(self.num_robots):
+            for t in self.material_types:
+                for _ in range(int(self.robot_inventory[rid].get(t, 0))):
+                    self._stock_events[rid][t].append(
+                        {"pickup_start": 0.0, "pickup_end": 0.0, "seq": -1}
+                    )
 
         self._episode_start_positions = [self._to_coord(p) for p in self.robot_positions]
 
@@ -1176,11 +1244,14 @@ class TaskSchedulingEnv:
         self, robot_id: int, task: dict, replenish: Union[int, Dict[str, int], None]
     ) -> Tuple[float, float, float, float]:
         """
-        Return (travel_time, wait_time, proc_time, dock_wait_time).
-        travel_time already includes dock waiting + pickup service ticks.
+        Return (travel_time, wait_time, proc_time, replenish_total).
+        travel_time already includes dock waiting + pickup service ticks;
+        replenish_total is the number of units picked up at the dock (0 when
+        delivering from onboard stock or transferring a part).
         """
         plan = self._estimate_action_plan(robot_id, task, replenish)
-        return plan["travel"], plan["wait"], plan["proc"], float(plan.get("dock_wait", 0.0))
+        rep_total = float(sum(int(v) for v in plan.get("replenish_plan", {}).values()))
+        return plan["travel"], plan["wait"], plan["proc"], rep_total
 
     def step(self, action: Tuple[int, Union[int, Dict[str, int], None]]):
         """
@@ -1207,8 +1278,23 @@ class TaskSchedulingEnv:
         jtype = task["type"]
         station = task["station"]
         jid = task["jid"]
+        op_index = int(task.get("op_index", 0))
 
-        plan = self._estimate_action_plan(rid, task, replenish)
+        replenish_plan = self._normalize_replenish_plan(task, replenish)
+        add_units = int(replenish_plan.get(jtype, 0)) if op_index == 0 else 0
+        inv = int(self.robot_inventory[rid].get(jtype, 0))
+        if op_index == 0:
+            if add_units < 0 or inv + add_units > self.capacity_per_type:
+                raise ValueError(
+                    f"Invalid replenish {add_units} for {jtype} "
+                    f"(inv={inv}, cap={self.capacity_per_type})"
+                )
+            if inv == 0 and add_units == 0:
+                raise ValueError(
+                    "Invalid action: dock operation with empty stock requires add >= 1"
+                )
+
+        plan = self._estimate_action_plan(rid, task, replenish_plan)
         start_t = float(plan["start_t"])
         travel = float(plan["travel"])
         wait = float(plan["wait"])
@@ -1229,15 +1315,38 @@ class TaskSchedulingEnv:
                 tk for tk in self.available_tasks if tk.get("op_uid") != op_uid
             ]
 
-        # Dock-per-job: pick up one unit at the dock and consume it at the
-        # station, so on-board inventory is unchanged after the job completes.
+        # Stock bookkeeping + pickup attribution. A dock visit picking `add`
+        # units creates one unit event per add x unit-duration sub-interval;
+        # the job consumes the oldest unit (FIFO) and its "pickup" is
+        # attributed to that unit's dock-visit sub-interval so the contract
+        # plan's order reproduces the batching.
+        attributed_start = pickup_start_t
+        attributed_end = pickup_end_t
+        if op_index == 0:
+            fifo = self._stock_events[rid][jtype]
+            unit_dur = float(task.get("pickup_service", proc))
+            for k in range(add_units):
+                fifo.append(
+                    {
+                        "pickup_start": pickup_start_t + k * unit_dur,
+                        "pickup_end": pickup_start_t + (k + 1) * unit_dur,
+                        "seq": self._dispatch_counter,
+                    }
+                )
+            self.robot_inventory[rid][jtype] = inv + add_units
+            if not fifo:
+                raise RuntimeError("stock accounting error: no unit to consume")
+            unit = fifo.popleft()
+            self.robot_inventory[rid][jtype] -= 1
+            attributed_start = float(unit["pickup_start"])
+            attributed_end = float(unit["pickup_end"])
 
         t_travel_end = float(plan["arrive_t"])
         t_wait_end = float(plan["process_start_t"])
         t_proc_end = t_wait_end + proc
 
         self.station_busy_until[station] = t_proc_end
-        if dock_key in self.dock_busy_until:
+        if need_pickup and dock_key in self.dock_busy_until:
             self.dock_busy_until[dock_key] = max(
                 self.dock_busy_until[dock_key], pickup_end_t
             )
@@ -1290,9 +1399,11 @@ class TaskSchedulingEnv:
                 "seq": self._dispatch_counter,
                 "robot": rid,
                 "jid": jid,
-                "replenish": 0,
-                "replenish_main": 0,
-                "replenish_plan": {t: 0 for t in self.material_types},
+                "replenish": int(add_units),
+                "replenish_main": int(add_units),
+                "replenish_plan": {
+                    t: int(replenish_plan.get(t, 0)) for t in self.material_types
+                },
                 "type": jtype,
                 "src": dock_key,
                 "dst": station,
@@ -1302,8 +1413,14 @@ class TaskSchedulingEnv:
                 "pickup_types": list(pickup_types),
                 "dock": dock_key,
                 "pickup": task["pickup"],
-                "pickup_start": pickup_start_t,
-                "pickup_end": pickup_end_t,
+                # Attributed pickup interval (which dock-visit sub-interval
+                # produced this job's material) -> used for the contract order.
+                "pickup_start": attributed_start,
+                "pickup_end": attributed_end,
+                # Physical dock-visit interval of THIS dispatch (empty stock
+                # delivery has no visit: start == end == dispatch start).
+                "dock_visit_start": pickup_start_t,
+                "dock_visit_end": pickup_end_t,
                 "drop": task["drop"],
                 "post_pos": post_pos,
                 "segments": [

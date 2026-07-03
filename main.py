@@ -1,6 +1,6 @@
 import os
 
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #solve OpenmMP library repeat problem
 
 import torch
 import torch.nn as nn
@@ -13,17 +13,19 @@ from training.evaluator import print_batch_results, run_test_and_plot
 from training.trainer import prepare_scenarios, train_ddqn
 
 
-def main():
+def main(): 
     # ---- FJSSP training data (scripts/Generate_training_data.py, unmodified) ----
     # Each JSONL line is one instance: {"machines": 6, "jobs": [{"operations":
     # [[{"machine", "processing"}, ...], ...], "material": "A|B|C"}, ...]}.
     # One instance = one training scenario (multi-operation jobs, machine choice).
-    use_fjssp_dataset = True
+
+
+    use_fjssp_dataset = True #True : call the Generate_training_data.py gen data
     fjssp_dataset_file = os.path.join("data", "fjssp_training_dataset.jsonl")
     fjssp_num_instances = 100
     fjssp_regenerate = False  # True: regenerate the dataset before training
 
-    # ---- Legacy dispatch-batch data source (used when use_fjssp_dataset=False) ----
+    # ---- Legacy dispatch-batch data source (used when use_fjssp_dataset=False) ----**
     task_file = os.path.join("data", "dispatch_batches.jsonl")
     train_data_dir = os.path.join(os.getcwd(), "data", "train_data")
     auto_generate_data = True
@@ -48,9 +50,9 @@ def main():
     do_test = True
 
     # Model checkpoint
-    save_model_path = os.path.join("checkpoints", "ddqn_policy.pt")
+    save_model_path = os.path.join("checkpoints", "ddqn_policy.pt") #the model checkpoint
     # Contract-format checkpoint (Phase III section 6): the deliverable that
-    # plugs into the target architecture via inference.load_model().
+    # plugs into the target architecture via inference.load_model().(future job to connect the main)
     export_contract_path = os.path.join("checkpoints", "my_scheduler_v1.pth")
     load_model_path = None
 
@@ -64,13 +66,15 @@ def main():
     epsilon = 1.0
     epsilon_end = 0.05
     epsilon_decay = 0.995
-    # Dock-per-job (Phase III contract): every job performs exactly one pickup
-    # at its own dock, so proactive replenishment no longer applies.
-    allow_proactive_replenish = False
-    proactive_replenish_bias_weight = 0.0
-    proactive_full_load_bias_weight = 0.0
-    proactive_waiting_replenish_bias_weight = 0.0
+    # Batch pickup / proactive replenishment: dock operations may take extra
+    # units of the job's material (up to capacity 3/type) so later same-material
+    # jobs are served from onboard stock. Score = Q + cover/load/wait bonuses.
+    allow_proactive_replenish = True
+    proactive_replenish_bias_weight = 2.5
+    proactive_full_load_bias_weight = 1.8
+    proactive_waiting_replenish_bias_weight = 1.5
     enable_collision_avoidance = True
+    # rainbow DDQN settinng
     use_rainbow = True
     rainbow_num_atoms = 51
     rainbow_v_min = -10000.0
@@ -297,6 +301,11 @@ def main():
                 policy_net,
                 export_contract_path,
                 env_spec=env.env_spec,
+                selection_bias={
+                    "cover": proactive_replenish_bias_weight,
+                    "load": proactive_full_load_bias_weight,
+                    "wait": proactive_waiting_replenish_bias_weight,
+                },
             )
             print(f"Exported Phase III contract checkpoint to {export_contract_path}")
 

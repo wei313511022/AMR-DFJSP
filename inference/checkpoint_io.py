@@ -21,9 +21,10 @@ FORMAT_VERSION = "1.0"
 IO_SCHEMA_VERSION = "1.0"
 
 
-def build_feature_config(env_spec: dict) -> dict:
+def build_feature_config(env_spec: dict, selection_bias: Optional[dict] = None) -> dict:
     """Describe the exact feature pipeline used by core.env / core.features."""
     materials = sorted(str(k).upper() for k in env_spec.get("materials", {}).keys())
+    bias = selection_bias or {}
     return {
         "materials": materials,
         # All times fed to the network are relative to the scene's `time`
@@ -37,7 +38,14 @@ def build_feature_config(env_spec: dict) -> dict:
             "station_busy_until (sorted station keys) | "
             "dock_busy_until (sorted dock keys)"
         ),
-        "action_features": ["travel", "station_wait", "proc", "dock_wait"],
+        "action_features": ["travel", "station_wait", "proc", "replenish_add"],
+        # Action-selection shaping (Score = Q + cover/load/wait bonuses); the
+        # inference rollout must use the same weights as training.
+        "selection_bias": {
+            "cover": float(bias.get("cover", 0.0)),
+            "load": float(bias.get("load", 0.0)),
+            "wait": float(bias.get("wait", 0.0)),
+        },
     }
 
 
@@ -47,6 +55,7 @@ def export_contract_checkpoint(
     env_spec: Optional[dict] = None,
     feature_config: Optional[dict] = None,
     metrics: Optional[dict] = None,
+    selection_bias: Optional[dict] = None,
 ) -> str:
     """Save `policy_net` as a self-describing Phase III checkpoint."""
     spec = load_env_spec(env_spec)
@@ -58,7 +67,7 @@ def export_contract_checkpoint(
         "io_schema_version": IO_SCHEMA_VERSION,
         "state_dict": policy_net.state_dict(),
         "arch_config": arch_config,
-        "feature_config": feature_config or build_feature_config(spec),
+        "feature_config": feature_config or build_feature_config(spec, selection_bias),
         "env_spec": spec,
         "metrics": metrics or {},
     }

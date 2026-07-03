@@ -21,7 +21,7 @@ import numpy as np
 import torch
 
 from core.env import TaskSchedulingEnv
-from core.features import build_actions_for_tasks, q_values_batch
+from core.features import build_actions_for_tasks, q_values_batch, select_action_index
 from core.model import QNetwork
 
 IO_SCHEMA_VERSION = "1.0"
@@ -90,6 +90,18 @@ class Scheduler:
         # with its own A*/collision engine. This keeps latency well below 1s.
         self.env = TaskSchedulingEnv(env_spec)
         self.env.enable_collision_avoidance = False
+        # Conservative: stock reported in the scene is not consumed — the
+        # integrating system replays every job's own dock pickup, so only
+        # stock acquired inside this rollout may serve later jobs.
+        self.env.consume_initial_inventory = False
+
+        # Action-selection bias weights (Score = Q + cover/load/wait bonuses)
+        # must match the values used during training; they travel with the
+        # checkpoint in feature_config.selection_bias.
+        bias = (feature_config or {}).get("selection_bias", {})
+        self._bias_cover = float(bias.get("cover", 0.0))
+        self._bias_load = float(bias.get("load", 0.0))
+        self._bias_wait = float(bias.get("wait", 0.0))
 
         state_dim = len(self.env.reset([]))
         if int(self.policy_net.state_dim) != int(state_dim):
@@ -173,7 +185,17 @@ class Scheduler:
                     task = env.available_tasks[task_idx]
                     feats[i] = env.action_features(rid, task, replenish)
                 q_all = q_values_batch(self.policy_net, state, feats, self.device)
-                best = int(torch.argmax(q_all).item())
+                best = select_action_index(
+                    q_values=q_all,
+                    actions=actions,
+                    tasks=env.available_tasks,
+                    inventory=env.robot_inventory[rid],
+                    capacity_per_type=env.capacity_per_type,
+                    proactive_replenish_bias_weight=self._bias_cover,
+                    action_feats=feats,
+                    full_load_bias_weight=self._bias_load,
+                    waiting_replenish_bias_weight=self._bias_wait,
+                )
                 env.step(actions[best])
 
         assignment: List[int] = [-1] * num_jobs

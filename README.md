@@ -4,6 +4,15 @@
 的 I/O 契約輸出**自描述 checkpoint**,讓訓練完的模型可以直接接進對方架構
 (取代 `ga_evolve()`),整合方只需 `load_model()` + `predict(scene)`。
 
+### 代辦事項
+[*] 訓練資料似乎有誤，不是用Generate_training_data.py
+[] 相關目標函數確定 
+[] 修改main 將訓練與測試分開
+[] 超參數調整
+[] object functionn 設計
+[] 了解rainbow ddqn設計
+[] 目前 action space 已改為 dock-per-job??
+
 ## 資料夾結構
 
 ```
@@ -11,9 +20,9 @@
 ├── configs/
 │   └── env_spec.json        # 契約 §2 環境常數(5 AMR、5 站、5 dock、A/B/C=5/10/15)
 ├── core/                    # 環境、模型、特徵(推論期也依賴,僅 torch/numpy)
-│   ├── env.py               #   模擬器:dock/站點互斥、避碰、init_state 暖啟動
+│   ├── env.py               #   模擬器:dock/站點互斥、避碰、init_state 暖啟動、批次取料
 │   ├── model.py             #   QNetwork(classic / Rainbow)
-│   ├── features.py          #   動作空間與特徵 (travel, station_wait, proc, dock_wait)
+│   ├── features.py          #   動作空間與特徵 (travel, station_wait, proc, replenish_add)
 │   └── data_io.py
 ├── training/                # 只在訓練期使用
 │   ├── trainer.py, replay.py, rollout.py, evaluator.py
@@ -66,13 +75,22 @@ plan = scheduler.predict(scene)   # scene: 契約 §3;plan: 契約 §4
 | §6 自描述權重檔 | `inference/checkpoint_io.py: export_contract_checkpoint` |
 | §8 訓練注意事項 | `env.reset(scenario, init_state=...)` 支援中途狀態訓練;dock 取料耗時=duration、dock 互斥已入模擬器 |
 
-## 重要語義(dock-per-job)
+## 重要語義(批次取料 batch pickup)
 
-- 每個 job 自帶 dock(訓練資料的 `"dock": 1..5`;scene 的 `dock_xy`)。
-- AMR 執行一個 job = 前往 dock →(等待 dock 空閒)→ 取料耗時 `duration`
-  → 前往站點 →(等待站點空閒)→ 卸貨+加工耗時 `duration`。
+- **取料工序(op0 / 單工序 job)**:動作 = 選 task + 選「這趟在料倉取幾份該材料」:
+  - 車上庫存 0 → 必取 1~3 份(容量上限每種 3);
+  - 車上庫存 >0 → 可 `add=0` 直接用存貨送站(**不進料倉**),或順路補到滿(proactive)。
+  - 取 N 份耗時 = N × 材料 duration(A/B/C = 5/10/15),期間佔用料倉(互斥)。
+- **搬運工序(FJSSP op>0)**:到前一站取在製品(耗時 0),單一動作、不批次。
+- **動作評分** `Score(i) = Q(i) + cover_bonus + load_bonus + wait_bonus`
+  (features.py `select_action_index`;權重隨 checkpoint 的 `selection_bias` 交付,
+  推論端 `predict()` 使用與訓練相同的權重)。
+- **契約 plan 的批次對應**:每份材料入庫時記下料倉造訪的子區間(N 份 = N 段
+  duration),job 消耗哪份(FIFO)其 `pickup` 就歸屬那段 → 同車連續 pickup 在
+  `order` 中相鄰,整合方重演時自然形成批次取料;§4 約束仍結構性成立。
+- **推論端保守規則**:scene 給的初始庫存不拿來抵扣(`consume_initial_inventory=False`),
+  因為整合方會重演每個 job 自己的 pickup;訓練端則可完整使用庫存。
 - dock 等待與取料以「路徑停留步」寫進 transport path,避碰預約自然涵蓋 dock 佔用。
-- 主動補貨(proactive replenish)在此語義下不再適用,已停用(相關參數保留為 0)。
 
 ---
 
@@ -81,3 +99,5 @@ plan = scheduler.predict(scene)   # scene: 契約 §3;plan: 契約 §4
 6 stations;10/15/20/25/30 jobs per instance;4~8 operations per job;
 1~6 feasible machines per operation;processing time 10~99。
 ref: https://github.com/SchedulingLab/fjsp-instances/tree/main
+
+
