@@ -1,0 +1,55 @@
+{
+  "spec_version": "2.0",
+  "io_schema_version": "1.0",
+  "field_source": "results/Route_Map.png (current field layout)",
+  "grid": {
+    "width": 12,
+    "height": 12,
+    "obstacles": [
+      [4, 9], [3, 10], [4, 10],
+      [4, 5], [3, 6], [4, 6],
+      [4, 1], [3, 2], [4, 2],
+      [8, 9], [7, 10], [8, 10],
+      [8, 5], [7, 6], [8, 6],
+      [8, 1], [7, 2], [8, 2]
+    ]
+  },
+  "amrs": {
+    "count": 3,
+    "start_positions": [[2, 1], [2, 4], [2, 7]],
+    "capacity_per_type": 3
+  },
+  "stations": {
+    "S1": [3, 9],
+    "S2": [3, 5],
+    "S3": [3, 1],
+    "S4": [7, 9],
+    "S5": [7, 5],
+    "S6": [7, 1]
+  },
+  "docks": {
+    "MA": [0, 9],
+    "MB": [0, 5],
+    "MC": [0, 1]
+  },
+  "material_dock_map": {
+    "A": "MA",
+    "B": "MB",
+    "C": "MC"
+  },
+  "output": {
+    "T": [11, 5]
+  },
+  "materials": {
+    "A": 5.0,
+    "B": 10.0,
+    "C": 15.0
+  },
+  "move_ticks_per_cell": 1.0,
+  "pickup_time_equals_duration": true,
+  "process_time_equals_duration": true,
+  "resource_mutex": {
+    "dock": true,
+    "station": true
+  }
+}

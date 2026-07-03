@@ -1,0 +1,40 @@
+{
+  "spec_version": "1.0",
+  "io_schema_version": "1.0",
+  "grid": {
+    "width": 10,
+    "height": 10,
+    "obstacles": []
+  },
+  "amrs": {
+    "count": 5,
+    "start_positions": [[2, 9], [2, 7], [2, 5], [2, 3], [2, 1]],
+    "capacity_per_type": 3
+  },
+  "stations": {
+    "S1": [9, 9],
+    "S2": [9, 7],
+    "S3": [9, 5],
+    "S4": [9, 3],
+    "S5": [9, 1]
+  },
+  "docks": {
+    "D1": [0, 9],
+    "D2": [0, 7],
+    "D3": [0, 5],
+    "D4": [0, 3],
+    "D5": [0, 1]
+  },
+  "materials": {
+    "A": 5.0,
+    "B": 10.0,
+    "C": 15.0
+  },
+  "move_ticks_per_cell": 1.0,
+  "pickup_time_equals_duration": true,
+  "process_time_equals_duration": true,
+  "resource_mutex": {
+    "dock": true,
+    "station": true
+  }
+}

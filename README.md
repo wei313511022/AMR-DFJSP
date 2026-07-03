@@ -1,12 +1,83 @@
-6 stations
+# AMR-DFJSP — DDQN 排程模型(Phase III 契約對齊版)
 
-10, 15, 20, 25, 30 jobs per instance
+以 Rainbow/DDQN 訓練 AMR 派工策略,並依照 `docs/Phase3_Model_IO_Contract.md`
+的 I/O 契約輸出**自描述 checkpoint**,讓訓練完的模型可以直接接進對方架構
+(取代 `ga_evolve()`),整合方只需 `load_model()` + `predict(scene)`。
 
-4 ~ 8 operations per job
+## 資料夾結構
 
-1 ~ 6 feasible machines per operation
+```
+├── main.py                  # 訓練/測試入口(python main.py)
+├── configs/
+│   └── env_spec.json        # 契約 §2 環境常數(5 AMR、5 站、5 dock、A/B/C=5/10/15)
+├── core/                    # 環境、模型、特徵(推論期也依賴,僅 torch/numpy)
+│   ├── env.py               #   模擬器:dock/站點互斥、避碰、init_state 暖啟動
+│   ├── model.py             #   QNetwork(classic / Rainbow)
+│   ├── features.py          #   動作空間與特徵 (travel, station_wait, proc, dock_wait)
+│   └── data_io.py
+├── training/                # 只在訓練期使用
+│   ├── trainer.py, replay.py, rollout.py, evaluator.py
+├── inference/               # ★ 交付給整合方的推論套件(契約 §5、§6)
+│   ├── scheduler.py         #   load_model(ckpt) -> Scheduler.predict(scene) -> plan
+│   └── checkpoint_io.py     #   export_contract_checkpoint(自描述權重檔)
+├── viz/                     # 視覺化(matplotlib / plotly / route map)
+├── scripts/
+│   ├── validate_contract.py # 契約 §9 驗收腳本
+│   ├── random_job_gen.py    # 訓練資料產生器(含 dock 欄位)
+│   ├── live_job_feeder.py
+│   └── Generate_training_data.py   # 經典 FJSSP 資料集(見文末)
+├── data/                    # jsonl 資料(訓練/測試情境)
+├── checkpoints/             # ddqn_policy.pt(續訓用)/ my_scheduler_v1.pth(交付用)
+├── docs/                    # 契約、參數說明、範例 scene/plan JSON
+├── notebooks/               # 舊 notebook(使用搬移前的扁平 import,僅供參考)
+└── results/                 # 訓練曲線、圖表、影片
+```
 
-10 ~ 99 processing time
+## 工作流程
 
+```bash
+# 1. 訓練(自動產生訓練資料;結束時同時輸出兩種 checkpoint)
+python main.py
 
+# 2. 契約驗收:load_model -> predict -> 檢查 §4 約束 / 確定性 / <1s 延遲
+python scripts/validate_contract.py                  # 用 checkpoints/my_scheduler_v1.pth
+python scripts/validate_contract.py --init-random    # 未訓練權重的管線煙霧測試
+```
+
+整合方拿到 `my_scheduler_v1.pth` 後:
+
+```python
+from inference import load_model
+scheduler = load_model("my_scheduler_v1.pth")
+plan = scheduler.predict(scene)   # scene: 契約 §3;plan: 契約 §4
+```
+
+`predict()` 為確定性、無狀態、單次 < 1 秒;plan 回傳前會先驗證 §4 全部硬約束。
+範例 scene/plan 見 `docs/examples/`(由驗收腳本產生)。
+
+## 與契約的對應
+
+| 契約項目 | 本 repo 實作 |
+|---|---|
+| §2 環境事實 | `configs/env_spec.json`(env 由此讀參數,改版換檔即可) |
+| §3 scene 輸入 | `inference/scheduler.py: Scheduler._scene_to_episode`(絕對時間→相對時間) |
+| §4 plan 輸出 | 自迴歸 rollout 逐步派工,結構性滿足約束;`validate_plan` 再驗一次 |
+| §5 推論介面 | `inference.load_model()` / `Scheduler.predict()` |
+| §6 自描述權重檔 | `inference/checkpoint_io.py: export_contract_checkpoint` |
+| §8 訓練注意事項 | `env.reset(scenario, init_state=...)` 支援中途狀態訓練;dock 取料耗時=duration、dock 互斥已入模擬器 |
+
+## 重要語義(dock-per-job)
+
+- 每個 job 自帶 dock(訓練資料的 `"dock": 1..5`;scene 的 `dock_xy`)。
+- AMR 執行一個 job = 前往 dock →(等待 dock 空閒)→ 取料耗時 `duration`
+  → 前往站點 →(等待站點空閒)→ 卸貨+加工耗時 `duration`。
+- dock 等待與取料以「路徑停留步」寫進 transport path,避碰預約自然涵蓋 dock 佔用。
+- 主動補貨(proactive replenish)在此語義下不再適用,已停用(相關參數保留為 0)。
+
+---
+
+### 附:經典 FJSSP 資料集(`scripts/Generate_training_data.py`)
+
+6 stations;10/15/20/25/30 jobs per instance;4~8 operations per job;
+1~6 feasible machines per operation;processing time 10~99。
 ref: https://github.com/SchedulingLab/fjsp-instances/tree/main

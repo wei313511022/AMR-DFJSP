@@ -1,0 +1,200 @@
+{
+  "schema_version": "1.0",
+  "time": 1234.0,
+  "amrs": [
+    {
+      "position": [
+        3,
+        7
+      ],
+      "available_at": 1262.435960818272,
+      "inventory": {
+        "A": 1,
+        "B": 0,
+        "C": 0
+      }
+    },
+    {
+      "position": [
+        10,
+        3
+      ],
+      "available_at": 1250.0764601292008,
+      "inventory": {
+        "A": 1,
+        "B": 0,
+        "C": 0
+      }
+    },
+    {
+      "position": [
+        0,
+        4
+      ],
+      "available_at": 1236.5784170106751,
+      "inventory": {
+        "A": 1,
+        "B": 0,
+        "C": 0
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        7,
+        5
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1212.7740405428742
+    },
+    {
+      "material": "C",
+      "duration": 15.0,
+      "station_xy": [
+        3,
+        9
+      ],
+      "dock_xy": [
+        0,
+        1
+      ],
+      "arrival_time": 1186.6275149646256
+    },
+    {
+      "material": "C",
+      "duration": 15.0,
+      "station_xy": [
+        7,
+        1
+      ],
+      "dock_xy": [
+        0,
+        1
+      ],
+      "arrival_time": 1204.8501547769797
+    },
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        7,
+        5
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1204.7229288679807
+    },
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        3,
+        5
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1231.6708659691121
+    },
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        3,
+        1
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1213.0430478214266
+    },
+    {
+      "material": "C",
+      "duration": 15.0,
+      "station_xy": [
+        3,
+        9
+      ],
+      "dock_xy": [
+        0,
+        1
+      ],
+      "arrival_time": 1205.4543155176632
+    },
+    {
+      "material": "C",
+      "duration": 15.0,
+      "station_xy": [
+        7,
+        1
+      ],
+      "dock_xy": [
+        0,
+        1
+      ],
+      "arrival_time": 1224.9636810038032
+    },
+    {
+      "material": "C",
+      "duration": 15.0,
+      "station_xy": [
+        7,
+        5
+      ],
+      "dock_xy": [
+        0,
+        1
+      ],
+      "arrival_time": 1202.0543265536908
+    },
+    {
+      "material": "B",
+      "duration": 10.0,
+      "station_xy": [
+        3,
+        9
+      ],
+      "dock_xy": [
+        0,
+        5
+      ],
+      "arrival_time": 1206.6127767145222
+    },
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        7,
+        5
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1231.0199415016884
+    },
+    {
+      "material": "A",
+      "duration": 5.0,
+      "station_xy": [
+        7,
+        9
+      ],
+      "dock_xy": [
+        0,
+        9
+      ],
+      "arrival_time": 1199.9800013409108
+    }
+  ]
+}
