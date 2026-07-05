@@ -18,7 +18,7 @@
 ```
 ├── main.py                  # 訓練/測試入口(python main.py)
 ├── configs/
-│   └── env_spec.json        # 契約 §2 環境常數(5 AMR、5 站、5 dock、A/B/C=5/10/15)
+│   └── env_spec.json        # 場域常數(Route_Map:12×12、5 AMR、6 站、MA/MB/MC、T)
 ├── core/                    # 環境、模型、特徵(推論期也依賴,僅 torch/numpy)
 │   ├── env.py               #   模擬器:dock/站點互斥、避碰、init_state 暖啟動、批次取料
 │   ├── model.py             #   QNetwork(classic / Rainbow)
@@ -90,7 +90,15 @@ plan = scheduler.predict(scene)   # scene: 契約 §3;plan: 契約 §4
   `order` 中相鄰,整合方重演時自然形成批次取料;§4 約束仍結構性成立。
 - **推論端保守規則**:scene 給的初始庫存不拿來抵扣(`consume_initial_inventory=False`),
   因為整合方會重演每個 job 自己的 pickup;訓練端則可完整使用庫存。
+  另外若 scene 中同一材料來自多個 dock,批次取料無法保真,`predict()` 會自動
+  降級為「每次進倉只取一份」(材料↔料倉一對一的場域不受影響)。
+- **目標函數**:reward 對齊契約評估目標 `makespan + 0.001×Σ(各AMR完工時間)`
+  (權重見 `env.objective_load_balance_weight`)。
 - dock 等待與取料以「路徑停留步」寫進 transport path,避碰預約自然涵蓋 dock 佔用。
+
+> **效能報告注意**:訓練與推論用的是快速估計(曼哈頓距離、無避碰),
+> 對方系統會用 A*+避碰重演 plan——因此 makespan 數字**必須以對方模擬器重演
+> 的結果為準**,本 repo 內部數字只能當相對比較用。
 
 ---
 

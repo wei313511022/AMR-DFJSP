@@ -115,6 +115,10 @@ class TaskSchedulingEnv:
         # If False, stock provided via init_state is shown as zero and cannot be
         # consumed (inference: the integrator replays every job's own pickup).
         self.consume_initial_inventory = True
+        # Contract objective: makespan + w * sum(per-AMR finish times).
+        # The dense reward mirrors it so the summed episode reward equals the
+        # negative objective (secondary term balances load across AMRs).
+        self.objective_load_balance_weight = 0.001
         # If True, AMRs use time-aware collision avoidance; if False, route overlap is allowed.
         self.enable_collision_avoidance = True
 
@@ -1272,6 +1276,7 @@ class TaskSchedulingEnv:
                 f"Invalid action_index {action_index}, available={len(self.available_tasks)}"
             )
         prev_makespan = self.makespan()
+        prev_finish_sum = float(sum(self.robot_free_times))
         rid = self.current_robot
         task = self.available_tasks[action_index]
 
@@ -1443,10 +1448,14 @@ class TaskSchedulingEnv:
 
         self._advance_to_decision_point()
 
-        # Dense reward with unchanged objective:
-        # sum_t [-(mk_t - mk_{t-1})] = -final_makespan
+        # Dense reward aligned with the contract objective
+        # makespan + w * sum(per-AMR finish times):
+        #   sum_t reward_t = -(final_makespan + w * sum(final finish times))
         new_makespan = self.makespan()
-        reward = -(new_makespan - prev_makespan)
+        new_finish_sum = float(sum(self.robot_free_times))
+        reward = -(new_makespan - prev_makespan) - self.objective_load_balance_weight * (
+            new_finish_sum - prev_finish_sum
+        )
         if self.done():
             return None, reward, True
         return self._get_state(), reward, False

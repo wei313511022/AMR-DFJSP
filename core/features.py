@@ -4,8 +4,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from core.env import Coord, TaskSchedulingEnv
-
 
 def flatten_jobs(scenario: Union[dict, List[dict]]) -> List[dict]:
     if isinstance(scenario, dict) and "jobs" in scenario:
@@ -25,55 +23,13 @@ def flatten_jobs(scenario: Union[dict, List[dict]]) -> List[dict]:
     return []
 
 
-def decode_robot_pos(state_vec: np.ndarray, num_robots: int, rid: int) -> Coord:
-    """
-    state layout (M robots, S stations, D docks):
-      [onehot(M), n_tasks(1), t(1), robots(6*M), stations(S), docks(D)]
-    robots block starts at idx = M + 2
-    each robot: [free_time, x, y, invA, invB, invC]
-    """
-    base = num_robots + 2 + rid * 6
-    x = int(state_vec[base + 1])
-    y = int(state_vec[base + 2])
-    return (x, y)
-
-
-def decode_robot_free_time(state_vec: np.ndarray, rid: int, num_robots: int = 5) -> float:
-    base = num_robots + 2 + rid * 6
-    return float(state_vec[base + 0])
-
-
-def decode_robot_inventory(state_vec: np.ndarray, num_robots: int, rid: int) -> Dict[str, int]:
-    base = num_robots + 2 + rid * 6
-    inv_a = int(state_vec[base + 3])
-    inv_b = int(state_vec[base + 4])
-    inv_c = int(state_vec[base + 5])
-    return {"A": inv_a, "B": inv_b, "C": inv_c}
-
-
-def decode_now_t(state_vec: np.ndarray, num_robots: int = 5) -> float:
-    return float(state_vec[num_robots + 1])
-
-
-def decode_station_busy(
-    state_vec: np.ndarray, num_stations: int = 5, num_docks: int = 5
-) -> Dict[str, float]:
-    start = -(num_stations + num_docks)
-    end = -num_docks if num_docks > 0 else None
-    vals = state_vec[start:end]
-    return {f"S{i+1}": float(v) for i, v in enumerate(vals)}
-
-
-def decode_dock_busy(state_vec: np.ndarray, num_docks: int = 5) -> Dict[str, float]:
-    vals = state_vec[-num_docks:]
-    return {f"D{i+1}": float(v) for i, v in enumerate(vals)}
-
 #build the action of AMR list
 def build_actions_for_tasks(
     tasks: List[dict],  #the available task
     inventory: Dict[str, int],  #usable onboard stock per material
     capacity_per_type: int,
     allow_proactive_replenish: bool = True,
+    max_add: Optional[int] = None,
 ) -> List[Tuple[int, Optional[Dict[str, int]]]]:
     """
     Batch-pickup action space (proactive replenishment restored, adapted to
@@ -84,10 +40,16 @@ def build_actions_for_tasks(
       - dock operations (op_index == 0) choose how many units of the job's
         material to pick up at its dock (Score(i) = Q + cover/load/wait bonuses
         compares these quantity options):
-          inventory == 0 -> add in 1..(cap - inv)   (must visit the dock)
+          inventory == 0 -> add in 1..cap_i   (must visit the dock)
           inventory >  0 -> add = 0 (deliver from onboard stock, skip the dock)
-                            plus add in 1..(cap - inv) when proactive top-up
+                            plus add in 1..cap_i when proactive top-up
                             is enabled (visit the dock on the way).
+
+    cap_i masks useless pickups: never carry more units of a material than the
+    currently visible same-material demand (this job + other pending dock ops).
+    Future arrivals are not counted — conservative, avoids dead stock at the
+    end of an episode. `max_add` additionally caps units per dock visit
+    (inference uses max_add=1 when batching would be unfaithful).
     """
     mat_types = ["A", "B", "C"]
     actions: List[Tuple[int, Optional[Dict[str, int]]]] = []
@@ -100,51 +62,30 @@ def build_actions_for_tasks(
             continue
         inv = int(inventory.get(jtype, 0))
         headroom = max(0, int(capacity_per_type) - inv)
+        # Other pending dock operations of the same material (siblings deduped).
+        others = _same_type_remaining(tasks, idx, jtype)
+
         adds: List[int] = []
         if inv > 0:
             adds.append(0)
             if allow_proactive_replenish:
-                adds.extend(range(1, headroom + 1))
+                # After consuming one unit for this job, carried stock should
+                # not exceed the remaining visible demand.
+                cap_i = min(headroom, max(0, others - inv + 1))
+                if max_add is not None:
+                    cap_i = min(cap_i, int(max_add))
+                adds.extend(range(1, cap_i + 1))
         else:
-            adds.extend(range(1, headroom + 1))
+            cap_i = min(headroom, others + 1)
+            if max_add is not None:
+                cap_i = min(cap_i, int(max_add))
+            cap_i = max(1, cap_i)  # must at least pick this job's own unit
+            adds.extend(range(1, cap_i + 1))
         for add in adds:
             plan = {t: 0 for t in mat_types}
             plan[jtype] = int(add)
             actions.append((idx, plan))
     return actions
-
-
-def action_features_from_snapshot(
-    env: TaskSchedulingEnv,
-    robot_pos: Coord,
-    now_t: float,
-    station_busy: Dict[str, float],
-    inventory: Dict[str, int],
-    task: dict,
-    replenish: Union[int, Dict[str, int], None],
-    dock_busy: Optional[Dict[str, float]] = None,
-) -> np.ndarray:
-    """
-    Quick estimate of (travel, wait, proc, dock_wait) from a state snapshot,
-    matching the dock-per-job timeline used by env.action_features.
-    """
-    _ = inventory, replenish
-    dock = task["pickup"]
-    dock_key = str(task.get("dock", ""))
-    drop = task["drop"]
-    station = task["station"]
-    proc = float(task["proc_time"])
-
-    arrive_dock = now_t + float(env._dist(robot_pos, dock))
-    dock_free = float((dock_busy or {}).get(dock_key, 0.0))
-    dock_wait = max(0.0, dock_free - arrive_dock)
-    pickup_end = arrive_dock + dock_wait + proc
-
-    travel = (pickup_end - now_t) + float(env._dist(dock, drop))
-    arrive = now_t + travel
-    wait = max(0.0, station_busy[station] - arrive)
-
-    return np.array([travel, wait, proc, dock_wait], dtype=np.float32)
 
 
 def q_values_batch(
@@ -250,6 +191,11 @@ def select_action_index(
     """
     Select action index by Q-value, optionally adding a small proactive
     replenishment bias to reduce future source round-trips.
+
+    The bias only compares options OF THE SAME TASK (which quantity to pick
+    up); it is zero-based per task so it never shifts the ranking BETWEEN
+    tasks — cross-task preferences stay purely Q-driven. Without this, tasks
+    at busy stations would systematically collect wait/load bonuses.
     """
     if len(actions) == 0:
         raise ValueError("actions is empty.")
@@ -261,15 +207,15 @@ def select_action_index(
     ):
         return int(torch.argmax(q_values).item())
 
-    best_idx = 0
-    best_score = float("-inf")
     w_cover = float(proactive_replenish_bias_weight)
     w_load = float(full_load_bias_weight)
     w_wait = float(waiting_replenish_bias_weight)
+
+    bonuses: List[float] = []
+    repl_totals: List[int] = []
+    repl_mains: List[int] = []
     for i, (task_idx, replenish_plan) in enumerate(actions):
         task_idx_i = int(task_idx)
-        q_i = float(q_values[i].item())
-
         task = tasks[task_idx_i] if 0 <= task_idx_i < len(tasks) else {}
         jtype = str(task.get("type", "")).upper()
         if isinstance(replenish_plan, dict):
@@ -278,6 +224,8 @@ def select_action_index(
             plan = {jtype: int(max(0, replenish_plan or 0))}
         repl_main = int(max(0, plan.get(jtype, 0)))
         repl_total = int(sum(max(0, int(v)) for v in plan.values()))
+        repl_mains.append(repl_main)
+        repl_totals.append(repl_total)
 
         total_headroom = 0
         for t in ["A", "B", "C"]:
@@ -298,10 +246,28 @@ def select_action_index(
             wait = float(action_feats[i][1])
 
         wait_factor = min(max(wait, 0.0), 30.0) / 30.0
-        score = q_i + w_cover * gain + w_load * load_ratio
+        bonus = w_cover * gain + w_load * load_ratio
         if repl_total > 0 and wait > 1e-6:
-            # If station is occupied, favor using that waiting window to pre-load.
-            score += w_wait * load_ratio * (1.0 + wait_factor)
+            # If the station is occupied anyway, favor using that waiting
+            # window to pre-load extra units.
+            bonus += w_wait * load_ratio * (1.0 + wait_factor)
+        bonuses.append(bonus)
+
+    # Zero-base the bonus within each task group.
+    min_bonus_by_task: Dict[int, float] = {}
+    for (task_idx, _plan), bonus in zip(actions, bonuses):
+        key = int(task_idx)
+        cur = min_bonus_by_task.get(key)
+        if cur is None or bonus < cur:
+            min_bonus_by_task[key] = bonus
+
+    best_idx = 0
+    best_score = float("-inf")
+    for i, (task_idx, _plan) in enumerate(actions):
+        q_i = float(q_values[i].item())
+        repl_main = repl_mains[i]
+        repl_total = repl_totals[i]
+        score = q_i + bonuses[i] - min_bonus_by_task[int(task_idx)]
 
         if score > best_score:
             best_score = score

@@ -27,10 +27,10 @@ def format_inventory(inv: Dict[str, int]) -> str:
 
 
 def build_robot_labels(
-    inventories: Optional[List[Dict[str, int]]], num_robots: int = 5
+    inventories: Optional[List[Dict[str, int]]], num_robots: Optional[int] = None
 ) -> List[str]:
-    if inventories:
-        num_robots = max(num_robots, len(inventories))
+    if num_robots is None:
+        num_robots = len(inventories) if inventories else 3
     base = [f"AMR{i+1}" for i in range(num_robots)]
     if not inventories:
         return base
@@ -343,7 +343,11 @@ def draw_amr_schedule(
         return
 
     type_to_color = {"A": "tab:blue", "B": "tab:orange", "C": "tab:green"}
-    robot_names = build_robot_labels(inventories)
+    max_rid = max((int(item.get("robot", 0)) for item in trace), default=0)
+    num_lanes = max(
+        max_rid + 1, len(inventories) if inventories else 0
+    )
+    robot_names = build_robot_labels(inventories, num_robots=num_lanes)
 
     lane_h = 16
     lane_gap = 8
@@ -402,7 +406,7 @@ def draw_amr_schedule(
                 if show_labels:
                     ax.text(s + dur / 2, lane_y + lane_h / 2, label_job, ha="center", va="center", fontsize=9, color="black")
 
-    yticks = [i * (lane_h + lane_gap) + lane_h / 2 for i in range(3)]
+    yticks = [i * (lane_h + lane_gap) + lane_h / 2 for i in range(num_lanes)]
     ax.set_yticks(yticks)
     ax.set_yticklabels(robot_names)
     ax.grid(True, axis="x", linestyle="--", alpha=0.4)

@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional, Union
 
 import torch
@@ -138,15 +139,25 @@ def run_test_and_plot(
     print(f"Test makespan = {mk:.2f}s")
 
     if show_test_plots:
-        plot_dispatch_queue(env.trace, save_path="dispatch_queue.png", title_info=test_title)
+        out_dir = "results"
+        os.makedirs(out_dir, exist_ok=True)
+        plot_dispatch_queue(
+            env.trace,
+            save_path=os.path.join(out_dir, "dispatch_queue.png"),
+            title_info=test_title,
+        )
         plot_amr_schedule(
             env.trace,
             makespan=mk,
-            save_path="amr_schedule.png",
+            save_path=os.path.join(out_dir, "amr_schedule.png"),
             inventories=env.robot_inventory,
             title_info=test_title,
         )
-        plot_input_queue(test_scenario, save_path="input_queue.png", title_info=test_title)
+        plot_input_queue(
+            test_scenario,
+            save_path=os.path.join(out_dir, "input_queue.png"),
+            title_info=test_title,
+        )
 
     return mk
 
@@ -156,15 +167,36 @@ def print_batch_results(
     policy_net: nn.Module,
     device: torch.device,
     scenario_list: List[Union[dict, List[dict]]],
+    max_scenarios: Optional[int] = 10,
+    collision_avoidance: bool = False,
 ) -> None:
-    print("\n=== BATCH RESULTS ===")
-    for i, rec in enumerate(scenario_list):
-        if isinstance(rec, list) and len(rec) > 0 and isinstance(rec[0], dict) and "jobs" in rec[0]:
-            job_count = len(flatten_jobs(rec))
-            mk_i = run_greedy_episode(env, policy_net, rec, device)
-            print(f"[STREAM {i}] batches={len(rec)} jobs={job_count} makespan={mk_i:.2f}s")
-        else:
-            dt = float(rec.get("dispatch_time", 0.0)) if isinstance(rec, dict) else 0.0
-            job_count = len(flatten_jobs(rec))
-            mk_i = run_greedy_episode(env, policy_net, rec, device)
-            print(f"[BATCH {i}] dispatch_time={dt:.2f} jobs={job_count} makespan={mk_i:.2f}s")
+    """Batch evaluation summary.
+
+    Runs with collision avoidance OFF by default: the collision-aware
+    simulation costs minutes per FJSSP instance, so evaluating a full dataset
+    with it can take hours. `max_scenarios=None` evaluates everything.
+    """
+    subset = scenario_list if max_scenarios is None else scenario_list[: max(0, int(max_scenarios))]
+    mode = "collision-aware" if collision_avoidance else "fast estimate (no CA)"
+    print(f"\n=== BATCH RESULTS ({len(subset)}/{len(scenario_list)} scenarios, {mode}) ===")
+
+    prev_ca = env.enable_collision_avoidance
+    env.enable_collision_avoidance = collision_avoidance
+    try:
+        for i, rec in enumerate(subset):
+            if isinstance(rec, list) and len(rec) > 0 and isinstance(rec[0], dict) and "jobs" in rec[0]:
+                job_count = len(flatten_jobs(rec))
+                mk_i = run_greedy_episode(env, policy_net, rec, device)
+                print(f"[STREAM {i}] batches={len(rec)} jobs={job_count} makespan={mk_i:.2f}s")
+            else:
+                dt = float(rec.get("dispatch_time", 0.0)) if isinstance(rec, dict) else 0.0
+                job_count = len(flatten_jobs(rec))
+                mk_i = run_greedy_episode(env, policy_net, rec, device)
+                print(f"[BATCH {i}] dispatch_time={dt:.2f} jobs={job_count} makespan={mk_i:.2f}s")
+        if len(subset) < len(scenario_list):
+            print(
+                f"... {len(scenario_list) - len(subset)} more scenarios skipped "
+                "(raise max_scenarios or pass None to evaluate all)"
+            )
+    finally:
+        env.enable_collision_avoidance = prev_ca

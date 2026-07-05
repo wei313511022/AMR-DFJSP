@@ -60,7 +60,7 @@ def main():
     action_dim = 4  # (travel, station_wait, proc, dock_wait)
     lr = 1e-3
     adam_eps = 1.5e-4
-    num_episodes = 30
+    num_episodes = 200
     batch_size = 128
     gamma = 0.99
     epsilon = 1.0
@@ -73,10 +73,21 @@ def main():
     proactive_replenish_bias_weight = 2.5
     proactive_full_load_bias_weight = 1.8
     proactive_waiting_replenish_bias_weight = 1.5
-    enable_collision_avoidance = True
+    # Collision avoidance: OFF for training — the time-aware A* planning per
+    # candidate action dominates wall time (~1000x slower episodes) while the
+    # GPU sits idle; the contract's movement model is the quick Manhattan
+    # estimate anyway and inference predict() also runs without it.
+    # ON for the final test/demo so the showcased schedule is collision-free.
+    train_collision_avoidance = False
+    test_collision_avoidance = True
     # rainbow DDQN settinng
     use_rainbow = True
     rainbow_num_atoms = 51
+    # Distributional support must cover the n-step target range. Targets are
+    # discounted negative objective increments: |Q| is roughly
+    # (avg step cost ~ makespan/steps) x 1/(1-gamma). For 30-job FJSSP
+    # instances (makespan ~ 5000-6000, ~200 ops, gamma 0.99) that is ~ -3000,
+    # so -10000 has margin — re-size this if instances grow or gamma rises.
     rainbow_v_min = -10000.0
     rainbow_v_max = 0.0
     rainbow_noisy_std = 0.5
@@ -93,8 +104,9 @@ def main():
     grad_clip_norm = 10.0
     use_noisy_exploration = True
 
-    # Training visualization and profiling
-    show_train_schedule = True
+    # Training visualization and profiling (keep OFF for long runs — live
+    # drawing adds significant wall time per step)
+    show_train_schedule = False
     train_schedule_every_episodes = 1
     train_schedule_every_steps = 10
     train_schedule_window = 120.0
@@ -102,12 +114,12 @@ def main():
     train_schedule_pause = 0.01
     train_schedule_show_labels = False
     train_schedule_figsize = (14, 8)
-    show_train_route_map = True
+    show_train_route_map = False
     train_route_map_every_episodes = 1
     train_route_map_every_steps = 1
     train_route_map_pause = 0.01
     train_route_map_figsize = (9, 8)
-    train_route_map_animate = True
+    train_route_map_animate = False
     train_route_map_time_step = 0.5
     train_route_map_max_frames_per_update = 120
     train_route_map_delay_seconds = 20.0
@@ -116,6 +128,10 @@ def main():
 
     # Test and plotting
     test_scenario_file = os.path.join("data", "test_scenario_one_time.jsonl")
+    # Batch evaluation after the demo run: limit scenario count and use the
+    # fast estimate — collision-aware evaluation of a whole dataset takes hours.
+    batch_eval_max_scenarios = 10  # None = evaluate the full scenario_list
+    batch_eval_collision_avoidance = False
     show_live = False
     show_live_stream = False
     show_interactive = False
@@ -179,9 +195,10 @@ def main():
     env.proactive_replenish_bias_weight = proactive_replenish_bias_weight
     env.proactive_full_load_bias_weight = proactive_full_load_bias_weight
     env.proactive_waiting_replenish_bias_weight = proactive_waiting_replenish_bias_weight
-    env.enable_collision_avoidance = enable_collision_avoidance
+    env.enable_collision_avoidance = train_collision_avoidance
 
-    # State layout is defined by the env spec (5 AMRs / 5 stations / 5 docks -> 47).
+    # State layout is defined by the env spec (Route_Map field:
+    # 5 AMRs / 6 stations / 3 material docks -> 46).
     state_dim = len(env.reset([]))
     input_dim = state_dim + action_dim
     print(f"state_dim = {state_dim}, action_dim = {action_dim}")
@@ -310,6 +327,8 @@ def main():
             print(f"Exported Phase III contract checkpoint to {export_contract_path}")
 
     if do_test:
+        # Test/demo runs with the full collision-aware simulation.
+        env.enable_collision_avoidance = test_collision_avoidance
         run_test_and_plot(
             env=env,
             policy_net=policy_net,
@@ -338,7 +357,14 @@ def main():
             route_play_step=route_play_step,
             route_play_interval_ms=route_play_interval_ms,
         )
-        print_batch_results(env=env, policy_net=policy_net, device=device, scenario_list=scenario_list)
+        print_batch_results(
+            env=env,
+            policy_net=policy_net,
+            device=device,
+            scenario_list=scenario_list,
+            max_scenarios=batch_eval_max_scenarios,
+            collision_avoidance=batch_eval_collision_avoidance,
+        )
 
 
 if __name__ == "__main__":

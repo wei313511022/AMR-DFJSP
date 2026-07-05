@@ -15,8 +15,8 @@
     ]
   },
   "amrs": {
-    "count": 3,
-    "start_positions": [[2, 1], [2, 4], [2, 7]],
+    "count": 5,
+    "start_positions": [[2, 9], [2, 7], [2, 5], [2, 3], [2, 1]],
     "capacity_per_type": 3
   },
   "stations": {

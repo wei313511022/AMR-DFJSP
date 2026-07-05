@@ -92,7 +92,9 @@ def main() -> int:
     parser.add_argument(
         "--init-random",
         action="store_true",
-        help="Export an untrained checkpoint first (pipeline smoke test).",
+        help="Export an untrained checkpoint first (pipeline smoke test). "
+        "Always writes to its own file so a trained my_scheduler_v1.pth is "
+        "never overwritten.",
     )
     parser.add_argument("--jobs", type=int, default=12, help="Jobs per test scene.")
     parser.add_argument("--seed", type=int, default=7)
@@ -101,6 +103,11 @@ def main() -> int:
     ckpt_path = Path(args.checkpoint)
 
     if args.init_random:
+        # Never touch the deliverable checkpoint: smoke tests get their own file.
+        smoke_path = REPO_ROOT / "checkpoints" / "contract_smoke.pth"
+        if Path(args.checkpoint).resolve() != smoke_path.resolve():
+            print(f"[init-random] using {smoke_path.name} (ignoring --checkpoint)")
+        ckpt_path = smoke_path
         env = TaskSchedulingEnv()
         state_dim = len(env.reset([]))
         action_dim = 4

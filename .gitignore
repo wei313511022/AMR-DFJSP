@@ -1,0 +1,19 @@
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# Model weights (deliver my_scheduler_v1.pth separately when handing off)
+checkpoints/
+
+# Regenerated training data (main.py rebuilds it via scripts/Generate_training_data.py)
+data/fjssp_training_dataset.jsonl
+data/train_data/
+dispatch_batches_*.jsonl
+
+# Test/visualization outputs (rewritten on every test run)
+results/amr_schedule.png
+results/dispatch_queue.png
+results/input_queue.png
+live_frames/
+live_schedule.gif

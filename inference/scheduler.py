@@ -113,7 +113,7 @@ class Scheduler:
 
     # ------------------------------------------------------------------ scene
 
-    def _scene_to_episode(self, scene: dict) -> Tuple[List[dict], dict]:
+    def _scene_to_episode(self, scene: dict) -> Tuple[List[dict], dict, bool]:
         t0 = float(scene.get("time", 0.0))
         amrs = scene.get("amrs", [])
         if len(amrs) != self.env.num_robots:
@@ -123,12 +123,14 @@ class Scheduler:
             )
 
         jobs: List[dict] = []
+        docks_by_material: Dict[str, set] = {}
         for idx, job in enumerate(scene.get("jobs", [])):
             material = str(job["material"]).upper()
             station_xy = (int(job["station_xy"][0]), int(job["station_xy"][1]))
             station_key = self.env._station_by_coord.get(station_xy)
             if station_key is None:
                 raise ValueError(f"job {idx}: unknown station_xy {job['station_xy']}")
+            docks_by_material.setdefault(material, set()).add(tuple(job["dock_xy"]))
             jobs.append(
                 {
                     "jid": idx,
@@ -137,10 +139,17 @@ class Scheduler:
                     or self.env.material_durations[material],
                     "station": station_key,
                     "dock_xy": list(job["dock_xy"]),
-                    # arrival_time <= scene.time per contract, so all jobs are
-                    # already released when the episode starts at t=0.
+                    # Contract guarantees arrival_time <= scene.time; keep the
+                    # relative value anyway so future-dated jobs (defensive)
+                    # are released at the right moment instead of early.
+                    "_release": max(0.0, float(job.get("arrival_time", t0)) - t0),
                 }
             )
+
+        # Batched pickups are only faithful when a material always comes from
+        # one dock (a stocked unit is interchangeable with the job's own dock
+        # pickup). Otherwise fall back to one-unit-per-visit pickups.
+        batching_ok = all(len(d) <= 1 for d in docks_by_material.values())
 
         init_state = {
             "positions": [list(a["position"]) for a in amrs],
@@ -148,7 +157,7 @@ class Scheduler:
             "free_times": [max(0.0, float(a.get("available_at", t0)) - t0) for a in amrs],
             "inventory": [dict(a.get("inventory", {})) for a in amrs],
         }
-        return jobs, init_state
+        return jobs, init_state, batching_ok
 
     # ---------------------------------------------------------------- predict
 
@@ -156,7 +165,7 @@ class Scheduler:
         """scene (contract section 3) -> plan (contract section 4)."""
         _check_schema_version(scene.get("schema_version", "1.0"), "scene")
 
-        jobs, init_state = self._scene_to_episode(scene)
+        jobs, init_state, batching_ok = self._scene_to_episode(scene)
         num_jobs = len(jobs)
         num_amrs = self.env.num_robots
         if num_jobs == 0:
@@ -166,8 +175,18 @@ class Scheduler:
                 "order": [],
             }
 
+        # Group jobs by (relative) release time; contract scenes normally
+        # collapse to a single release at t=0.
+        releases: Dict[float, List[dict]] = {}
+        for j in jobs:
+            releases.setdefault(float(j.pop("_release", 0.0)), []).append(j)
+        scenario = [
+            {"dispatch_time": t, "jobs": batch} for t, batch in sorted(releases.items())
+        ]
+
         env = self.env
-        env.reset({"dispatch_time": 0.0, "jobs": jobs}, init_state=init_state)
+        env.reset(scenario, init_state=init_state)
+        max_add = None if batching_ok else 1
 
         with torch.no_grad():
             while not env.done():
@@ -176,6 +195,8 @@ class Scheduler:
                     env.available_tasks,
                     env.robot_inventory[rid],
                     env.capacity_per_type,
+                    allow_proactive_replenish=batching_ok,
+                    max_add=max_add,
                 )
                 if not actions:
                     raise RuntimeError("no valid actions during rollout")
