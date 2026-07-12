@@ -10,6 +10,7 @@ from core.env import TaskSchedulingEnv
 from core.model import QNetwork
 from inference.checkpoint_io import export_contract_checkpoint
 from training.evaluator import print_batch_results, run_test_and_plot
+from training.test_runner import evaluate_test_folder
 from training.trainer import prepare_scenarios, train_ddqn
 
 
@@ -125,6 +126,22 @@ def main():
     train_route_map_delay_seconds = 20.0
     enable_profile = True
     profile_cuda_sync = True
+
+    # Folder-based test dataset (user-provided scenarios) + video export.
+    # Every .jsonl/.json in test_data_dir is evaluated (see training/test_runner
+    # for the file->scenario rules); each scenario gets a combined video
+    # (Gantt schedule + field route map) plus a summary.csv in test_output_dir.
+    test_data_dir = os.path.join("data", "test_data")  # None/missing dir = skip
+    test_output_dir = os.path.join("results", "test_runs")
+    test_folder_max_scenarios = None  # None = evaluate every scenario found
+    # Fast estimate matches the training/inference movement model; flip to
+    # True for collision-faithful videos (minutes per FJSSP instance).
+    test_folder_collision_avoidance = False
+    save_test_videos = True
+    test_video_max_scenarios = 3  # record videos for the first N scenarios (None = all)
+    test_video_fps = 10
+    test_video_max_frames = 300  # frame count cap per video (time axis is subsampled)
+    test_video_dpi = 100
 
     # Test and plotting
     test_scenario_file = os.path.join("data", "test_scenario_one_time.jsonl")
@@ -327,6 +344,26 @@ def main():
             print(f"Exported Phase III contract checkpoint to {export_contract_path}")
 
     if do_test:
+        # User-provided test dataset: evaluate every scenario in the folder and
+        # save per-scenario videos (Gantt schedule + route map) with summary.csv.
+        if test_data_dir and os.path.isdir(test_data_dir):
+            evaluate_test_folder(
+                env=env,
+                policy_net=policy_net,
+                device=device,
+                test_data_dir=test_data_dir,
+                output_dir=test_output_dir,
+                collision_avoidance=test_folder_collision_avoidance,
+                max_scenarios=test_folder_max_scenarios,
+                save_videos=save_test_videos,
+                video_max_scenarios=test_video_max_scenarios,
+                video_fps=test_video_fps,
+                video_max_frames=test_video_max_frames,
+                video_dpi=test_video_dpi,
+            )
+        elif test_data_dir:
+            print(f"[TEST-DATA] folder '{test_data_dir}' not found — skipped")
+
         # Test/demo runs with the full collision-aware simulation.
         env.enable_collision_avoidance = test_collision_avoidance
         run_test_and_plot(

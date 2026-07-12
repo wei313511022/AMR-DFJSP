@@ -40,9 +40,36 @@ def _path_prefix(path: List[Coord], elapsed: float) -> List[Tuple[float, float]]
     return pts
 
 
+def _machine_states_at_time(trace: List[dict], t: float) -> List[dict]:
+    """Operations being processed on their machines at time t (the AMR has
+    already handed the part over and left)."""
+    states: List[dict] = []
+    for item in trace:
+        segs = _segment_map(item)
+        seg_p = segs.get("process")
+        if seg_p is None:
+            continue
+        s = float(seg_p.get("start", 0.0))
+        e = float(seg_p.get("end", s))
+        if s - 1e-9 <= t < e - 1e-9:
+            states.append(
+                {
+                    "station": str(item.get("dst", "")),
+                    "jid": item.get("jid"),
+                    "op_index": item.get("op_index"),
+                    "num_ops": item.get("num_ops"),
+                    "type": str(item.get("type", "")),
+                    "proc_elapsed": max(0.0, t - s),
+                    "proc_total": max(0.0, e - s),
+                    "proc_remaining": max(0.0, e - t),
+                }
+            )
+    return states
+
+
 def _robot_snapshot_at_time(
     env: TaskSchedulingEnv, trace: List[dict], t: float
-) -> Tuple[List[dict], float]:
+) -> Tuple[List[dict], List[dict], float]:
     max_t = 0.0
     actions_by_robot: Dict[int, List[dict]] = {rid: [] for rid in range(env.num_robots)}
 
@@ -179,16 +206,9 @@ def _robot_snapshot_at_time(
                 dst = action["dst"]
                 break
 
-            if t < tp:
-                status = "process"
-                mode = "supply" if int(action["replenish"]) > 0 else "deliver"
-                jid = action["jid"]
-                dst = action["dst"]
-                proc_total = max(0.0, tp - tw)
-                proc_elapsed = max(0.0, min(proc_total, t - tw))
-                proc_remaining = max(0.0, tp - t)
-                break
-
+            # FJSSP semantics: the AMR hands the part over at tw and is free;
+            # the machine keeps processing until tp on its own
+            # (see _machine_states_at_time). The robot idles at post_pos.
             post_pos = tuple(action.get("post_pos", path[-1]))
             pos = (float(post_pos[0]), float(post_pos[1]))
 
@@ -220,7 +240,7 @@ def _robot_snapshot_at_time(
             }
         )
 
-    return snapshots, max_t
+    return snapshots, _machine_states_at_time(trace, t), max_t
 
 
 def _draw_base_map(ax, env: TaskSchedulingEnv) -> None:
@@ -326,7 +346,12 @@ def _normalize_snapshot_for_draw(snap: dict) -> dict:
 
 
 def _draw_route_map_from_snapshots(
-    ax, env: TaskSchedulingEnv, snapshots: List[dict], current_t: float, max_t: float
+    ax,
+    env: TaskSchedulingEnv,
+    snapshots: List[dict],
+    current_t: float,
+    max_t: float,
+    machine_states: Optional[List[dict]] = None,
 ) -> List[str]:
     ax.clear()
     _draw_base_map(ax, env)
@@ -335,6 +360,49 @@ def _draw_route_map_from_snapshots(
     # Strong, fixed color identity per AMR.
     colors = ["#e41a1c", "#377eb8", "#4daf4a", "#ff7f00", "#984ea3"]
     status_lines: List[str] = []
+
+    # Machines processing on their own (FJSSP: the AMR already left).
+    mat_colors = {"A": "#1f77b4", "B": "#ff7f0e", "C": "#2ca02c"}
+    for m in machine_states or []:
+        st = str(m.get("station", ""))
+        if st not in env.station_locs:
+            continue
+        sx, sy = env.station_locs[st]
+        mcolor = mat_colors.get(str(m.get("type", "")).upper(), "#7f7f7f")
+        hl = patches.Rectangle(
+            (sx - 0.45, sy - 0.45),
+            0.9,
+            0.9,
+            facecolor=mcolor,
+            edgecolor=mcolor,
+            alpha=0.25,
+            linewidth=1.2,
+            zorder=2.5,
+        )
+        ax.add_patch(hl)
+        left = float(m.get("proc_remaining", 0.0))
+        jid = m.get("jid")
+        op = m.get("op_index")
+        nops = m.get("num_ops")
+        if op is not None and nops:
+            job_txt = f"J{jid}({int(op) + 1}/{int(nops)})"
+        else:
+            job_txt = f"J{jid}" + (f".{op}" if op is not None else "")
+        ax.text(
+            sx,
+            sy - 0.62,
+            f"{job_txt} left {left:.1f}s",
+            ha="center",
+            va="top",
+            fontsize=9,
+            color=mcolor,
+            weight="bold",
+        )
+        status_lines.append(
+            f"{st}: processing {job_txt} ({m.get('type','')}), "
+            f"{float(m.get('proc_elapsed', 0.0)):.1f}/{float(m.get('proc_total', 0.0)):.1f}s "
+            f"(left {left:.1f}s)"
+        )
 
     norm_snaps = [_normalize_snapshot_for_draw(s) for s in snapshots]
     norm_snaps.sort(key=lambda s: int(s.get("rid", -1)))
@@ -401,8 +469,10 @@ def _draw_route_map_from_snapshots(
 
 
 def draw_route_map(ax, env: TaskSchedulingEnv, trace: List[dict], current_t: float) -> List[str]:
-    snapshots, max_t = _robot_snapshot_at_time(env, trace, current_t)
-    return _draw_route_map_from_snapshots(ax, env, snapshots, current_t, max_t)
+    snapshots, machine_states, max_t = _robot_snapshot_at_time(env, trace, current_t)
+    return _draw_route_map_from_snapshots(
+        ax, env, snapshots, current_t, max_t, machine_states=machine_states
+    )
 
 
 def _load_route_jsonl_frames(route_jsonl_path: str) -> List[dict]:
@@ -446,7 +516,7 @@ def show_route_map_replay(
             "Use `%matplotlib qt` or `%matplotlib widget`."
         )
 
-    _, max_t = _robot_snapshot_at_time(env, trace, initial_t)
+    _, _, max_t = _robot_snapshot_at_time(env, trace, initial_t)
     max_t = max(1.0, max_t)
     initial_t = max(0.0, min(max_t, initial_t))
 

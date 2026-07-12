@@ -22,6 +22,22 @@ def format_job_label(jid: Any, station: Any) -> str:
     return f"J_{jid}{station_tag}"
 
 
+def format_trace_job_label(item: dict) -> str:
+    """Job label with operation progress: J3(2/6)@S4 = job 3's 2nd of 6
+    operations at station S4; delivery legs render as J3->T."""
+    jid = item.get("jid", item.get("seq", ""))
+    dst = str(item.get("dst", "") or "")
+    if item.get("is_delivery"):
+        return f"J{jid}->{dst or 'T'}"
+    op = item.get("op_index")
+    nops = item.get("num_ops")
+    if op is not None and nops:
+        core = f"J{jid}({int(op) + 1}/{int(nops)})"
+    else:
+        core = f"J{jid}"
+    return f"{core}@{format_station_label(dst)}" if dst else core
+
+
 def format_inventory(inv: Dict[str, int]) -> str:
     return f"A:{inv.get('A',0)} B:{inv.get('B',0)} C:{inv.get('C',0)}"
 
@@ -357,8 +373,7 @@ def draw_amr_schedule(
         lane_y = rid * (lane_h + lane_gap)
 
         jtype = item["type"]
-        jid = item.get("jid", item.get("seq", ""))
-        label_job = format_job_label(jid, item.get("dst"))
+        label_job = format_trace_job_label(item)
 
         for seg in item["segments"]:
             s = seg["start"]
@@ -402,7 +417,16 @@ def draw_amr_schedule(
             elif seg["kind"] == "wait":
                 ax.broken_barh([(s, dur)], (lane_y, lane_h), facecolors="lightgray", hatch="...", edgecolors="gray")
             else:
-                ax.broken_barh([(s, dur)], (lane_y, lane_h), facecolors=type_to_color.get(jtype, "tab:gray"))
+                # Machine processing: the AMR handed the part over at the
+                # start of this segment and is already free (translucent bar
+                # = the delivered operation being processed elsewhere).
+                ax.broken_barh(
+                    [(s, dur)],
+                    (lane_y, lane_h),
+                    facecolors=type_to_color.get(jtype, "tab:gray"),
+                    alpha=0.35,
+                    edgecolors=type_to_color.get(jtype, "tab:gray"),
+                )
                 if show_labels:
                     ax.text(s + dur / 2, lane_y + lane_h / 2, label_job, ha="center", va="center", fontsize=9, color="black")
 
@@ -423,11 +447,133 @@ def draw_amr_schedule(
         ),
         mpatches.Patch(facecolor="lightgray", edgecolor="gray", hatch="///", label="To Station"),
         mpatches.Patch(facecolor="lightgray", edgecolor="gray", hatch="...", label="Waiting"),
+        mpatches.Patch(facecolor="tab:gray", alpha=0.35, label="Process @ machine (AMR free)"),
     ]
     ax.legend(handles=leg, loc="upper right", frameon=True)
 
     if current_t is not None:
         ax.axvline(current_t, color="red", linestyle="--", linewidth=1)
+
+
+def _station_sort_key(name: str) -> Tuple[int, str]:
+    s = str(name)
+    if s.startswith("S") and s[1:].isdigit():
+        return (int(s[1:]), s)
+    return (10**9, s)
+
+
+def draw_machine_schedule(
+    ax,
+    trace: List[dict],
+    makespan: Optional[float],
+    station_keys: Optional[List[str]] = None,
+    show_labels: bool = True,
+    current_t: Optional[float] = None,
+) -> None:
+    """Classic FJSSP Gantt: one lane per machine/station, bars = processing
+    intervals (each operation runs on its chosen machine after the AMR
+    hand-over). Labels are J{jid}.{op_index}."""
+    if makespan is None:
+        title = "Machine Schedule (FJSSP)"
+    else:
+        title = f"Machine Schedule (FJSSP) | Makespan: {makespan:.1f}s"
+    ax.set_title(title)
+    ax.set_xlabel("Time (s)")
+
+    if not trace:
+        ax.text(0.5, 0.5, "No trace to plot.", transform=ax.transAxes, ha="center", va="center")
+        ax.grid(True, axis="x", linestyle="--", alpha=0.4)
+        return
+
+    lanes = list(station_keys) if station_keys else sorted(
+        {str(item.get("dst", "")) for item in trace if item.get("dst")},
+        key=_station_sort_key,
+    )
+    lane_index = {name: i for i, name in enumerate(lanes)}
+
+    type_to_color = {"A": "tab:blue", "B": "tab:orange", "C": "tab:green"}
+    lane_h = 16
+    lane_gap = 8
+
+    for item in trace:
+        dst = str(item.get("dst", ""))
+        if dst not in lane_index:
+            continue
+        lane_y = lane_index[dst] * (lane_h + lane_gap)
+        jtype = item.get("type", "")
+
+        for seg in item.get("segments", []):
+            if seg.get("kind") != "process":
+                continue
+            s = float(seg["start"])
+            dur = float(seg["end"]) - s
+            if dur <= 1e-9:
+                continue
+            ax.broken_barh(
+                [(s, dur)],
+                (lane_y, lane_h),
+                facecolors=type_to_color.get(jtype, "tab:gray"),
+                edgecolors="black",
+                linewidth=0.4,
+            )
+            if show_labels:
+                jid = item.get("jid", item.get("seq", ""))
+                op = item.get("op_index", None)
+                nops = item.get("num_ops", None)
+                if op is not None and nops:
+                    label = f"J{jid}({int(op) + 1}/{int(nops)})"
+                elif op is not None:
+                    label = f"J{jid}.{op}"
+                else:
+                    label = f"J{jid}"
+                ax.text(
+                    s + dur / 2,
+                    lane_y + lane_h / 2,
+                    label,
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="black",
+                )
+
+    yticks = [i * (lane_h + lane_gap) + lane_h / 2 for i in range(len(lanes))]
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(lanes)
+    ax.grid(True, axis="x", linestyle="--", alpha=0.4)
+
+    leg = [
+        mpatches.Patch(color=type_to_color["A"], label="Material A"),
+        mpatches.Patch(color=type_to_color["B"], label="Material B"),
+        mpatches.Patch(color=type_to_color["C"], label="Material C"),
+    ]
+    ax.legend(handles=leg, loc="upper right", frameon=True)
+
+    if current_t is not None:
+        ax.axvline(current_t, color="red", linestyle="--", linewidth=1)
+
+
+def plot_machine_schedule(
+    trace: List[dict],
+    makespan: float,
+    save_path: Optional[str] = None,
+    station_keys: Optional[List[str]] = None,
+    title_info: Optional[str] = None,
+):
+    if not trace:
+        print("No trace to plot.")
+        return
+
+    fig, ax = plt.subplots(figsize=(11, 4.5))
+    draw_machine_schedule(ax, trace, makespan, station_keys=station_keys)
+
+    if title_info:
+        fig.suptitle(title_info)
+        plt.tight_layout(rect=[0, 0, 1, 0.92])
+    else:
+        plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=200)
+    plt.show()
 
 
 def plot_amr_schedule(

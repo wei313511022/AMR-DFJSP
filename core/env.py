@@ -29,20 +29,33 @@ class TaskSchedulingEnv:
 
     Environment constants follow the Phase III I/O contract
     (docs/Phase3_Model_IO_Contract.md section 2) and are loaded from
-    configs/env_spec.json:
-      - 5 AMRs starting on the x=2 column
-      - 5 processing stations on the x=9 column (one AMR at a time)
-      - 5 inbound docks on the x=0 column (one AMR at a time); each job carries its own dock
-      - materials A/B/C with durations 5/10/15; pickup at dock costs `duration`,
-        unload+process at station costs `duration`
+    configs/env_spec.json (current field: 12x12 grid, 5 AMRs, stations
+    S1..S6, material docks MA/MB/MC, output point T).
+
+    FJSSP semantics (data/Generate_training_data.py instances):
+      - a job is an ordered list of operations; operation k+1 is released
+        only when operation k finishes (precedence is never reordered)
+      - each operation lists its feasible machines with processing times;
+        dispatching a task = choosing one machine for that operation
+      - machines process on their own: the AMR delivers the part, waits for
+        the machine to be free, hands it over and is immediately available
+        for new work
+      - op 0 additionally requires raw material picked up at the job's
+        material dock (pickup service = material duration, dock is mutex);
+        later ops fetch the in-process part at the previous station
+      - after the last operation an AMR carries the finished part to the
+        output point "T"; the job completes on arrival, so makespan = the
+        last job's arrival at T (deliver_finished_to_output toggles this;
+        the contract inference path turns it off)
 
     Decision point:
       - at least one idle AMR at current time
-      - AND there exists at least one available task (released jobs)
+      - AND there exists at least one available task (released operations)
     Action:
       - choose which task (index in available_tasks) to assign to current_robot
+        (+ how many material units to batch-pick at the dock for op-0 tasks)
     Objective:
-      - minimize makespan
+      - minimize makespan (+ small AMR load-balance term)
     """
 
     def __init__(self, env_spec: Union[dict, str, Path, None] = None):
@@ -84,11 +97,17 @@ class TaskSchedulingEnv:
             m: self.dock_locs[d] for m, d in self.material_dock_map.items()
         }
 
-        # Optional output/delivery points (e.g. finished-goods dock "T").
-        # Recorded for visualization; no dispatch behavior is attached yet.
+        # Output/delivery point(s) (finished-goods dock "T"). When
+        # deliver_finished_to_output is on, a job's last operation releases a
+        # final delivery task: an AMR fetches the finished part at the last
+        # station and carries it to the output point; the job only counts as
+        # complete (and extends makespan) when it arrives there.
         self.output_locs: Dict[str, Coord] = {
             str(k): (int(v[0]), int(v[1])) for k, v in spec.get("output", {}).items()
         }
+        # Disabled by the contract inference path (the plan schema has no
+        # delivery operation).
+        self.deliver_finished_to_output = True
 
         self.station_locs: Dict[str, Coord] = {
             str(k): (int(v[0]), int(v[1])) for k, v in spec.get("stations", {}).items()
@@ -333,10 +352,11 @@ class TaskSchedulingEnv:
 
             seg_transport = segs.get("transport")
             t_start = float(seg_transport.get("start", 0.0)) if seg_transport else 0.0
+            # The robot is released at the hand-over (end of "wait"); the
+            # "process" interval above stays reserved as machine occupancy,
+            # but the robot itself idles at post_pos from the hand-over on.
             t_end = 0.0
-            if seg_p is not None:
-                t_end = float(seg_p.get("end", 0.0))
-            elif seg_w is not None:
+            if seg_w is not None:
                 t_end = float(seg_w.get("end", 0.0))
             elif seg_transport is not None:
                 t_end = float(seg_transport.get("end", t_start))
@@ -612,7 +632,8 @@ class TaskSchedulingEnv:
         pickup_steps = int(math.ceil(pickup_service - 1e-9))
 
         start_t = max(self.t, self.robot_free_times[robot_id])
-        station_free = float(self.station_busy_until[station])
+        # Delivery legs target the output point, which has no busy window.
+        station_free = float(self.station_busy_until.get(station, 0.0))
         dock_free = float(self.dock_busy_until.get(dock_key, 0.0)) if need_pickup else 0.0
 
         pickup_types = [jtype] if need_pickup else []
@@ -950,9 +971,35 @@ class TaskSchedulingEnv:
             )
         return tasks
 
+    def _make_delivery_task(self, task: dict, station: str, release_time: float) -> dict:
+        """Final leg of a finished job: fetch the part at its last station
+        (service 0) and carry it to the output point. No machine choice, no
+        processing; arrival at the output completes the job."""
+        out_key, out_loc = sorted(self.output_locs.items())[0]
+        return {
+            "jid": int(task["jid"]),
+            "type": str(task["type"]),
+            "proc_time": 0.0,
+            "op_index": int(task.get("op_index", 0)) + 1,
+            "num_ops": int(task.get("num_ops", 1)),
+            "op_uid": self._next_op_uid(),
+            "dock": str(station),
+            "pickup": self.station_locs[station],
+            "pickup_service": 0.0,
+            "drop": out_loc,
+            "station": out_key,
+            "release_time": float(release_time),
+            "is_delivery": True,
+        }
+
     def _jobs_to_tasks(self, jobs: List[dict], release_time: float) -> List[dict]:
         tasks = []
         for j in jobs:
+            if isinstance(j, list):
+                # Raw FJSSP row (data/data_README.md format, e.g.
+                # sample_abz5.json): the job IS its operation list, with no
+                # material field.
+                j = {"operations": j}
             jid = j.get("jid")
             if jid is None or int(jid) < 0:
                 jid = self._next_job_id
@@ -960,6 +1007,11 @@ class TaskSchedulingEnv:
             jid = int(jid)
 
             jtype = str(j.get("type", j.get("material", ""))).upper()
+            if not jtype and "operations" in j:
+                # No material given (raw FJSSP instance): assign one
+                # deterministically (round-robin by job id) so op 0 has a
+                # dock to pick raw material from.
+                jtype = self.material_types[jid % len(self.material_types)]
             if jtype not in self.material_durations:
                 raise ValueError(f"Unknown job type: {jtype} (expect A/B/C)")
 
@@ -1119,6 +1171,7 @@ class TaskSchedulingEnv:
         self.trace: List[dict] = []
         self._dispatch_counter = 0
         self._reservation_cache = {}
+        self._max_completion = 0.0
 
         # Multi-operation (FJSSP) bookkeeping: full job definitions and
         # successor operations waiting for their predecessor to finish.
@@ -1208,7 +1261,10 @@ class TaskSchedulingEnv:
         )
 
     def makespan(self) -> float:
-        return float(max(self.robot_free_times)) if self.robot_free_times else 0.0
+        """Completion time of the last finished operation — including the
+        final delivery to the output point when deliver_finished_to_output
+        is on. AMR hand-over times do not extend it."""
+        return float(self._max_completion)
 
     def _get_state(self) -> List[float]:
         """
@@ -1219,7 +1275,7 @@ class TaskSchedulingEnv:
           - for each robot: free_time, x, y, invA, invB, invC (6*M)
           - station busy_until, sorted station keys (S)
           - dock busy_until, sorted dock keys (D)
-        total = M + 2 + 6*M + S + D  (M=5, S=5, D=5 -> 47)
+        total = M + 2 + 6*M + S + D  (current field M=5, S=6, D=3 -> 46)
         """
         st: List[float] = []
         onehot = [0.0] * self.num_robots
@@ -1350,7 +1406,15 @@ class TaskSchedulingEnv:
         t_wait_end = float(plan["process_start_t"])
         t_proc_end = t_wait_end + proc
 
-        self.station_busy_until[station] = t_proc_end
+        # FJSSP semantics: the machine processes the operation on its own;
+        # the AMR only waits for the machine to be free, hands the part over
+        # at t_wait_end and is then available for new work. Job/operation
+        # completion (t_proc_end) drives makespan, not AMR busy time.
+        # Delivery legs target the output point (not a machine): no station
+        # occupancy, completion = arrival time.
+        if station in self.station_busy_until:
+            self.station_busy_until[station] = t_proc_end
+        self._max_completion = max(self._max_completion, t_proc_end)
         if need_pickup and dock_key in self.dock_busy_until:
             self.dock_busy_until[dock_key] = max(
                 self.dock_busy_until[dock_key], pickup_end_t
@@ -1358,45 +1422,56 @@ class TaskSchedulingEnv:
 
         # Multi-operation job: release the next operation when this one
         # completes; the part then waits at this station for its next pickup.
+        # After the LAST operation, release a delivery task to the output
+        # point (dock "T") instead — the job completes on arrival there.
         op_index = int(task.get("op_index", 0))
         num_ops = int(task.get("num_ops", 1))
-        if op_index + 1 < num_ops:
-            successors = self._make_op_tasks(
-                task["jid"], op_index + 1, t_proc_end, prev_station=station
-            )
+        is_delivery = bool(task.get("is_delivery", False))
+        successors: Optional[List[dict]] = None
+        if not is_delivery:
+            if op_index + 1 < num_ops:
+                successors = self._make_op_tasks(
+                    task["jid"], op_index + 1, t_proc_end, prev_station=station
+                )
+            elif self.deliver_finished_to_output and self.output_locs:
+                successors = [self._make_delivery_task(task, station, t_proc_end)]
+        if successors:
             self._pending_ops.append((float(t_proc_end), successors))
             self._pending_ops.sort(key=lambda x: x[0])
 
         if self.enable_collision_avoidance:
+            # The robot steps aside right after the hand-over (t_wait_end);
+            # the station cell stays reserved by the processing machine.
             post_pos = self._post_process_position(transport_path, self._to_coord(task["drop"]))
             post_cands = self._post_process_candidates(transport_path, self._to_coord(task["drop"]))
             post_res = self._build_dynamic_reservations(
                 rid,
-                t_proc_end,
-                t_proc_end + 3.0,
+                t_wait_end,
+                t_wait_end + 3.0,
                 future_work_after_dispatch=True,
             )
             for cand in post_cands:
-                if self._point_conflict(post_res, cand, t_proc_end):
+                if self._point_conflict(post_res, cand, t_wait_end):
                     continue
                 if self._transition_conflict(
                     post_res,
                     cand,
                     cand,
-                    t_proc_end,
-                    t_proc_end + 1.0,
+                    t_wait_end,
+                    t_wait_end + 1.0,
                     ignore_source_point_at_t0=True,
                 ):
                     continue
                 post_pos = self._to_coord(cand)
                 break
         else:
-            # Keep robot at the workstation after processing when collision
+            # Keep robot at the workstation after the hand-over when collision
             # avoidance is disabled. This removes artificial travel between
             # consecutive jobs at the same station.
             post_pos = self._to_coord(task["drop"])
 
-        self.robot_free_times[rid] = t_proc_end
+        # AMR is free as soon as the part is handed over to the machine.
+        self.robot_free_times[rid] = t_wait_end
         self.robot_positions[rid] = post_pos
 
         self.trace.append(
@@ -1404,6 +1479,9 @@ class TaskSchedulingEnv:
                 "seq": self._dispatch_counter,
                 "robot": rid,
                 "jid": jid,
+                "op_index": int(op_index),
+                "num_ops": int(num_ops),
+                "is_delivery": is_delivery,
                 "replenish": int(add_units),
                 "replenish_main": int(add_units),
                 "replenish_plan": {

@@ -7,6 +7,7 @@ from viz.viz_matplotlib import (
     build_arrivals,
     build_robot_labels,
     format_job_label,
+    format_trace_job_label,
     split_transport_intervals,
 )
 
@@ -70,8 +71,7 @@ def show_interactive_schedule_plotly(
     for item in trace:
         proc = float(item.get("proc_time", 0.0))
         jtype = item.get("type")
-        jid = item.get("jid", item.get("seq", ""))
-        label = format_job_label(jid, item.get("dst"))
+        label = format_trace_job_label(item)
         disp_x.append(proc)
         disp_base.append(cursor)
         disp_text.append(label)
@@ -93,8 +93,7 @@ def show_interactive_schedule_plotly(
         rid = item["robot"]
         lane = robot_labels[rid] if rid < len(robot_labels) else f"AMR{rid+1}"
         jtype = item.get("type")
-        jid = item.get("jid", item.get("seq", ""))
-        label = format_job_label(jid, item.get("dst"))
+        label = format_trace_job_label(item)
 
         for seg in item.get("segments", []):
             s = seg["start"]

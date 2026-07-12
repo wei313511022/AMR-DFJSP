@@ -90,6 +90,9 @@ class Scheduler:
         # with its own A*/collision engine. This keeps latency well below 1s.
         self.env = TaskSchedulingEnv(env_spec)
         self.env.enable_collision_avoidance = False
+        # Contract plans have exactly [pickup, unload] per job — no final
+        # delivery-to-output leg.
+        self.env.deliver_finished_to_output = False
         # Conservative: stock reported in the scene is not consumed — the
         # integrating system replays every job's own dock pickup, so only
         # stock acquired inside this rollout may serve later jobs.

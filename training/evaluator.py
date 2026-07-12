@@ -9,9 +9,11 @@ from core.env import TaskSchedulingEnv
 from core.features import flatten_jobs
 from training.rollout import run_greedy_episode, run_greedy_episode_live, run_greedy_episode_live_stream
 from viz.viz_matplotlib import (
+    _station_sort_key,
     plot_amr_schedule,
     plot_dispatch_queue,
     plot_input_queue,
+    plot_machine_schedule,
     show_interactive_schedule,
 )
 from viz.viz_plotly import show_interactive_schedule_plotly
@@ -144,6 +146,13 @@ def run_test_and_plot(
         plot_dispatch_queue(
             env.trace,
             save_path=os.path.join(out_dir, "dispatch_queue.png"),
+            title_info=test_title,
+        )
+        plot_machine_schedule(
+            env.trace,
+            makespan=mk,
+            save_path=os.path.join(out_dir, "machine_schedule.png"),
+            station_keys=sorted(env.station_locs.keys(), key=_station_sort_key),
             title_info=test_title,
         )
         plot_amr_schedule(

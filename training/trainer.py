@@ -742,7 +742,16 @@ def train_ddqn(
 
         mk_history.append(mk)
         mk_per_job = mk / max(1, job_count)
-        total_proc = sum(float(j.get("proc_time", 0.0)) for j in flatten_jobs(scenario))
+        total_proc = 0.0
+        for j in flatten_jobs(scenario):
+            ops = j if isinstance(j, list) else j.get("operations") if isinstance(j, dict) else None
+            if ops:
+                # FJSSP job: lower-bound processing = fastest feasible machine per op.
+                total_proc += sum(
+                    min(float(c.get("processing", 0.0)) for c in op) for op in ops if op
+                )
+            elif isinstance(j, dict):
+                total_proc += float(j.get("proc_time", 0.0))
         mk_ratio = mk / max(1e-6, total_proc)
         mk_per_job_history.append(mk_per_job)
         mk_ratio_history.append(mk_ratio)
