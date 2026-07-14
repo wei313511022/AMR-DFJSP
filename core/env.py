@@ -14,6 +14,43 @@ Coord = Tuple[int, int]
 DEFAULT_ENV_SPEC_PATH = Path(__file__).resolve().parents[1] / "configs" / "env_spec.json"
 
 
+class MachineBuffer:
+    """Single-slot machine buffer state.
+
+    A part occupies its machine from the drop-off, through processing, until
+    an AMR picks it up. All mutations go through occupy()/schedule_pickup()
+    so the invariants (release is None ⟺ an occupant is present with no
+    scheduled pickup; a pickup only frees the slot when the picker really is
+    the occupant's successor) hold structurally.
+    """
+
+    __slots__ = ("process_end", "release", "occupant")
+
+    def __init__(self) -> None:
+        self.process_end = 0.0
+        # Time the slot is/was freed by the occupant's pickup;
+        # None = occupied and the pickup is not scheduled yet.
+        self.release: Optional[float] = 0.0
+        self.occupant: Optional[Tuple[int, int]] = None  # (jid, op_index)
+
+    @property
+    def blocked(self) -> bool:
+        return self.release is None
+
+    def occupy(self, jid: int, op_index: int, process_end: float) -> None:
+        self.process_end = float(process_end)
+        self.release = None
+        self.occupant = (int(jid), int(op_index))
+
+    def schedule_pickup(self, jid: int, op_index: int, pickup_t: float) -> bool:
+        """Free the slot at pickup_t if (jid, op_index) is the occupant."""
+        if self.occupant == (int(jid), int(op_index)):
+            self.release = float(pickup_t)
+            self.occupant = None
+            return True
+        return False
+
+
 def load_env_spec(env_spec: Union[dict, str, Path, None] = None) -> dict:
     """Load the Phase III environment spec (contract section 2) from dict or JSON file."""
     if isinstance(env_spec, dict):
@@ -37,9 +74,14 @@ class TaskSchedulingEnv:
         only when operation k finishes (precedence is never reordered)
       - each operation lists its feasible machines with processing times;
         dispatching a task = choosing one machine for that operation
-      - machines process on their own: the AMR delivers the part, waits for
-        the machine to be free, hands it over and is immediately available
-        for new work
+      - each machine has a SINGLE buffer slot: the part occupies it from the
+        drop-off, through processing, until an AMR picks it up (next
+        operation / delivery). A new part can only be dropped after that
+        pickup, so an AMR may hold material at the machine while waiting;
+        once dropped, processing starts immediately and the AMR is free
+        (haul another job, fetch material, or idle — policy's choice).
+        Deliveries to a machine whose occupant has no scheduled pickup yet
+        are masked out of the action space (schedule the removal first)
       - op 0 additionally requires raw material picked up at the job's
         material dock (pickup service = material duration, dock is mutex);
         later ops fetch the in-process part at the previous station
@@ -108,6 +150,15 @@ class TaskSchedulingEnv:
         # Disabled by the contract inference path (the plan schema has no
         # delivery operation).
         self.deliver_finished_to_output = True
+        # Single-slot machine buffer: a part occupies its machine from the
+        # drop-off until an AMR PICKS IT UP (next operation / delivery), not
+        # merely until processing ends. A new part can only be dropped after
+        # that pickup, so an AMR may stand at the machine holding material.
+        # While the occupant's pickup is not scheduled yet (its successor is
+        # not dispatched), deliveries to that machine are masked out of the
+        # action space (see blocked_task_indices). Disabled by the contract
+        # inference path (contract stations are wait-until-process-end).
+        self.enable_buffer_blocking = True
 
         self.station_locs: Dict[str, Coord] = {
             str(k): (int(v[0]), int(v[1])) for k, v in spec.get("stations", {}).items()
@@ -334,34 +385,14 @@ class TaskSchedulingEnv:
                         else:
                             add_edge(c0, c1, t0, t1)
 
-            seg_w = segs.get("wait")
-            if seg_w is not None:
-                add_interval(
-                    end_cell,
-                    float(seg_w.get("start", 0.0)),
-                    float(seg_w.get("end", 0.0)),
-                )
-
-            seg_p = segs.get("process")
-            if seg_p is not None:
-                add_interval(
-                    end_cell,
-                    float(seg_p.get("start", 0.0)),
-                    float(seg_p.get("end", 0.0)),
-                )
-
+            # Drop-off semantics: the robot occupies cells only along its
+            # transport path (incl. dock-service hold steps); the "wait"
+            # (part queued at the machine) and "process" (machine working)
+            # intervals involve no robot, so they reserve nothing. The robot
+            # idles at post_pos from the drop-off (transport end) onward.
             seg_transport = segs.get("transport")
             t_start = float(seg_transport.get("start", 0.0)) if seg_transport else 0.0
-            # The robot is released at the hand-over (end of "wait"); the
-            # "process" interval above stays reserved as machine occupancy,
-            # but the robot itself idles at post_pos from the hand-over on.
-            t_end = 0.0
-            if seg_w is not None:
-                t_end = float(seg_w.get("end", 0.0))
-            elif seg_transport is not None:
-                t_end = float(seg_transport.get("end", t_start))
-            else:
-                t_end = t_start
+            t_end = float(seg_transport.get("end", t_start)) if seg_transport else t_start
 
             actions_by_robot[rid].append(
                 {
@@ -589,6 +620,45 @@ class TaskSchedulingEnv:
         cands = self._post_process_candidates(transport_path, drop)
         return cands[0] if cands else self._to_coord(drop)
 
+    def _is_machine(self, station: str) -> bool:
+        """True for processing machines (S1..); False for the output point
+        "T" and any other non-machine drop target."""
+        return station in self.station_buffer
+
+    def _station_drop_free_time(self, station: str) -> float:
+        """Earliest time a new part can be dropped at `station` (single-slot
+        buffer: when the current occupant is picked up). If the occupant's
+        pickup is not scheduled yet, fall back to its process end — callers
+        normally mask such tasks (blocked_task_indices); the fallback only
+        feeds the stall-break path. Output point / unknown keys -> 0."""
+        buf = self.station_buffer.get(station)
+        if buf is None:
+            return 0.0
+        if not self.enable_buffer_blocking or buf.release is None:
+            return float(buf.process_end)
+        return max(float(buf.release), 0.0)
+
+    def blocked_task_indices(self) -> set:
+        """Indices in available_tasks whose drop target is a machine that is
+        occupied with an unscheduled pickup (single-slot buffer full)."""
+        if not self.enable_buffer_blocking:
+            return set()
+        out = set()
+        for i, t in enumerate(self.available_tasks):
+            if t.get("is_delivery"):
+                continue
+            buf = self.station_buffer.get(str(t.get("station", "")))
+            if buf is not None and buf.blocked:
+                if buf.occupant == (
+                    int(t.get("jid", -1)),
+                    int(t.get("op_index", 0)) - 1,
+                ):
+                    # The occupant is this task's own predecessor — its
+                    # pickup removes it, so the drop slot frees itself.
+                    continue
+                out.add(i)
+        return out
+
     def _normalize_replenish_plan(
         self, task: dict, replenish: Union[int, Dict[str, int], None]
     ) -> Dict[str, int]:
@@ -605,12 +675,17 @@ class TaskSchedulingEnv:
         return plan
 
     def _estimate_action_plan(
-        self, robot_id: int, task: dict, replenish: Union[int, Dict[str, int], None]
+        self,
+        robot_id: int,
+        task: dict,
+        replenish: Union[int, Dict[str, int], None],
+        for_execution: bool = True,
     ) -> dict:
-        # Batch-pickup timeline:
+        # Batch-pickup timeline (drop-off semantics — the AMR never waits at
+        # the station; the part queues there on its own):
         #   dock op, add>=1 : travel to dock -> (wait for dock) -> pick `add`
         #                     units (add x unit duration) -> travel to station
-        #                     -> (wait) -> process
+        #                     -> drop off; part waits -> machine processes
         #   dock op, add==0 : deliver from onboard stock, straight to station
         #   transfer op     : fetch the part at the previous station (0 service)
         # Dock waiting and pickup service are embedded into transport_path as
@@ -632,13 +707,53 @@ class TaskSchedulingEnv:
         pickup_steps = int(math.ceil(pickup_service - 1e-9))
 
         start_t = max(self.t, self.robot_free_times[robot_id])
-        # Delivery legs target the output point, which has no busy window.
-        station_free = float(self.station_busy_until.get(station, 0.0))
+        # Single-slot buffer: the drop must wait for the occupant's pickup
+        # (see _station_drop_free_time). Delivery legs target the output
+        # point, which has no busy window.
+        station_free = self._station_drop_free_time(station)
         dock_free = float(self.dock_busy_until.get(dock_key, 0.0)) if need_pickup else 0.0
 
         pickup_types = [jtype] if need_pickup else []
 
         if not self.enable_collision_avoidance:
+            if not for_execution:
+                # Feature-estimation fast path: same timeline as the
+                # materialized branch below, computed analytically — no
+                # multi-thousand-cell hold paths are allocated per candidate
+                # action. `travel` covers movement + dock queue/service;
+                # `wait` is the machine-buffer hold at the drop target.
+                if need_pickup:
+                    d1 = float(self._dist(pos, dock))
+                    arrive_dock_t = start_t + d1
+                    dock_wait = float(
+                        max(0, int(math.ceil(max(0.0, dock_free - arrive_dock_t) - 1e-9)))
+                    )
+                    pickup_start_t = arrive_dock_t + dock_wait
+                    pickup_end_t = pickup_start_t + float(pickup_steps)
+                    arrive_t = pickup_end_t + float(self._dist(dock, drop))
+                else:
+                    arrive_t = start_t + float(self._dist(pos, drop))
+                    pickup_start_t = start_t
+                    pickup_end_t = start_t
+                    dock_wait = 0.0
+                process_start_t = max(arrive_t, station_free)
+                return {
+                    "start_t": float(start_t),
+                    "travel": float(arrive_t - start_t),
+                    "wait": float(max(0.0, process_start_t - arrive_t)),
+                    "proc": float(proc),
+                    "arrive_t": float(arrive_t),
+                    "process_start_t": float(process_start_t),
+                    "transport_path": [],
+                    "need_pickup": bool(need_pickup),
+                    "replenish_plan": dict(replenish_plan),
+                    "pickup_types": list(pickup_types),
+                    "dock": dock_key,
+                    "dock_wait": dock_wait,
+                    "pickup_start_t": float(pickup_start_t),
+                    "pickup_end_t": float(pickup_end_t),
+                }
+
             if need_pickup:
                 leg1 = [self._to_coord(p) for p in self._path(pos, dock)]
                 if (not leg1) or (leg1[-1] != dock):
@@ -676,15 +791,17 @@ class TaskSchedulingEnv:
 
             travel = float(max(0, len(transport_path) - 1))
             arrive_t = start_t + travel
+            # Single-slot buffer: the AMR holds the part at the machine until
+            # the occupant is picked up (station_free), then drops it and the
+            # machine starts immediately. The hold is embedded as path hold
+            # steps so the AMR is genuinely busy during the wait.
             process_start_t = max(arrive_t, station_free)
-
             if process_start_t > arrive_t + 1e-9:
                 add_steps = int(math.ceil(process_start_t - arrive_t - 1e-9))
                 transport_path = self._delay_before_goal(transport_path, add_steps)
                 travel = float(max(0, len(transport_path) - 1))
                 arrive_t = start_t + travel
                 process_start_t = max(arrive_t, station_free)
-
             wait = max(0.0, process_start_t - arrive_t)
             return {
                 "start_t": float(start_t),
@@ -715,6 +832,7 @@ class TaskSchedulingEnv:
         future_work_after_dispatch = (len(self.available_tasks) > 1) or math.isfinite(
             self._next_release_time()
         )
+        # Both the dock service and the buffer wait can delay the AMR.
         slack = max(0.0, station_free - start_t) + max(0.0, dock_free - start_t)
 
         def leg_candidates_steps(
@@ -803,7 +921,8 @@ class TaskSchedulingEnv:
                     candidate.extend([dock] * pickup_steps)
                     t_after_pickup = t_arr_dock + float(pickup_steps)
 
-                    # Leg 2: dock -> station; block arrival until it is free.
+                    # Leg 2: dock -> station; the AMR may only enter the drop
+                    # cell once the buffer frees (occupant picked up).
                     tail = plan_leg(
                         dock,
                         drop,
@@ -820,7 +939,8 @@ class TaskSchedulingEnv:
                     pickup_start_t = t_arr_dock
                     pickup_end_t = t_after_pickup
                 else:
-                    # Deliver from onboard stock: straight to the station.
+                    # Deliver from onboard stock: straight to the station;
+                    # enter the drop cell only once the buffer frees.
                     candidate = plan_leg(
                         pos,
                         drop,
@@ -848,15 +968,14 @@ class TaskSchedulingEnv:
 
         travel = float(max(0, len(transport_path) - 1))
         arrive_t = start_t + travel
+        # Single-slot buffer hold (see the collision-free branch above).
         process_start_t = max(arrive_t, station_free)
-
         if process_start_t > arrive_t + 1e-9:
             add_steps = int(math.ceil(process_start_t - arrive_t - 1e-9))
             transport_path = self._delay_before_goal(transport_path, add_steps)
             travel = float(max(0, len(transport_path) - 1))
             arrive_t = start_t + travel
             process_start_t = max(arrive_t, station_free)
-
         wait = max(0.0, process_start_t - arrive_t)
         return {
             "start_t": float(start_t),
@@ -1161,9 +1280,13 @@ class TaskSchedulingEnv:
 
         self._episode_start_positions = [self._to_coord(p) for p in self.robot_positions]
 
-        self.station_busy_until: Dict[str, float] = {
-            k: 0.0 for k in self.station_locs.keys()
+        # One single-slot buffer per machine (see MachineBuffer).
+        self.station_buffer: Dict[str, MachineBuffer] = {
+            k: MachineBuffer() for k in self.station_locs.keys()
         }
+        # Count of forced drops onto a machine whose release was unscheduled
+        # (stall-break fallback approximates release = process end).
+        self.buffer_override_count = 0
         self.dock_busy_until: Dict[str, float] = {
             k: 0.0 for k in self.dock_locs.keys()
         }
@@ -1236,6 +1359,20 @@ class TaskSchedulingEnv:
 
             #into the decision point
             if idle and self.available_tasks:
+                if (
+                    self.enable_buffer_blocking
+                    and len(self.blocked_task_indices()) == len(self.available_tasks)
+                ):
+                    # Every dispatchable task targets a full machine whose
+                    # occupant has no scheduled pickup. Advance to the next
+                    # operation release (a processing part will finish and
+                    # its successor can unblock the chain) instead of
+                    # dispatching a blocked task. Only a true swap-deadlock
+                    # (no pending releases) falls through to the stall-break.
+                    next_rel = self._next_release_time()
+                    if math.isfinite(next_rel) and next_rel > self.t + 1e-9:
+                        self.t = max(self.t, next_rel)
+                        continue
                 self.current_robot = min(idle, key=lambda i: (self.robot_free_times[i], i)) #the decision point ==> no consider the amr location
                 self.current_time = self.t
                 return
@@ -1295,7 +1432,16 @@ class TaskSchedulingEnv:
                 st.append(float(inv[tkey]))
 
         for sname in sorted(self.station_locs.keys()):
-            st.append(float(self.station_busy_until[sname]))
+            # Time from which the machine can accept a new part — the same
+            # quantity the planner uses (_station_drop_free_time: occupant's
+            # scheduled pickup, else process end as a lower bound; plain
+            # process end when buffer blocking is disabled).
+            st.append(
+                max(
+                    float(self.station_buffer[sname].process_end),
+                    self._station_drop_free_time(sname),
+                )
+            )
         for dname in sorted(self.dock_locs.keys()):
             st.append(float(self.dock_busy_until[dname]))
         return st
@@ -1305,11 +1451,12 @@ class TaskSchedulingEnv:
     ) -> Tuple[float, float, float, float]:
         """
         Return (travel_time, wait_time, proc_time, replenish_total).
-        travel_time already includes dock waiting + pickup service ticks;
-        replenish_total is the number of units picked up at the dock (0 when
-        delivering from onboard stock or transferring a part).
+        travel_time includes dock waiting + pickup service ticks; wait_time
+        is the machine-buffer hold at the drop target; replenish_total is the
+        number of units picked up at the dock (0 when delivering from onboard
+        stock or transferring a part).
         """
-        plan = self._estimate_action_plan(robot_id, task, replenish)
+        plan = self._estimate_action_plan(robot_id, task, replenish, for_execution=False)
         rep_total = float(sum(int(v) for v in plan.get("replenish_plan", {}).values()))
         return plan["travel"], plan["wait"], plan["proc"], rep_total
 
@@ -1406,14 +1553,27 @@ class TaskSchedulingEnv:
         t_wait_end = float(plan["process_start_t"])
         t_proc_end = t_wait_end + proc
 
-        # FJSSP semantics: the machine processes the operation on its own;
-        # the AMR only waits for the machine to be free, hands the part over
-        # at t_wait_end and is then available for new work. Job/operation
-        # completion (t_proc_end) drives makespan, not AMR busy time.
-        # Delivery legs target the output point (not a machine): no station
-        # occupancy, completion = arrival time.
-        if station in self.station_busy_until:
-            self.station_busy_until[station] = t_proc_end
+        # Single-slot buffer bookkeeping:
+        #  - this dispatch's pickup at a station (op>0 transfer / delivery)
+        #    removes the occupant there -> that buffer's release is now
+        #    scheduled at the pickup time;
+        #  - dropping onto a machine occupies its buffer until some later
+        #    dispatch picks the part up (release=None until then). The AMR
+        #    held the part during any buffer wait (embedded in transport).
+        # Delivery legs target the output point: no occupancy, completion =
+        # arrival. Machine processing starts right at the drop.
+        is_delivery_leg = bool(task.get("is_delivery", False))
+        if op_index > 0 or is_delivery_leg:
+            prev_buf = self.station_buffer.get(dock_key)
+            if prev_buf is not None:
+                prev_buf.schedule_pickup(jid, op_index - 1, pickup_start_t)
+        buf = self.station_buffer.get(station)
+        if buf is not None:
+            if self.enable_buffer_blocking and buf.blocked:
+                # Stall-break fallback dropped onto a machine whose pickup
+                # was not scheduled yet (release approximated; counted).
+                self.buffer_override_count += 1
+            buf.occupy(jid, op_index, t_proc_end)
         self._max_completion = max(self._max_completion, t_proc_end)
         if need_pickup and dock_key in self.dock_busy_until:
             self.dock_busy_until[dock_key] = max(
@@ -1440,38 +1600,37 @@ class TaskSchedulingEnv:
             self._pending_ops.sort(key=lambda x: x[0])
 
         if self.enable_collision_avoidance:
-            # The robot steps aside right after the hand-over (t_wait_end);
-            # the station cell stays reserved by the processing machine.
+            # The robot steps aside right after the drop-off (t_travel_end).
             post_pos = self._post_process_position(transport_path, self._to_coord(task["drop"]))
             post_cands = self._post_process_candidates(transport_path, self._to_coord(task["drop"]))
             post_res = self._build_dynamic_reservations(
                 rid,
-                t_wait_end,
-                t_wait_end + 3.0,
+                t_travel_end,
+                t_travel_end + 3.0,
                 future_work_after_dispatch=True,
             )
             for cand in post_cands:
-                if self._point_conflict(post_res, cand, t_wait_end):
+                if self._point_conflict(post_res, cand, t_travel_end):
                     continue
                 if self._transition_conflict(
                     post_res,
                     cand,
                     cand,
-                    t_wait_end,
-                    t_wait_end + 1.0,
+                    t_travel_end,
+                    t_travel_end + 1.0,
                     ignore_source_point_at_t0=True,
                 ):
                     continue
                 post_pos = self._to_coord(cand)
                 break
         else:
-            # Keep robot at the workstation after the hand-over when collision
+            # Keep robot at the workstation after the drop-off when collision
             # avoidance is disabled. This removes artificial travel between
             # consecutive jobs at the same station.
             post_pos = self._to_coord(task["drop"])
 
-        # AMR is free as soon as the part is handed over to the machine.
-        self.robot_free_times[rid] = t_wait_end
+        # AMR is free as soon as the part is dropped off at the machine.
+        self.robot_free_times[rid] = t_travel_end
         self.robot_positions[rid] = post_pos
 
         self.trace.append(

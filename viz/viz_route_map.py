@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib.widgets import Button, Slider
 
 from core.env import Coord, TaskSchedulingEnv
+from viz.viz_matplotlib import format_trace_job_label
 
 
 def _segment_map(item: dict) -> Dict[str, dict]:
@@ -41,29 +42,46 @@ def _path_prefix(path: List[Coord], elapsed: float) -> List[Tuple[float, float]]
 
 
 def _machine_states_at_time(trace: List[dict], t: float) -> List[dict]:
-    """Operations being processed on their machines at time t (the AMR has
-    already handed the part over and left)."""
+    """Per-machine occupancy at time t under the single-slot buffer:
+    phase "processing" while the operation runs, then phase "blocked"
+    (done, still occupying the machine) until an AMR picks the part up."""
+    from viz.viz_matplotlib import build_removal_times
+
+    removal = build_removal_times(trace)
     states: List[dict] = []
     for item in trace:
+        if item.get("is_delivery"):
+            continue
         segs = _segment_map(item)
         seg_p = segs.get("process")
         if seg_p is None:
             continue
         s = float(seg_p.get("start", 0.0))
         e = float(seg_p.get("end", s))
-        if s - 1e-9 <= t < e - 1e-9:
-            states.append(
-                {
-                    "station": str(item.get("dst", "")),
-                    "jid": item.get("jid"),
-                    "op_index": item.get("op_index"),
-                    "num_ops": item.get("num_ops"),
-                    "type": str(item.get("type", "")),
-                    "proc_elapsed": max(0.0, t - s),
-                    "proc_total": max(0.0, e - s),
-                    "proc_remaining": max(0.0, e - t),
-                }
-            )
+        if removal:
+            rem = removal.get((item.get("jid"), int(item.get("op_index", 0))), float("inf"))
+        else:
+            # Trace carries no pickup info at all (legacy / contract runs
+            # without delivery semantics): show only the processing phase
+            # instead of flagging every finished operation BLOCKED forever.
+            rem = e
+        if not (s - 1e-9 <= t < rem - 1e-9):
+            continue
+        phase = "processing" if t < e - 1e-9 else "blocked"
+        states.append(
+            {
+                "station": str(item.get("dst", "")),
+                "jid": item.get("jid"),
+                "op_index": item.get("op_index"),
+                "num_ops": item.get("num_ops"),
+                "type": str(item.get("type", "")),
+                "phase": phase,
+                "proc_elapsed": min(max(0.0, t - s), max(0.0, e - s)),
+                "proc_total": max(0.0, e - s),
+                "proc_remaining": max(0.0, e - t) if phase == "processing" else 0.0,
+                "blocked_for": max(0.0, t - e) if phase == "blocked" else 0.0,
+            }
+        )
     return states
 
 
@@ -85,6 +103,11 @@ def _robot_snapshot_at_time(
             {
                 "jid": item.get("jid"),
                 "type": str(item.get("type", "")),
+                "op_index": item.get("op_index"),
+                "num_ops": item.get("num_ops"),
+                "is_delivery": bool(item.get("is_delivery", False)),
+                "need_pickup": bool(item.get("need_pickup", False)),
+                "pickup": tuple(item.get("pickup", ()) or ()),
                 "replenish": int(item.get("replenish", 0)),
                 "replenish_plan": dict(item.get("replenish_plan", {})),
                 "dst": item.get("dst"),
@@ -114,6 +137,11 @@ def _robot_snapshot_at_time(
         proc_elapsed = 0.0
         proc_total = 0.0
         proc_remaining = 0.0
+        carrying = False
+        wait_kind: Optional[str] = None
+        carry_label = ""
+        carry_type = ""
+        is_delivery_leg = False
         added_total = {k: 0 for k in env.material_types}
         consumed_total = {k: 0 for k in env.material_types}
         last_inventory_event: Optional[dict] = None
@@ -195,19 +223,48 @@ def _robot_snapshot_at_time(
                 mode = "supply" if int(action["replenish"]) > 0 else "deliver"
                 jid = action["jid"]
                 dst = action["dst"]
+
+                # Cargo / wait-kind classification: where is the pickup point
+                # along the path, and has the loading run finished? Before
+                # that the AMR travels empty (or queues/loads at the dock);
+                # after it the AMR carries the part, and any hold step means
+                # it is holding the part at the machine (buffer full).
+                need_pickup = bool(action.get("need_pickup"))
+                pickup_cell = tuple(action.get("pickup", ()) or ())
+                pickup_idx = None
+                if need_pickup and len(pickup_cell) == 2:
+                    for pi, c in enumerate(path):
+                        if tuple(c) == pickup_cell:
+                            pickup_idx = pi
+                            break
+                service_end = 0
+                if pickup_idx is not None:
+                    service_end = pickup_idx
+                    while (
+                        service_end < len(path) - 1
+                        and tuple(path[service_end]) == pickup_cell
+                        and tuple(path[service_end + 1]) == pickup_cell
+                    ):
+                        service_end += 1
+                carrying = (not need_pickup) or (
+                    pickup_idx is not None and step_idx >= service_end
+                )
+                if is_wait_step:
+                    on_pickup_side = need_pickup and (
+                        pickup_idx is None or step_idx < service_end
+                    )
+                    wait_kind = "dock" if on_pickup_side else "buffer"
+                else:
+                    wait_kind = None
+                carry_label = format_trace_job_label(action)
+                carry_type = str(action.get("type", ""))
+                is_delivery_leg = bool(action.get("is_delivery"))
                 break
 
             pos = (float(path[-1][0]), float(path[-1][1]))
 
-            if t < tw:
-                status = "wait"
-                mode = "supply" if int(action["replenish"]) > 0 else "deliver"
-                jid = action["jid"]
-                dst = action["dst"]
-                break
-
-            # FJSSP semantics: the AMR hands the part over at tw and is free;
-            # the machine keeps processing until tp on its own
+            # Drop-off semantics: the AMR is free the moment it arrives (t1);
+            # the part queues and is processed at the machine on its own
             # (see _machine_states_at_time). The robot idles at post_pos.
             post_pos = tuple(action.get("post_pos", path[-1]))
             pos = (float(post_pos[0]), float(post_pos[1]))
@@ -237,6 +294,14 @@ def _robot_snapshot_at_time(
                 "proc_elapsed": proc_elapsed,
                 "proc_total": proc_total,
                 "proc_remaining": proc_remaining,
+                # Cargo state: is the AMR holding a part right now, and if it
+                # is waiting — at the dock (queue/loading) or at the machine
+                # (buffer full, waiting for the occupant to finish/be taken).
+                "carrying": carrying,
+                "carry_label": carry_label,
+                "carry_type": carry_type,
+                "wait_kind": wait_kind,
+                "is_delivery": is_delivery_leg,
             }
         )
 
@@ -342,6 +407,11 @@ def _normalize_snapshot_for_draw(snap: dict) -> dict:
         "proc_elapsed": float(snap.get("proc_elapsed", 0.0)),
         "proc_total": float(snap.get("proc_total", 0.0)),
         "proc_remaining": float(snap.get("proc_remaining", 0.0)),
+        "carrying": bool(snap.get("carrying", False)),
+        "carry_label": str(snap.get("carry_label", "") or ""),
+        "carry_type": str(snap.get("carry_type", "") or ""),
+        "wait_kind": snap.get("wait_kind", None),
+        "is_delivery": bool(snap.get("is_delivery", False)),
     }
 
 
@@ -361,26 +431,44 @@ def _draw_route_map_from_snapshots(
     colors = ["#e41a1c", "#377eb8", "#4daf4a", "#ff7f00", "#984ea3"]
     status_lines: List[str] = []
 
-    # Machines processing on their own (FJSSP: the AMR already left).
+    # Machine occupancy (single-slot buffer): colored highlight while
+    # processing; gray highlight when done but still awaiting pickup.
+    # A station can carry two tags at once after a deadlock override
+    # (old part awaiting pickup + forced new part) — stack them vertically.
     mat_colors = {"A": "#1f77b4", "B": "#ff7f0e", "C": "#2ca02c"}
+    tags_per_station: Dict[str, int] = {}
+    # station -> occupant info (labelled) for the AMR status lines below;
+    # when two states coexist (deadlock-override anomaly) keep the blocked
+    # one — that pickup is what a holding AMR is actually waiting for.
+    machine_by_station: Dict[str, dict] = {}
     for m in machine_states or []:
         st = str(m.get("station", ""))
+        _jid = m.get("jid")
+        _op = m.get("op_index")
+        _nops = m.get("num_ops")
+        if _op is not None and _nops:
+            _lbl = f"J{_jid}({int(_op) + 1}/{int(_nops)})"
+        else:
+            _lbl = f"J{_jid}"
+        if st not in machine_by_station or str(m.get("phase")) == "blocked":
+            machine_by_station[st] = {**m, "label": _lbl}
         if st not in env.station_locs:
             continue
         sx, sy = env.station_locs[st]
+        phase = str(m.get("phase", "processing"))
         mcolor = mat_colors.get(str(m.get("type", "")).upper(), "#7f7f7f")
+        hl_color = mcolor if phase == "processing" else "#888888"
         hl = patches.Rectangle(
             (sx - 0.45, sy - 0.45),
             0.9,
             0.9,
-            facecolor=mcolor,
-            edgecolor=mcolor,
+            facecolor=hl_color,
+            edgecolor=hl_color,
             alpha=0.25,
             linewidth=1.2,
             zorder=2.5,
         )
         ax.add_patch(hl)
-        left = float(m.get("proc_remaining", 0.0))
         jid = m.get("jid")
         op = m.get("op_index")
         nops = m.get("num_ops")
@@ -388,20 +476,34 @@ def _draw_route_map_from_snapshots(
             job_txt = f"J{jid}({int(op) + 1}/{int(nops)})"
         else:
             job_txt = f"J{jid}" + (f".{op}" if op is not None else "")
+        if phase == "processing":
+            left = float(m.get("proc_remaining", 0.0))
+            tag = f"{job_txt} left {left:.1f}s"
+            status_lines.append(
+                f"{st}: processing {job_txt} ({m.get('type','')}), "
+                f"{float(m.get('proc_elapsed', 0.0)):.1f}/{float(m.get('proc_total', 0.0)):.1f}s "
+                f"(left {left:.1f}s)"
+            )
+        else:
+            blocked = float(m.get("blocked_for", 0.0))
+            tag = f"{job_txt} await pickup"
+            status_lines.append(
+                f"{st}: BLOCKED — {job_txt} ({m.get('type','')}) done, "
+                f"awaiting pickup for {blocked:.1f}s"
+            )
+        slot = tags_per_station.get(st, 0)
+        tags_per_station[st] = slot + 1
         ax.text(
             sx,
-            sy - 0.62,
-            f"{job_txt} left {left:.1f}s",
+            sy - 0.62 - 0.42 * slot,
+            tag,
             ha="center",
             va="top",
-            fontsize=9,
-            color=mcolor,
+            fontsize=8,
+            color=hl_color,
             weight="bold",
-        )
-        status_lines.append(
-            f"{st}: processing {job_txt} ({m.get('type','')}), "
-            f"{float(m.get('proc_elapsed', 0.0)):.1f}/{float(m.get('proc_total', 0.0)):.1f}s "
-            f"(left {left:.1f}s)"
+            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.75),
+            zorder=6,
         )
 
     norm_snaps = [_normalize_snapshot_for_draw(s) for s in snapshots]
@@ -420,9 +522,28 @@ def _draw_route_map_from_snapshots(
             ax.plot(xs, ys, linestyle=line_style, linewidth=2.2, color=color, alpha=0.9, zorder=3)
 
         x, y = snap["pos"]
-        circ = patches.Circle((x, y), 0.32, facecolor="white", edgecolor=color, linewidth=2.4, zorder=5)
+        # Filled circle = the AMR is carrying a part (tinted by material);
+        # hollow circle = travelling empty / idle.
+        carry_tints = {"A": "#aec7e8", "B": "#ffce9e", "C": "#b5e3b5"}
+        face = (
+            carry_tints.get(snap.get("carry_type", "").upper(), "#e0e0e0")
+            if snap.get("carrying")
+            else "white"
+        )
+        circ = patches.Circle((x, y), 0.32, facecolor=face, edgecolor=color, linewidth=2.4, zorder=5)
         ax.add_patch(circ)
-        ax.text(x, y + 0.5, f"AMR{rid+1}", ha="center", va="bottom", fontsize=10, color=color, weight="bold")
+        ax.text(
+            x,
+            y + 0.5,
+            f"AMR{rid+1}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+            color=color,
+            weight="bold",
+            bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.7),
+            zorder=6,
+        )
 
         if snap.get("status") == "process":
             dst = str(snap.get("dst", ""))
@@ -452,18 +573,48 @@ def _draw_route_map_from_snapshots(
                 )
 
         inv = snap["inv"]
-        jtxt = f", J{snap['jid']}->{snap['dst']}" if snap["jid"] is not None else ""
-        proc_txt = ""
-        if snap.get("status") == "process":
+        inv_txt = f"A{inv.get('A',0)} B{inv.get('B',0)} C{inv.get('C',0)}"
+        pos_txt = f"(x:{x:.1f} y:{y:.1f})"
+        dst = str(snap.get("dst", "") or "")
+        label = snap.get("carry_label") or (
+            f"J{snap['jid']}" if snap.get("jid") is not None else ""
+        )
+        status = snap.get("status")
+        wait_kind = snap.get("wait_kind")
+
+        # Spell the AMR's situation out: empty vs carrying, and — when
+        # waiting — whether it queues at the dock or holds the part at a
+        # machine whose occupant is still processing / awaiting pickup.
+        if status == "wait" and wait_kind == "buffer":
+            occ = machine_by_station.get(dst)
+            if occ is not None:
+                if str(occ.get("phase")) == "processing":
+                    reason = (
+                        f"machine busy: {occ['label']} processing, "
+                        f"left {float(occ.get('proc_remaining', 0.0)):.1f}s"
+                    )
+                else:
+                    reason = f"waiting pickup of {occ['label']}"
+            else:
+                reason = "buffer full"
+            act = f"HOLDING {label} — {reason}"
+        elif status == "wait" and wait_kind == "dock":
+            act = f"queue/loading @ dock for {label}"
+        elif status == "wait":
+            act = f"waiting ({label})"
+        elif status == "move":
+            if snap.get("carrying"):
+                act = f"carrying {label}"
+            else:
+                act = f"empty, to pick {label}"
+        elif status == "process":
             pe = float(snap.get("proc_elapsed", 0.0))
             pt = float(snap.get("proc_total", 0.0))
             pr = float(snap.get("proc_remaining", 0.0))
-            proc_txt = f", proc {pe:.1f}/{pt:.1f}s (left {pr:.1f}s)"
-        status_lines.append(
-            f"AMR{rid+1}: {snap['status']}, {snap['mode']}{jtxt}, "
-            f"A{inv.get('A',0)} B{inv.get('B',0)} C{inv.get('C',0)}{proc_txt}, "
-            f"(x:{x:.1f} y:{y:.1f})"
-        )
+            act = f"process {label}, {pe:.1f}/{pt:.1f}s (left {pr:.1f}s)"
+        else:
+            act = "idle"
+        status_lines.append(f"AMR{rid+1}: {act}, {inv_txt}, {pos_txt}")
 
     return status_lines
 

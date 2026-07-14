@@ -1,6 +1,7 @@
+﻿import math
 import os
 import time
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,8 +10,33 @@ import torch.nn as nn
 
 from core.data_io import poll_live_job_file
 from core.env import TaskSchedulingEnv
-from core.features import build_actions_for_tasks, q_values_batch, select_action_index
+from core.features import (
+    env_action_candidates,
+    env_selection_bias,
+    q_values_batch,
+    select_action_index,
+)
 from viz.viz_matplotlib import draw_amr_schedule, draw_dispatch_queue, draw_input_queue
+
+
+def _greedy_action(
+    env: TaskSchedulingEnv, policy_net: nn.Module, state: np.ndarray, device: torch.device
+) -> Tuple[int, Union[int, Dict[str, int], None]]:
+    """One greedy decision: candidates + features + Q + biased argmax."""
+    rid = env.current_robot
+    actions, feats = env_action_candidates(env, rid)
+    with torch.no_grad():
+        q_all = q_values_batch(policy_net, state, feats, device)
+        best_idx = select_action_index(
+            q_values=q_all,
+            actions=actions,
+            tasks=env.available_tasks,
+            inventory=env.robot_inventory[rid],
+            capacity_per_type=env.capacity_per_type,
+            action_feats=feats,
+            **env_selection_bias(env),
+        )
+    return actions[best_idx]
 
 
 def run_greedy_episode(
@@ -26,41 +52,7 @@ def run_greedy_episode(
         s = np.array(env._get_state(), dtype=np.float32)
         done = False
         while not done:
-            rid = env.current_robot
-            actions = build_actions_for_tasks(
-                env.available_tasks,
-                env.robot_inventory[rid],
-                env.capacity_per_type,
-                allow_proactive_replenish=env.allow_proactive_replenish,
-            )
-            k = len(actions)
-            feats = np.zeros((k, 4), dtype=np.float32)
-            for i, (task_idx, replenish) in enumerate(actions):
-                task = env.available_tasks[task_idx]
-                travel, wait, proc, rep = env.action_features(rid, task, replenish)
-                feats[i] = (travel, wait, proc, rep)
-
-            with torch.no_grad():
-                q_all = q_values_batch(policy_net, s, feats, device)
-                best_idx = select_action_index(
-                    q_values=q_all,
-                    actions=actions,
-                    tasks=env.available_tasks,
-                    inventory=env.robot_inventory[rid],
-                    capacity_per_type=env.capacity_per_type,
-                    proactive_replenish_bias_weight=float(
-                        getattr(env, "proactive_replenish_bias_weight", 0.0)
-                    ),
-                    action_feats=feats,
-                    full_load_bias_weight=float(
-                        getattr(env, "proactive_full_load_bias_weight", 0.0)
-                    ),
-                    waiting_replenish_bias_weight=float(
-                        getattr(env, "proactive_waiting_replenish_bias_weight", 0.0)
-                    ),
-                )
-
-            action = actions[best_idx]
+            action = _greedy_action(env, policy_net, s, device)
             sp, _, done = env.step(action)
             s = np.array(sp, dtype=np.float32) if sp is not None else None
 
@@ -113,41 +105,7 @@ def run_greedy_episode_live(
         fig.subplots_adjust(hspace=0.5, top=0.9)
 
         while not done:
-            rid = env.current_robot
-            actions = build_actions_for_tasks(
-                env.available_tasks,
-                env.robot_inventory[rid],
-                env.capacity_per_type,
-                allow_proactive_replenish=env.allow_proactive_replenish,
-            )
-            k = len(actions)
-            feats = np.zeros((k, 4), dtype=np.float32)
-            for i, (task_idx, replenish) in enumerate(actions):
-                task = env.available_tasks[task_idx]
-                travel, wait, proc, rep = env.action_features(rid, task, replenish)
-                feats[i] = (travel, wait, proc, rep)
-
-            with torch.no_grad():
-                q_all = q_values_batch(policy_net, s, feats, device)
-                best_idx = select_action_index(
-                    q_values=q_all,
-                    actions=actions,
-                    tasks=env.available_tasks,
-                    inventory=env.robot_inventory[rid],
-                    capacity_per_type=env.capacity_per_type,
-                    proactive_replenish_bias_weight=float(
-                        getattr(env, "proactive_replenish_bias_weight", 0.0)
-                    ),
-                    action_feats=feats,
-                    full_load_bias_weight=float(
-                        getattr(env, "proactive_full_load_bias_weight", 0.0)
-                    ),
-                    waiting_replenish_bias_weight=float(
-                        getattr(env, "proactive_waiting_replenish_bias_weight", 0.0)
-                    ),
-                )
-
-            action = actions[best_idx]
+            action = _greedy_action(env, policy_net, s, device)
             sp, _, done = env.step(action)
             s = np.array(sp, dtype=np.float32) if sp is not None else None
             step += 1
@@ -275,48 +233,21 @@ def run_greedy_episode_live_stream(
             idle = [i for i in range(env.num_robots) if env.robot_free_times[i] <= env.t + 1e-9]
 
             if idle and env.available_tasks:
+                # Mirror env._advance_to_decision_point: if EVERY available
+                # task is buffer-blocked and a future release can unblock the
+                # chain, advance time instead of forcing a blocked dispatch.
+                if (
+                    env.enable_buffer_blocking
+                    and len(env.blocked_task_indices()) == len(env.available_tasks)
+                ):
+                    next_rel = env._next_release_time()
+                    if math.isfinite(next_rel) and next_rel > env.t + 1e-9:
+                        env.t = max(env.t, next_rel)
+                        continue
+
                 env.current_robot = min(idle, key=lambda i: (env.robot_free_times[i], i))
-                rid = env.current_robot
                 s = np.array(env._get_state(), dtype=np.float32)
-
-                actions = build_actions_for_tasks(
-                    env.available_tasks,
-                    env.robot_inventory[rid],
-                    env.capacity_per_type,
-                    allow_proactive_replenish=env.allow_proactive_replenish,
-                )
-                if not actions:
-                    time.sleep(idle_sleep)
-                    continue
-
-                k = len(actions)
-                feats = np.zeros((k, 4), dtype=np.float32)
-                for i, (task_idx, replenish) in enumerate(actions):
-                    task = env.available_tasks[task_idx]
-                    travel, wait, proc, rep = env.action_features(rid, task, replenish)
-                    feats[i] = (travel, wait, proc, rep)
-
-                with torch.no_grad():
-                    q_all = q_values_batch(policy_net, s, feats, device)
-                    best_idx = select_action_index(
-                        q_values=q_all,
-                        actions=actions,
-                        tasks=env.available_tasks,
-                        inventory=env.robot_inventory[rid],
-                        capacity_per_type=env.capacity_per_type,
-                        proactive_replenish_bias_weight=float(
-                            getattr(env, "proactive_replenish_bias_weight", 0.0)
-                        ),
-                        action_feats=feats,
-                        full_load_bias_weight=float(
-                            getattr(env, "proactive_full_load_bias_weight", 0.0)
-                        ),
-                        waiting_replenish_bias_weight=float(
-                            getattr(env, "proactive_waiting_replenish_bias_weight", 0.0)
-                        ),
-                    )
-
-                action = actions[best_idx]
+                action = _greedy_action(env, policy_net, s, device)
                 sp, _, _done = env.step(action)
                 s = np.array(sp, dtype=np.float32) if sp is not None else s
                 step += 1

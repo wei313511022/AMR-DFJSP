@@ -11,7 +11,13 @@ import torch.nn as nn
 
 from core.data_io import load_records
 from core.env import TaskSchedulingEnv
-from core.features import build_actions_for_tasks, flatten_jobs, q_values_batch, select_action_index
+from core.features import (
+    env_action_candidates,
+    env_selection_bias,
+    flatten_jobs,
+    q_values_batch,
+    select_action_index,
+)
 from training.replay import NStepAccumulator, PrioritizedReplayBuffer, ReplayTransition
 from viz.viz_matplotlib import draw_amr_schedule, draw_dispatch_queue, draw_input_queue
 from viz.viz_route_map import draw_route_map
@@ -482,21 +488,10 @@ def train_ddqn(
 
             if enable_profile:
                 t0 = time.perf_counter()
-            actions = build_actions_for_tasks(
-                env.available_tasks,
-                env.robot_inventory[rid],
-                env.capacity_per_type,
-                allow_proactive_replenish=env.allow_proactive_replenish,
-            )
+            actions, feats = env_action_candidates(env, rid)
             k = len(actions)
             if k == 0:
                 raise RuntimeError("No valid actions available during training step.")
-
-            feats = np.zeros((k, 4), dtype=np.float32)
-            for i, (task_idx, replenish) in enumerate(actions):
-                task = env.available_tasks[task_idx]
-                travel, wait, proc, rep = env.action_features(rid, task, replenish)
-                feats[i] = (travel, wait, proc, rep)
 
             if enable_profile:
                 prof_add("action_features", time.perf_counter() - t0)
@@ -521,16 +516,8 @@ def train_ddqn(
                         tasks=env.available_tasks,
                         inventory=env.robot_inventory[rid],
                         capacity_per_type=env.capacity_per_type,
-                        proactive_replenish_bias_weight=float(
-                            getattr(env, "proactive_replenish_bias_weight", 0.0)
-                        ),
                         action_feats=feats,
-                        full_load_bias_weight=float(
-                            getattr(env, "proactive_full_load_bias_weight", 0.0)
-                        ),
-                        waiting_replenish_bias_weight=float(
-                            getattr(env, "proactive_waiting_replenish_bias_weight", 0.0)
-                        ),
+                        **env_selection_bias(env),
                     )
             a_feat = feats[a_idx].copy()
 
@@ -544,18 +531,7 @@ def train_ddqn(
 
             sp_arr = np.array(sp, dtype=np.float32) if sp is not None else None
             if not done:
-                next_rid = env.current_robot
-                next_actions = build_actions_for_tasks(
-                    env.available_tasks,
-                    env.robot_inventory[next_rid],
-                    env.capacity_per_type,
-                    allow_proactive_replenish=env.allow_proactive_replenish,
-                )
-                next_feats = np.zeros((len(next_actions), 4), dtype=np.float32)
-                for i, (task_idx, replenish) in enumerate(next_actions):
-                    task = env.available_tasks[task_idx]
-                    travel, wait, proc, rep = env.action_features(next_rid, task, replenish)
-                    next_feats[i] = (travel, wait, proc, rep)
+                _next_actions, next_feats = env_action_candidates(env, env.current_robot)
             else:
                 next_feats = np.zeros((0, 4), dtype=np.float32)
 
@@ -776,7 +752,8 @@ def train_ddqn(
             f"[EP {ep+1}] batch={scenario_tag} dispatch_time={dispatch_time:.2f} "
             f"release_t0={release_t0:.2f} jobs={job_count} MA-50 mk: {avg_mk:.2f}, "
             f"mk/job: {mk_per_job:.3f}, mk/proc: {mk_ratio:.3f}, "
-            f"eps={explore_value:.3f}, last_mk={mk:.2f}"
+            f"eps={explore_value:.3f}, last_mk={mk:.2f}, "
+            f"buffer_overrides={int(getattr(env, 'buffer_override_count', 0))}"
         )
         update_train_plot(ep)
 

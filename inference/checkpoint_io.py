@@ -17,8 +17,12 @@ import torch
 
 from core.env import load_env_spec
 
-FORMAT_VERSION = "1.0"
+FORMAT_VERSION = "1.1"
 IO_SCHEMA_VERSION = "1.0"
+# Environment/feature semantics generation. Bump whenever the meaning of the
+# state vector or action features changes (checkpoints keep loading dimension-
+# wise, so the loader uses this marker to warn about stale weights).
+ENV_SEMANTICS = "fjssp-v2-single-buffer-delivery"
 
 
 def build_feature_config(env_spec: dict, selection_bias: Optional[dict] = None) -> dict:
@@ -27,6 +31,7 @@ def build_feature_config(env_spec: dict, selection_bias: Optional[dict] = None) 
     bias = selection_bias or {}
     return {
         "materials": materials,
+        "env_semantics": ENV_SEMANTICS,
         # All times fed to the network are relative to the scene's `time`
         # (episodes always start at t=0 inside the simulator).
         "relative_time": True,
@@ -35,10 +40,16 @@ def build_feature_config(env_spec: dict, selection_bias: Optional[dict] = None) 
         "state_layout": (
             "onehot(current_robot, M) | n_available_tasks | t | "
             "per-robot [free_time, x, y, invA, invB, invC] | "
-            "station_busy_until (sorted station keys) | "
+            "per-station accepts-new-part-from time (occupant's scheduled "
+            "pickup if known, else its process end; sorted station keys) | "
             "dock_busy_until (sorted dock keys)"
         ),
-        "action_features": ["travel", "station_wait", "proc", "replenish_add"],
+        "action_features": [
+            "travel(move+dock_queue+loading)",
+            "machine_buffer_wait",
+            "proc",
+            "replenish_add",
+        ],
         # Action-selection shaping (Score = Q + cover/load/wait bonuses); the
         # inference rollout must use the same weights as training.
         "selection_bias": {

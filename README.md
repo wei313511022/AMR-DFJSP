@@ -36,11 +36,16 @@
     格式），可含動態到達（dispatch_time）。
 - **決策**：事件驅動——每當「有 AMR 空閒且有可派工序」即為一個決策點，
   模型替該 AMR 選擇 (工序＋機台) 以及「這趟在料倉批次取幾份材料」。
-- **FJSSP 語義（機台獨立加工）**：AMR 只負責搬運——把工件送到選定機台、
-  等機台空出後**交件（handover）即釋放**，可立刻接下一個任務；機台自行加工，
-  加工完成才釋放該 job 的下一道工序。**機台選擇由模型決定**：工序有多台可行
-  機台時，每台機台是一個候選動作，模型依 Q 值（以整體目標函數為 reward 訓練）
-  挑選對 makespan 最有利的機台。
+- **FJSSP 語義（單一機台 buffer）**：每台機台只有**一個緩衝位**——工件從放上
+  機台起（等待加工＋加工中＋完工待取）一直佔用該機台，**直到被 AMR 取走**
+  （下一工序或送貨）才釋放；下一個工件才能放上並立即開始加工。因此
+  **AMR 可能載著材料在機台旁等待**前一件被取走。放好工件後 AMR 立即釋放，
+  接著做什麼（搬別的 job、先去料倉補料、或原地待命）由模型依 Q 值決定。
+  佔用中且「取走尚未被安排」的機台，送料動作會被**遮罩**——模型必須先派
+  「取走」才能派「補位」（env `blocked_task_indices`）。
+  **機台選擇由模型決定**：工序有多台可行機台時，每台機台是一個候選動作，
+  模型依 Q 值（以整體目標函數為 reward 訓練）挑選對 makespan 最有利的機台；
+  動作特徵中的 `wait` 是「AMR 到站後預計持料等待多久」，供模型避開壅塞機台。
 - **出貨（delivery to T）**：job 的最後一道工序完工後，會釋放一個「送出貨口」
   任務——AMR 到最後加工站取成品（耗時 0）、運往出貨口 **T**；
   **job 到達 T 才算完成**。**Makespan ＝ 最後一個 job 送達 T 的時間**
@@ -112,7 +117,8 @@
 ├── docs/                    # 契約、參數說明（PARAMETER_GUIDE.md）、範例 scene/plan
 ├── notebooks/               # 舊 notebook（使用搬移前的扁平 import，僅供參考）
 └── results/
-    └── test_runs/           #   ★ 測試輸出（summary.csv + 每筆測資影片）
+    └── <YYYY-MM-DD_HH-MM-SS>/  # ★ 每次執行一個資料夾：params.md（參數快照）
+                                #   + summary.csv + 每筆測資影片 + 測試 PNG
 ```
 
 ## 4. 各模組詳細說明
@@ -139,6 +145,11 @@
    **逐筆測資評估**——印出每筆的模型計算時間與 makespan、寫 `summary.csv`、
    輸出三面板影片（見 4.10）；再跑 `run_test_and_plot()`（demo 回合＋各種圖），
    最後 `print_batch_results()` 對前 N 個訓練情境快速批次評估。
+
+**每次執行的結果資料夾**：全部參數集中在 `run_config()`（此函式**只含參數
+賦值**，params.md 就是它的完整快照，結構上不可能漏記或混入雜項）；main()
+啟動時建立 `results/<YYYY-MM-DD_HH-MM-SS>/` 並寫入 `params.md`，本次執行的
+所有測試輸出（summary.csv、影片、PNG）都存進這個資料夾，不同執行互不覆蓋。
 
 ### 4.2 `configs/env_spec.json` — 場域規格（契約 §2）
 
@@ -173,11 +184,19 @@
      子區間（第 k 份 = 第 k 段 duration）；job 消耗哪份（FIFO），其契約 `pickup`
      就歸屬那段——同車連續 pickup 在 plan `order` 中相鄰，整合方重演時
      自然形成批次取料。
-  3. **交件即釋放**：AMR 等機台空出、於 `process_start` 交件後即釋放
-     （`robot_free_times = 交件時間`），機台獨立加工至 `process_end` 才佔用站點
-     （`station_busy_until`）並釋放下一工序；makespan 以工序/送貨完成時間追蹤
-     （`_max_completion`）。更新後寫入 `trace`（每筆含 op_index、num_ops、
-     is_delivery、segments、transport_path、pickup 歸屬區間等）。
+  3. **單一 buffer 記帳（`MachineBuffer` 類別）**：每台機台一個
+     `MachineBuffer`（`occupy()`／`schedule_pickup()` 封裝不變量——release
+     為 None ⟺ 佔用中且取走未安排；取件者須為佔用者的後繼才釋放）。機台的
+     可放料時間＝佔用者的**被取走時刻**；AMR 若早到就**持料等待**（路徑停留
+     步嵌入 transport，屬 AMR 時間），放料瞬間機台開始加工、AMR 同時釋放。
+     佔用中且取走未安排的機台其送料動作被遮罩；全部候選被遮罩時先快轉到
+     下一個工序釋放時刻，仍無解（真正的交換死結）才近似放行並計數
+     （`buffer_override_count`，訓練 log 與 summary.csv 都會輸出）。
+     makespan 以工序/送貨完成時間追蹤（`_max_completion`）。
+  - **特徵估算快速路徑**：`action_features` 走解析式時間計算
+     （`for_execution=False`，不實體化數千格的等待路徑），只有真正執行的
+     動作才建完整 transport path——特徵中 `travel`＝移動＋料倉排隊/取料、
+     `wait`＝機台 buffer 持料等待。
   4. **Dense reward**：`-(Δmakespan) - w×(Δ Σ交件時間)`，逐步累加後
      episode 總 reward ＝ 負的最終目標函數值。
 - **避碰（可開關）**：`_build_dynamic_reservations()` 把其他 AMR 已承諾的
@@ -202,6 +221,10 @@
     cap_i 由「目前可見的同材料需求」封頂，避免 episode 尾端載死庫存；
     `max_add=1` 供推論端在批次不保真時降級。
 - `q_values_batch()`：一個 state 對 K 個動作特徵批次算 Q。
+- **`env_action_candidates(env, rid)`**：決策點的**唯一入口**——建動作列表、
+  套用 buffer 遮罩（含 stall-break 回退，只在這裡）、算特徵矩陣；
+  trainer/rollout/scheduler 全部共用。`env_selection_bias(env)` 統一提供
+  三個評分權重 kwargs。
 - `select_action_index()`：**Score(i) = Q(i) + cover_bonus + load_bonus + wait_bonus**。
   cover＝補貨能多覆蓋幾個未來同材料 job、load＝載貨率、wait＝站點反正要等就
   順便補貨。bonus 在**同一 task 的數量選項間**零基化，不影響跨 task 排序
@@ -272,16 +295,21 @@
   否則**一行（一筆記錄）＝一個獨立測資**（FJSSP instance，命名
   `test_dataset_000`、`test_dataset_001`…）。
 - `evaluate_test_folder(...)`：對每筆測資跑 greedy 回合，記錄
-  `jobs / makespan / finish_sum / objective / eval_seconds`
-  （eval_seconds＝模型排程該筆的完整計算時間，含所有派工、機台選擇、送 T 決策），
-  寫入 `results/test_runs/summary.csv` 並印出平均/最小/最大 makespan。
+  `jobs / makespan / finish_sum / objective / eval_seconds / buffer_overrides`
+  （eval_seconds＝模型排程該筆的完整計算時間；buffer_overrides＝交換死結
+  近似放行次數，>0 表示該 makespan 偏樂觀），寫入本次執行資料夾的
+  `summary.csv` 並印出平均/最小/最大 makespan。
   預設 `collision_avoidance=False`（快速估計＝訓練/推論的移動模型；
   要避碰忠實影片再開，每筆需數分鐘）。
-- `record_schedule_video(...)`：把跑完的 `env.trace` 渲染成**單一三面板影片**——
-  上：機台甘特圖（整體 FJSSP 排程，長條標籤 `J{jid}(目前工序/總工序)`，
-  紅色游標隨時間移動）；中：AMR Gantt（搬運/等待活動）；
-  下：場域路線圖（AMR 即時位置、路徑、各機台加工中工序與剩餘時間、出貨口 T），
-  底部附機台/AMR 狀態文字。影格數由 `video_max_frames` 封頂（時間軸等距抽樣）。
+- `record_schedule_video(...)`：把跑完的 `env.trace` 渲染成**單一四面板影片**，
+  以**滑動時間視窗**確保細節可讀（長 makespan 不再整段壓縮）：
+  1. **全程縮覽帶**：整段機台佔用縮圖，橙色區塊＝目前放大的視窗位置；
+  2. **機台甘特（放大）**：只顯示游標附近 `video_window` 秒（None＝自動取
+     makespan/6，夾在 120–600s），長條標籤 `J{jid}(目前工序/總工序)` 清楚可讀，
+     紅網底＝完工待取；
+  3. **AMR 甘特（放大）**：同視窗，六類活動含 job 標籤；
+  4. **場域路線圖**：AMR 即時位置/路徑、機台兩相位狀態（加工倒數/待取）、出貨口 T。
+  底部附機台/AMR 完整狀態文字。影格數由 `video_max_frames` 封頂（時間軸等距抽樣）。
   **影片格式**：系統 PATH 有 ffmpeg → `.mp4`；否則用 `imageio-ffmpeg` 套件
   附帶的 ffmpeg（已裝，`pip install imageio-ffmpeg`）→ `.mp4`；
   兩者都沒有 → 自動退回 `.gif`（Pillow）。
@@ -290,7 +318,7 @@
 `test_output_dir`、`test_folder_collision_avoidance`（預設 False）、
 `test_folder_max_scenarios`、`save_test_videos`、`test_video_max_scenarios`
 （只為前 N 筆錄影，None＝全部）、`test_video_fps` / `test_video_max_frames` /
-`test_video_dpi`。
+`test_video_dpi` / `test_video_window`（甘特放大視窗秒數，None＝自動）。
 
 ### 4.11 `inference/` — 交付推論套件（契約 §5、§6）
 
@@ -311,8 +339,10 @@
     無法保真，自動降級為每趟只取一份（`max_add=1`）。
 - `checkpoint_io.py`：`export_contract_checkpoint()` 輸出自描述 .pth——
   `format_version / io_schema_version / state_dict / arch_config /
-  feature_config（含 state 佈局說明與 selection_bias）/ env_spec / metrics`。
-  任何常數都不寫死在推論程式，一律從 checkpoint 讀。
+  feature_config（含 state 佈局說明、selection_bias 與 **env_semantics**
+  語義世代標記）/ env_spec / metrics`。任何常數都不寫死在推論程式，一律從
+  checkpoint 讀。`load_model()` 發現 checkpoint 的 `env_semantics` 與現行
+  模擬器不符時會**明確警告**（舊語義權重維度相同仍可載入，但結果不可信）。
 
 ### 4.12 `scripts/` — 資料產生與驗收
 
@@ -326,19 +356,29 @@
 ### 4.13 `viz/` — 視覺化
 
 - `viz_matplotlib.py`：
-  - **機台甘特圖** `draw/plot_machine_schedule`：經典 FJSSP 排程呈現——
-    每台機台一條泳道，長條＝該工序的加工區間（材料色）。標籤格式
-    **`J{jid}({目前工序}/{總工序數})`**（如 `J10(3/6)`），路線圖的加工中機台
-    與 Plotly hover 也採同一格式（`format_trace_job_label`）；
-    出貨任務顯示為 `J{jid}->T`。
-  - AMR Gantt `draw/plot_amr_schedule`：transport/wait 分段＋料倉取料/庫存標註；
-    加工段以**半透明**顯示（AMR 交件後已釋放，僅表示其送達的工序仍在機台上加工）。
+  - **機台甘特圖** `draw/plot_machine_schedule`——每台機台一條泳道，完整呈現
+    單一 buffer 下的機台狀態：
+    - **加工中**：材料色實心條，標籤 **`J{jid}({目前工序}/{總工序數})`**（如 `J10(3/6)`）；
+    - **完工待取（佔用 buffer）**：紅色網底條，從加工完成畫到被 AMR 取走
+      （`build_removal_times` 由後繼取件時間推得）——機台被堵塞的成本一目瞭然；
+    - 紅色虛線＝目前時間游標；圖例橫排在座標軸上方，不遮擋長條。
+  - **AMR Gantt** `draw/plot_amr_schedule`——AMR 活動細分六類：
+    前往料倉（藍斜線）、料倉排隊/取料（灰點）、搬往機台（灰斜線）、
+    **持料在機台旁等 buffer**（紅點——單一 buffer 的關鍵等待）、
+    **送出貨口 T**（橘斜線）、加工參考（半透明，AMR 已釋放）。
   - 派工佇列圖、輸入（到達）佇列圖、帶時間滑桿的互動排程視窗；
-    `plot_*` 版本另存 PNG 至 `results/`。
+    `plot_*` 版本另存 PNG。
 - `viz_plotly.py`：Plotly 互動 Gantt（縮放、hover 細節、時間窗捲動）。
 - `viz_route_map.py`：場域路線圖——從 `trace` 重建任意時刻各 AMR 的位置與
-  已走路徑快照；機台加工狀態獨立顯示（`_machine_states_at_time`：色塊高亮＋
-  `J{jid}(k/N) left Xs` 剩餘時間，即使 AMR 已離開），支援時間滑桿回放/自動播放。
+  已走路徑快照；機台佔用狀態獨立顯示（`_machine_states_at_time` 兩相位：
+  **加工中**＝材料色高亮＋`J{jid}(k/N) left Xs` 倒數、
+  **完工待取**＝灰色高亮＋`await pickup`），支援時間滑桿回放/自動播放。
+  影片狀態面板逐台列出：機台（processing 進度 / BLOCKED 已等多久）與 AMR
+  的**載貨情境**——`carrying J11(4/5)@S6`（載貨移動）、
+  `empty, to pick …`（空車去取件）、`queue/loading @ dock`（料倉排隊/取料）、
+  **`HOLDING J15(3/8)@S2 — machine busy: … left Xs`（持料等機台完工）或
+  `— waiting pickup of …`（持料等前件被取走）**、idle；
+  地圖上 AMR 圓點**實心（材料色）＝載貨中、空心＝空車**。
 
 ### 4.14 `data/`、`checkpoints/`、`docs/`、`notebooks/`、`results/`
 
@@ -374,9 +414,9 @@ conda activate pytoch
 python main.py
 
 # 2. 測試：把測資放進 data/test_data/（如 test_dataset.jsonl，一行一筆），
-#    跑 main.py（do_test=True）即自動逐筆評估：
-#    -> 印出每筆的模型計算時間（eval_seconds）與 makespan
-#    -> 寫入 results/test_runs/summary.csv
+#    跑 main.py（do_test=True）即自動逐筆評估；本次所有輸出存進
+#    results/<日期_時間>/（內含 params.md 參數快照，執行間互不覆蓋）：
+#    -> 印出每筆的模型計算時間（eval_seconds）與 makespan -> summary.csv
 #    -> 前 N 筆各輸出一支三面板影片（機台甘特+AMR甘特+路線圖，.mp4）
 #    只要數字不要影片：save_test_videos=False
 
@@ -411,9 +451,12 @@ plan = scheduler.predict(scene)   # scene: 契約 §3；plan: 契約 §4
 
 ## 7. 重要語義（FJSSP 交件 + 出貨 + 批次取料）
 
-- **交件即釋放（機台獨立加工）**：AMR 送達選定機台後，若機台仍在加工前一件
-  則原地等待（站點互斥）；機台空出即交件，AMR 立刻釋放接新任務，
-  機台自行加工到完工才釋放該 job 的下一道工序。
+- **單一機台 buffer**：工件佔用機台直到**被 AMR 取走**才釋放緩衝位；
+  送料的 AMR 若早到需**持料等待**（屬 AMR 時間），放料後機台立即加工、
+  AMR 立即釋放。取走未安排的機台其送料動作被遮罩（先派取走再派補位）；
+  真正的交換死結以加工完成時刻近似放行並計數（`env.buffer_override_count`，
+  訓練後的策略應學會避免壅塞使其趨近 0）。AMR 釋放後接哪個任務
+  （搬運/補料/待命）由模型依 makespan 目標決定。
 - **出貨任務**：最後一道工序完工即釋放送 T 任務（取件耗時 0、無加工），
   job 送達 T 才完成；makespan ＝ 最後一個 job 到達 T 的時間。
   出貨口無互斥、不佔機台；契約推論端（`inference/scheduler.py`）自動關閉此行為。

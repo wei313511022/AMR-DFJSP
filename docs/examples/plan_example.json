@@ -1,58 +1,38 @@
 {
   "schema_version": "1.0",
   "assignment": [
-    1,
-    0,
-    0,
-    2,
-    1,
     2,
     3,
+    0,
     4,
-    3,
-    1,
     2,
-    4
+    1,
+    4,
+    2,
+    2,
+    1,
+    3,
+    0
   ],
   "order": [
     [
-      10,
+      0,
       "pickup"
-    ],
-    [
-      8,
-      "pickup"
-    ],
-    [
-      10,
-      "unload"
     ],
     [
       0,
-      "pickup"
+      "unload"
     ],
     [
       7,
       "pickup"
     ],
     [
-      5,
-      "pickup"
-    ],
-    [
-      8,
-      "unload"
-    ],
-    [
-      0,
-      "unload"
-    ],
-    [
       1,
       "pickup"
     ],
     [
-      9,
+      5,
       "pickup"
     ],
     [
@@ -61,14 +41,6 @@
     ],
     [
       7,
-      "unload"
-    ],
-    [
-      5,
-      "unload"
-    ],
-    [
-      1,
       "unload"
     ],
     [
@@ -76,19 +48,47 @@
       "pickup"
     ],
     [
-      9,
+      1,
+      "unload"
+    ],
+    [
+      8,
+      "pickup"
+    ],
+    [
+      5,
       "unload"
     ],
     [
       6,
       "unload"
+    ],
+    [
+      11,
+      "unload"
+    ],
+    [
+      10,
+      "pickup"
+    ],
+    [
+      9,
+      "pickup"
     ],
     [
       3,
       "pickup"
     ],
     [
-      11,
+      8,
+      "unload"
+    ],
+    [
+      9,
+      "unload"
+    ],
+    [
+      10,
       "unload"
     ],
     [

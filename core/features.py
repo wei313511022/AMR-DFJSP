@@ -50,6 +50,10 @@ def build_actions_for_tasks(
     Future arrivals are not counted — conservative, avoids dead stock at the
     end of an episode. `max_add` additionally caps units per dock visit
     (inference uses max_add=1 when batching would be unfaithful).
+
+    Buffer masking is NOT applied here — use env_action_candidates(), the
+    single entry point for decision points, which filters buffer-blocked
+    tasks and owns the stall-break policy.
     """
     mat_types = ["A", "B", "C"]
     actions: List[Tuple[int, Optional[Dict[str, int]]]] = []
@@ -86,6 +90,61 @@ def build_actions_for_tasks(
             plan[jtype] = int(add)
             actions.append((idx, plan))
     return actions
+
+
+def env_selection_bias(env) -> Dict[str, float]:
+    """select_action_index keyword weights (Score = Q + cover/load/wait
+    bonuses) as configured on the env — one definition for every call site."""
+    return {
+        "proactive_replenish_bias_weight": float(
+            getattr(env, "proactive_replenish_bias_weight", 0.0)
+        ),
+        "full_load_bias_weight": float(
+            getattr(env, "proactive_full_load_bias_weight", 0.0)
+        ),
+        "waiting_replenish_bias_weight": float(
+            getattr(env, "proactive_waiting_replenish_bias_weight", 0.0)
+        ),
+    }
+
+
+def env_action_candidates(
+    env,
+    robot_id: int,
+    allow_proactive_replenish: Optional[bool] = None,
+    max_add: Optional[int] = None,
+) -> Tuple[List[Tuple[int, Optional[Dict[str, int]]]], np.ndarray]:
+    """Single entry point for a decision point: build the robot's action
+    list and its (travel, wait, proc, replenish) feature rows.
+
+    Applies the single-slot buffer mask (env.blocked_task_indices). If EVERY
+    task is blocked — a swap-deadlock the env could not wait out in
+    _advance_to_decision_point — the mask is dropped so the episode can
+    proceed; env.step() then approximates the drop and counts it in
+    buffer_override_count.
+    """
+    tasks = env.available_tasks
+    allow = (
+        env.allow_proactive_replenish
+        if allow_proactive_replenish is None
+        else allow_proactive_replenish
+    )
+    actions = build_actions_for_tasks(
+        tasks,
+        env.robot_inventory[robot_id],
+        env.capacity_per_type,
+        allow_proactive_replenish=allow,
+        max_add=max_add,
+    )
+    blocked = env.blocked_task_indices()
+    if blocked:
+        kept = [a for a in actions if a[0] not in blocked]
+        actions = kept or actions  # stall-break (see docstring)
+
+    feats = np.zeros((len(actions), 4), dtype=np.float32)
+    for i, (task_idx, replenish) in enumerate(actions):
+        feats[i] = env.action_features(robot_id, tasks[task_idx], replenish)
+    return actions, feats
 
 
 def q_values_batch(

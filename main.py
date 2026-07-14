@@ -1,4 +1,5 @@
 import os
+import time
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #solve OpenmMP library repeat problem
 
@@ -14,7 +15,12 @@ from training.test_runner import evaluate_test_folder
 from training.trainer import prepare_scenarios, train_ddqn
 
 
-def main(): 
+def run_config() -> dict:
+    """Every experiment parameter for one run.
+
+    This function contains ONLY parameter assignments — params.md is
+    exactly dict(locals()) of it, so nothing can drift into or out of
+    the experiment record."""
     # ---- FJSSP training data (scripts/Generate_training_data.py, unmodified) ----
     # Each JSONL line is one instance: {"machines": 6, "jobs": [{"operations":
     # [[{"machine", "processing"}, ...], ...], "material": "A|B|C"}, ...]}.
@@ -130,9 +136,9 @@ def main():
     # Folder-based test dataset (user-provided scenarios) + video export.
     # Every .jsonl/.json in test_data_dir is evaluated (see training/test_runner
     # for the file->scenario rules); each scenario gets a combined video
-    # (Gantt schedule + field route map) plus a summary.csv in test_output_dir.
+    # (Gantt schedule + field route map) plus a summary.csv. All outputs of
+    # this run land in a fresh results/<date_time>/ folder (see below).
     test_data_dir = os.path.join("data", "test_data")  # None/missing dir = skip
-    test_output_dir = os.path.join("results", "test_runs")
     test_folder_max_scenarios = None  # None = evaluate every scenario found
     # Fast estimate matches the training/inference movement model; flip to
     # True for collision-faithful videos (minutes per FJSSP instance).
@@ -142,6 +148,10 @@ def main():
     test_video_fps = 10
     test_video_max_frames = 300  # frame count cap per video (time axis is subsampled)
     test_video_dpi = 100
+    # Gantt zoom window (seconds) that follows the cursor in the video;
+    # None = auto (~makespan/6, clamped to [120, 600]). The overview strip
+    # always shows the full run.
+    test_video_window = None
 
     # Test and plotting
     test_scenario_file = os.path.join("data", "test_scenario_one_time.jsonl")
@@ -170,6 +180,34 @@ def main():
     live_gif_path = "live_schedule.gif"
     route_play_step = 0.5
     route_play_interval_ms = 120
+    return dict(locals())
+
+
+def main():
+    cfg = run_config()
+    # Expose the parameters as module globals: the body below only READS
+    # them by name (it never rebinds any), so global lookup is safe and
+    # params.md stays the single structured source of truth.
+    globals().update(cfg)
+
+    # ---- Per-run results folder ----
+    # Everything this run produces (test PNGs, summary.csv, videos) goes
+    # into a fresh results/<YYYY-MM-DD_HH-MM-SS>/ folder, together with
+    # params.md documenting exactly the contents of run_config().
+    run_stamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    results_run_dir = os.path.join("results", run_stamp)
+    os.makedirs(results_run_dir, exist_ok=True)
+    param_lines = [
+        f"# Run parameters — {run_stamp}",
+        "",
+        "| parameter | value |",
+        "|---|---|",
+    ]
+    for key in sorted(cfg):
+        param_lines.append(f"| {key} | `{cfg[key]!r}` |")
+    with open(os.path.join(results_run_dir, "params.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(param_lines) + "\n")
+    print(f"Results folder: {results_run_dir}")
 
     if use_fjssp_dataset:
         # Integrates scripts/Generate_training_data.py as-is: import and call
@@ -352,7 +390,7 @@ def main():
                 policy_net=policy_net,
                 device=device,
                 test_data_dir=test_data_dir,
-                output_dir=test_output_dir,
+                output_dir=results_run_dir,
                 collision_avoidance=test_folder_collision_avoidance,
                 max_scenarios=test_folder_max_scenarios,
                 save_videos=save_test_videos,
@@ -360,6 +398,7 @@ def main():
                 video_fps=test_video_fps,
                 video_max_frames=test_video_max_frames,
                 video_dpi=test_video_dpi,
+                video_window=test_video_window,
             )
         elif test_data_dir:
             print(f"[TEST-DATA] folder '{test_data_dir}' not found — skipped")
@@ -372,6 +411,7 @@ def main():
             device=device,
             scenario_list=scenario_list,
             test_scenario_file=test_scenario_file,
+            out_dir=results_run_dir,
             show_live=show_live,
             show_live_stream=show_live_stream,
             show_interactive=show_interactive,

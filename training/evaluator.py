@@ -47,6 +47,7 @@ def run_test_and_plot(
     live_gif_path: str = "live_schedule.gif",
     route_play_step: float = 0.5,
     route_play_interval_ms: int = 120,
+    out_dir: str = "results",
 ) -> float:
     print("\n=== TEST & PLOT ===")
     if test_scenario_file:
@@ -141,7 +142,6 @@ def run_test_and_plot(
     print(f"Test makespan = {mk:.2f}s")
 
     if show_test_plots:
-        out_dir = "results"
         os.makedirs(out_dir, exist_ok=True)
         plot_dispatch_queue(
             env.trace,

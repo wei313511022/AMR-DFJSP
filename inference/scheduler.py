@@ -21,8 +21,9 @@ import numpy as np
 import torch
 
 from core.env import TaskSchedulingEnv
-from core.features import build_actions_for_tasks, q_values_batch, select_action_index
+from core.features import env_action_candidates, q_values_batch, select_action_index
 from core.model import QNetwork
+from inference.checkpoint_io import ENV_SEMANTICS
 
 IO_SCHEMA_VERSION = "1.0"
 
@@ -91,8 +92,10 @@ class Scheduler:
         self.env = TaskSchedulingEnv(env_spec)
         self.env.enable_collision_avoidance = False
         # Contract plans have exactly [pickup, unload] per job — no final
-        # delivery-to-output leg.
+        # delivery-to-output leg and no single-slot buffer blocking (contract
+        # stations free at process end; the integrator replays its own rules).
         self.env.deliver_finished_to_output = False
+        self.env.enable_buffer_blocking = False
         # Conservative: stock reported in the scene is not consumed — the
         # integrating system replays every job's own dock pickup, so only
         # stock acquired inside this rollout may serve later jobs.
@@ -194,20 +197,12 @@ class Scheduler:
         with torch.no_grad():
             while not env.done():
                 rid = env.current_robot
-                actions = build_actions_for_tasks(
-                    env.available_tasks,
-                    env.robot_inventory[rid],
-                    env.capacity_per_type,
-                    allow_proactive_replenish=batching_ok,
-                    max_add=max_add,
+                actions, feats = env_action_candidates(
+                    env, rid, allow_proactive_replenish=batching_ok, max_add=max_add
                 )
                 if not actions:
                     raise RuntimeError("no valid actions during rollout")
                 state = np.array(env._get_state(), dtype=np.float32)
-                feats = np.zeros((len(actions), 4), dtype=np.float32)
-                for i, (task_idx, replenish) in enumerate(actions):
-                    task = env.available_tasks[task_idx]
-                    feats[i] = env.action_features(rid, task, replenish)
                 q_all = q_values_batch(self.policy_net, state, feats, self.device)
                 best = select_action_index(
                     q_values=q_all,
@@ -258,6 +253,17 @@ def load_model(checkpoint_path: str, device: str = "cpu") -> Scheduler:
             "(expected keys: state_dict / arch_config / feature_config / env_spec)"
         )
     _check_schema_version(ckpt.get("io_schema_version", "?"), "checkpoint")
+
+    # Feature/dynamics semantics marker: checkpoints trained on an older
+    # environment (different state meaning) still load dimension-wise, so
+    # surface the mismatch loudly instead of degrading silently.
+    ckpt_semantics = (ckpt.get("feature_config") or {}).get("env_semantics")
+    if ckpt_semantics != ENV_SEMANTICS:
+        print(
+            f"WARNING: checkpoint env_semantics={ckpt_semantics!r} does not match "
+            f"this simulator ({ENV_SEMANTICS!r}); the weights were trained on "
+            "different state/feature semantics — retrain before trusting results."
+        )
 
     arch = dict(ckpt["arch_config"])
     model_class = arch.pop("model_class", "QNetwork")

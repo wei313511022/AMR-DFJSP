@@ -1,6 +1,0 @@
-scenario,jobs,makespan,finish_sum,objective,eval_seconds
-test_dataset_000,25,1730.0,8465.0,1738.465,1.14
-test_dataset_001,10,936.0,4211.0,940.211,0.23
-test_dataset_002,15,1079.0,5228.0,1084.228,0.4
-test_dataset_003,20,1564.0,7402.0,1571.402,0.72
-test_dataset_004,10,815.0,3807.0,818.807,0.17

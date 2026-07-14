@@ -110,6 +110,18 @@ def split_transport_intervals(item: dict, seg: dict) -> Dict[str, List[Tuple[flo
                     pickup_idx = i
                     break
 
+    # First step index after the pickup arrival that is no longer a hold at
+    # the pickup cell = end of the dock queue/loading run.
+    service_end_idx = 0
+    if pickup_idx is not None:
+        service_end_idx = pickup_idx
+        while (
+            service_end_idx < step_count
+            and tuple(path[service_end_idx]) == tuple(path[pickup_idx])
+            and tuple(path[service_end_idx + 1]) == tuple(path[pickup_idx])
+        ):
+            service_end_idx += 1
+
     for i in range(step_count):
         t0 = s + dt * i
         t1 = t0 + dt
@@ -118,7 +130,13 @@ def split_transport_intervals(item: dict, seg: dict) -> Dict[str, List[Tuple[flo
         c0 = path[i]
         c1 = path[i + 1]
         is_wait = tuple(c0) == tuple(c1)
-        on_pickup_leg = bool(need_pickup and (pickup_idx is not None) and (i < pickup_idx))
+        # Pickup side = everything up to the pickup point plus the CONTIGUOUS
+        # run of hold steps right after arriving there (dock queueing +
+        # loading service). Later hold steps — even at a coincidentally equal
+        # cell — belong to the station side (machine buffer hold).
+        on_pickup_leg = bool(
+            need_pickup and (pickup_idx is not None) and i < service_end_idx
+        )
         if on_pickup_leg:
             if is_wait:
                 pickup_wait_raw.append((t0, t1 - t0))
@@ -345,12 +363,13 @@ def draw_amr_schedule(
     show_labels: bool = True,
     current_t: Optional[float] = None,
     inventories: Optional[List[Dict[str, int]]] = None,
+    min_label_dur: float = 0.0,
 ) -> None:
     if makespan is None:
         title = "AMR Schedule (DDQN)"
     else:
         title = f"AMR Schedule (DDQN) | Makespan: {makespan:.1f}s"
-    ax.set_title(title)
+    ax.set_title(title, loc="left", pad=30)
     ax.set_xlabel("Time (s)")
 
     if not trace:
@@ -398,23 +417,47 @@ def draw_amr_schedule(
                         edgecolors="#4c72b0",
                     )
                 if station_move:
+                    if item.get("is_delivery"):
+                        # Final leg carrying the finished job to output T.
+                        ax.broken_barh(
+                            station_move,
+                            (lane_y, lane_h),
+                            facecolors="#fff3e0",
+                            hatch="///",
+                            edgecolors="#ff7f0e",
+                        )
+                    else:
+                        ax.broken_barh(
+                            station_move,
+                            (lane_y, lane_h),
+                            facecolors="lightgray",
+                            hatch="///",
+                            edgecolors="gray",
+                        )
+                if pickup_wait:
+                    # Queueing at / loading from the material dock.
                     ax.broken_barh(
-                        station_move,
-                        (lane_y, lane_h),
-                        facecolors="lightgray",
-                        hatch="///",
-                        edgecolors="gray",
-                    )
-                all_wait_intervals = pickup_wait + station_wait
-                if all_wait_intervals:
-                    ax.broken_barh(
-                        all_wait_intervals,
+                        pickup_wait,
                         (lane_y, lane_h),
                         facecolors="lightgray",
                         hatch="...",
                         edgecolors="gray",
                     )
+                if station_wait:
+                    # Holding the part next to the machine until its buffer
+                    # frees (previous part picked up) — the key cost of the
+                    # single-slot buffer.
+                    ax.broken_barh(
+                        station_wait,
+                        (lane_y, lane_h),
+                        facecolors="#ffe6e6",
+                        hatch="...",
+                        edgecolors="#cc4444",
+                    )
             elif seg["kind"] == "wait":
+                # AMR holding the part (dock queue / machine buffer wait);
+                # normally embedded in the transport path as hold steps, so
+                # this segment is usually zero-length.
                 ax.broken_barh([(s, dur)], (lane_y, lane_h), facecolors="lightgray", hatch="...", edgecolors="gray")
             else:
                 # Machine processing: the AMR handed the part over at the
@@ -427,8 +470,17 @@ def draw_amr_schedule(
                     alpha=0.35,
                     edgecolors=type_to_color.get(jtype, "tab:gray"),
                 )
-                if show_labels:
-                    ax.text(s + dur / 2, lane_y + lane_h / 2, label_job, ha="center", va="center", fontsize=9, color="black")
+                if show_labels and dur >= min_label_dur:
+                    ax.text(
+                        s + dur / 2,
+                        lane_y + lane_h / 2,
+                        label_job,
+                        ha="center",
+                        va="center",
+                        fontsize=8,
+                        color="black",
+                        clip_on=True,
+                    )
 
     yticks = [i * (lane_h + lane_gap) + lane_h / 2 for i in range(num_lanes)]
     ax.set_yticks(yticks)
@@ -446,13 +498,38 @@ def draw_amr_schedule(
             label="To Material",
         ),
         mpatches.Patch(facecolor="lightgray", edgecolor="gray", hatch="///", label="To Station"),
-        mpatches.Patch(facecolor="lightgray", edgecolor="gray", hatch="...", label="Waiting"),
+        mpatches.Patch(facecolor="#fff3e0", edgecolor="#ff7f0e", hatch="///", label="To Output T"),
+        mpatches.Patch(facecolor="lightgray", edgecolor="gray", hatch="...", label="Dock queue / loading"),
+        mpatches.Patch(
+            facecolor="#ffe6e6", edgecolor="#cc4444", hatch="...",
+            label="Holding part @ machine (buffer full)",
+        ),
         mpatches.Patch(facecolor="tab:gray", alpha=0.35, label="Process @ machine (AMR free)"),
     ]
-    ax.legend(handles=leg, loc="upper right", frameon=True)
+    # Horizontal legend above the axis so it never covers schedule bars.
+    ax.legend(
+        handles=leg, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+        ncol=5, fontsize=7, frameon=False, borderaxespad=0.0,
+    )
 
     if current_t is not None:
         ax.axvline(current_t, color="red", linestyle="--", linewidth=1)
+
+
+def build_removal_times(trace: List[dict]) -> Dict[Tuple[Any, int], float]:
+    """(jid, op_index) -> time the finished part was picked up off its
+    machine (single-slot buffer freed). Derived from the successor
+    operation's / delivery's physical pickup in the trace. Items from
+    legacy traces without dock_visit_start are skipped (no removal info)."""
+    removal: Dict[Tuple[Any, int], float] = {}
+    for it in trace:
+        if "dock_visit_start" not in it:
+            continue
+        if int(it.get("op_index", 0)) > 0 or it.get("is_delivery"):
+            removal[(it.get("jid"), int(it.get("op_index", 0)) - 1)] = float(
+                it["dock_visit_start"]
+            )
+    return removal
 
 
 def _station_sort_key(name: str) -> Tuple[int, str]:
@@ -469,6 +546,7 @@ def draw_machine_schedule(
     station_keys: Optional[List[str]] = None,
     show_labels: bool = True,
     current_t: Optional[float] = None,
+    min_label_dur: float = 0.0,
 ) -> None:
     """Classic FJSSP Gantt: one lane per machine/station, bars = processing
     intervals (each operation runs on its chosen machine after the AMR
@@ -477,7 +555,7 @@ def draw_machine_schedule(
         title = "Machine Schedule (FJSSP)"
     else:
         title = f"Machine Schedule (FJSSP) | Makespan: {makespan:.1f}s"
-    ax.set_title(title)
+    ax.set_title(title, loc="left", pad=16)
     ax.set_xlabel("Time (s)")
 
     if not trace:
@@ -494,6 +572,7 @@ def draw_machine_schedule(
     type_to_color = {"A": "tab:blue", "B": "tab:orange", "C": "tab:green"}
     lane_h = 16
     lane_gap = 8
+    removal = build_removal_times(trace)
 
     for item in trace:
         dst = str(item.get("dst", ""))
@@ -509,6 +588,20 @@ def draw_machine_schedule(
             dur = float(seg["end"]) - s
             if dur <= 1e-9:
                 continue
+            # Single-slot buffer: after processing the part still occupies
+            # the machine until an AMR picks it up — draw that blocked span
+            # so machine utilization vs. blocking is visible at a glance.
+            if not item.get("is_delivery"):
+                rem = removal.get((item.get("jid"), int(item.get("op_index", 0))))
+                if rem is not None and rem > float(seg["end"]) + 1e-9:
+                    ax.broken_barh(
+                        [(float(seg["end"]), rem - float(seg["end"]))],
+                        (lane_y, lane_h),
+                        facecolors="#fff0f0",
+                        hatch="xx",
+                        edgecolors="#cc4444",
+                        linewidth=0.4,
+                    )
             ax.broken_barh(
                 [(s, dur)],
                 (lane_y, lane_h),
@@ -516,7 +609,7 @@ def draw_machine_schedule(
                 edgecolors="black",
                 linewidth=0.4,
             )
-            if show_labels:
+            if show_labels and dur >= min_label_dur:
                 jid = item.get("jid", item.get("seq", ""))
                 op = item.get("op_index", None)
                 nops = item.get("num_ops", None)
@@ -532,8 +625,9 @@ def draw_machine_schedule(
                     label,
                     ha="center",
                     va="center",
-                    fontsize=7,
+                    fontsize=8,
                     color="black",
+                    clip_on=True,
                 )
 
     yticks = [i * (lane_h + lane_gap) + lane_h / 2 for i in range(len(lanes))]
@@ -542,11 +636,19 @@ def draw_machine_schedule(
     ax.grid(True, axis="x", linestyle="--", alpha=0.4)
 
     leg = [
-        mpatches.Patch(color=type_to_color["A"], label="Material A"),
-        mpatches.Patch(color=type_to_color["B"], label="Material B"),
-        mpatches.Patch(color=type_to_color["C"], label="Material C"),
+        mpatches.Patch(color=type_to_color["A"], label="Processing (A)"),
+        mpatches.Patch(color=type_to_color["B"], label="Processing (B)"),
+        mpatches.Patch(color=type_to_color["C"], label="Processing (C)"),
+        mpatches.Patch(
+            facecolor="#fff0f0", edgecolor="#cc4444", hatch="xx",
+            label="Done, awaiting pickup (buffer occupied)",
+        ),
     ]
-    ax.legend(handles=leg, loc="upper right", frameon=True)
+    # Horizontal legend above the axis so it never covers schedule bars.
+    ax.legend(
+        handles=leg, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+        ncol=4, fontsize=7, frameon=False, borderaxespad=0.0,
+    )
 
     if current_t is not None:
         ax.axvline(current_t, color="red", linestyle="--", linewidth=1)
