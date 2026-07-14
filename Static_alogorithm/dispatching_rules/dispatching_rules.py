@@ -36,7 +36,10 @@ from operation_policy import (  # noqa: E402
     OperationAction,
     OperationEstimate,
     apply_fast_action,
+    empty_dock_service_events,
     estimate_action,
+    estimated_dock_wait,
+    estimated_travel_time,
     legal_actions,
     station_remaining_workload as active_station_workload,
 )
@@ -81,6 +84,7 @@ class RuleState:
     picked_jobs: set
     completed_jobs: set
     carrier_map: Dict[int, str]
+    dock_service_events: Dict[str, List[Tuple[float, float, int, str]]] = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +113,7 @@ def initial_state() -> RuleState:
         picked_jobs=set(),
         completed_jobs=set(),
         carrier_map={},
+        dock_service_events=empty_dock_service_events(),
     )
 
 
@@ -118,19 +123,20 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     avail = state.amr_availabilities[amr]
     capacity_blocked = state.inventory[amr].get(material, 0) >= AMR_LOAD_CAPACITY
     pickup_location = job_pickup_location(job)
-    to_pickup = heuristic(curr_pos, pickup_location)
+    to_pickup = estimated_travel_time(curr_pos, pickup_location)
     inbound_dock = dock_key_from_value(job.inbound_dock)
-    pickup_start = max(
-        avail + to_pickup,
-        float(job.arrival_time),
-        state.station_availabilities.get(inbound_dock, 0.0),
+    ready_time = max(avail + to_pickup, float(job.arrival_time))
+    pickup_start = ready_time + estimated_dock_wait(
+        inbound_dock, ready_time, state.station_availabilities, state.dock_service_events
     )
     pickup_end = pickup_start + job.duration
 
     target_station = STATIONS[job.station]
-    to_station = heuristic(pickup_location, target_station)
+    to_station = estimated_travel_time(pickup_location, target_station)
     travel_end = pickup_end + to_station
-    process_start = max(travel_end, state.station_availabilities.get(job.station, 0.0))
+    process_start = travel_end + estimated_dock_wait(
+        job.station, travel_end, state.station_availabilities, state.dock_service_events
+    )
     process_end = process_start + job.duration
     travel_time = to_pickup + to_station
 
@@ -244,6 +250,7 @@ def choose_operation(
             state.inventory,
             state.assigned_count,
             workloads,
+            dock_service_events=state.dock_service_events,
         )
         for action in actions
     ]
@@ -274,6 +281,7 @@ def apply_operation(action: OperationAction, state: RuleState, jobs: Sequence[Jo
         state.station_availabilities,
         state.inventory,
         state.assigned_count,
+        dock_service_events=state.dock_service_events,
     )
 
 

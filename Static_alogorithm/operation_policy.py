@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -29,6 +30,76 @@ NUM_OPERATION_TYPES = 2
 DOCK_DELAY_SCALE = 100.0
 DOCK_QUEUE_SCALE = float(max(len(AMR_KEYS), 1))
 LOWER_BOUND_SCALE = 500.0
+
+DOCK_KEYS = list(INBOUND_DOCK_LOCATIONS.keys()) + list(STATIONS.keys())
+DockEvent = Tuple[float, float, int, str]
+DockServiceEvents = Dict[str, List[DockEvent]]
+
+# Calibration corrects the fast rollout's optimistic estimates toward the
+# collision-aware decoder: travel is an affine map of Manhattan distance and
+# dock waits gain a penalty indexed by how many committed services are still
+# unfinished when the AMR becomes ready. Identity values keep the legacy
+# behavior when no artifact has been fitted yet.
+CALIBRATION_PATH = Path(__file__).resolve().parent / "calibration" / "fast_model_calibration.json"
+
+
+def load_calibration(path: Optional[Path] = CALIBRATION_PATH) -> dict:
+    calibration = {
+        "travel": {"scale": 1.0, "offset": 0.0},
+        "dock_wait_penalty": [0.0, 0.0, 0.0, 0.0],
+    }
+    if path is not None and Path(path).exists():
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+        travel = raw.get("travel", {})
+        calibration["travel"]["scale"] = float(travel.get("scale", 1.0))
+        calibration["travel"]["offset"] = float(travel.get("offset", 0.0))
+        for i, value in enumerate(raw.get("dock_wait_penalty", [])[:4]):
+            calibration["dock_wait_penalty"][i] = float(value)
+    return calibration
+
+
+CALIBRATION = load_calibration()
+
+
+def set_calibration(calibration: Optional[dict]) -> None:
+    """Override the active calibration; None resets to identity."""
+    global CALIBRATION
+    CALIBRATION = calibration if calibration is not None else load_calibration(None)
+
+
+def estimated_travel_time(origin: Tuple[int, int], destination: Tuple[int, int]) -> float:
+    base = heuristic(origin, destination)
+    if base <= 0.0:
+        return 0.0
+    travel = CALIBRATION["travel"]
+    # Real grid travel can never beat Manhattan distance.
+    return max(float(base), travel["scale"] * base + travel["offset"])
+
+
+def empty_dock_service_events() -> DockServiceEvents:
+    return {dock: [] for dock in DOCK_KEYS}
+
+
+def dock_queue_depth(
+    dock_service_events: Optional[DockServiceEvents],
+    dock_key: str,
+    ready_time: float,
+) -> int:
+    if not dock_service_events:
+        return 0
+    return sum(1 for event in dock_service_events.get(dock_key, []) if event[1] > ready_time)
+
+
+def estimated_dock_wait(
+    dock_key: str,
+    ready_time: float,
+    station_availabilities: Dict[str, float],
+    dock_service_events: Optional[DockServiceEvents] = None,
+) -> float:
+    base_wait = max(0.0, station_availabilities.get(dock_key, 0.0) - ready_time)
+    penalties = CALIBRATION["dock_wait_penalty"]
+    depth = dock_queue_depth(dock_service_events, dock_key, ready_time)
+    return base_wait + penalties[min(depth, len(penalties) - 1)]
 
 
 @dataclass(frozen=True)
@@ -191,38 +262,47 @@ def decision_time(amr_availabilities: Dict[str, float]) -> float:
     return min(amr_availabilities.values()) if amr_availabilities else 0.0
 
 
-def completion_time_lower_bound(
+def completion_time_estimate(
     job: Job,
     amr_positions: Dict[str, Tuple[int, int]],
     amr_availabilities: Dict[str, float],
     station_availabilities: Dict[str, float],
 ) -> float:
+    """Best-case completion over all AMRs, using calibrated travel times.
+
+    With an identity calibration this is a true lower bound; once calibrated
+    it becomes an estimate aligned with the collision-aware decoder.
+    """
     if not amr_positions:
         return 0.0
 
     pickup_location = job_pickup_location(job)
     target_station = STATIONS[job.station]
     inbound_dock = dock_key_from_value(job.inbound_dock)
-    lower_bounds = []
+    estimates = []
 
     for amr in AMR_KEYS:
         if amr not in amr_positions or amr not in amr_availabilities:
             continue
-        pickup_travel = heuristic(amr_positions[amr], pickup_location)
+        pickup_travel = estimated_travel_time(amr_positions[amr], pickup_location)
         pickup_start = max(
             amr_availabilities[amr] + pickup_travel,
             float(job.arrival_time),
             station_availabilities.get(inbound_dock, 0.0),
         )
         pickup_end = pickup_start + job.duration
-        outbound_travel_end = pickup_end + heuristic(pickup_location, target_station)
+        outbound_travel_end = pickup_end + estimated_travel_time(pickup_location, target_station)
         completion = max(
             outbound_travel_end,
             station_availabilities.get(job.station, 0.0),
         ) + job.duration
-        lower_bounds.append(completion)
+        estimates.append(completion)
 
-    return min(lower_bounds) if lower_bounds else 0.0
+    return min(estimates) if estimates else 0.0
+
+
+# Backward-compatible alias (the quantity is no longer a strict bound once calibrated).
+completion_time_lower_bound = completion_time_estimate
 
 
 def dock_congestion_features(
@@ -246,7 +326,8 @@ def dock_congestion_features(
     inbound_committed = sum(
         1
         for other in jobs
-        if other.idx in picked_jobs_set
+        if other.idx != job.idx
+        and other.idx not in picked_jobs_set
         and other.idx not in completed_jobs_set
         and dock_key_from_value(other.inbound_dock) == inbound_dock
     )
@@ -275,6 +356,7 @@ def estimate_action(
     amr_inventory: Dict[str, Dict[str, int]],
     assigned_count: Dict[str, int],
     station_workload: Dict[str, float],
+    dock_service_events: Optional[DockServiceEvents] = None,
 ) -> OperationEstimate:
     job = jobs[action.job_list_idx]
     start_time = amr_availabilities[action.amr]
@@ -282,19 +364,19 @@ def estimate_action(
 
     if action.kind == PICKUP:
         pickup_location = job_pickup_location(job)
-        to_pickup = heuristic(amr_positions[action.amr], pickup_location)
-        pickup_travel_end = start_time + to_pickup
+        to_pickup = estimated_travel_time(amr_positions[action.amr], pickup_location)
         inbound_dock = dock_key_from_value(job.inbound_dock)
-        pickup_start = max(
-            pickup_travel_end,
-            float(job.arrival_time),
-            station_availabilities.get(inbound_dock, 0.0),
+        ready_time = max(start_time + to_pickup, float(job.arrival_time))
+        pickup_start = ready_time + estimated_dock_wait(
+            inbound_dock, ready_time, station_availabilities, dock_service_events
         )
         pickup_end = pickup_start + job.duration
         target_station = STATIONS[job.station]
-        to_station = heuristic(pickup_location, target_station)
+        to_station = estimated_travel_time(pickup_location, target_station)
         projected_travel_end = pickup_end + to_station
-        projected_process_start = max(projected_travel_end, station_availabilities.get(job.station, 0.0))
+        projected_process_start = projected_travel_end + estimated_dock_wait(
+            job.station, projected_travel_end, station_availabilities, dock_service_events
+        )
         projected_completion = projected_process_start + job.duration
         return OperationEstimate(
             action=action,
@@ -308,9 +390,11 @@ def estimate_action(
         )
 
     target_station = STATIONS[job.station]
-    to_station = heuristic(amr_positions[action.amr], target_station)
+    to_station = estimated_travel_time(amr_positions[action.amr], target_station)
     travel_end = start_time + to_station
-    process_start = max(travel_end, station_availabilities.get(job.station, 0.0))
+    process_start = travel_end + estimated_dock_wait(
+        job.station, travel_end, station_availabilities, dock_service_events
+    )
     process_end = process_start + job.duration
     return OperationEstimate(
         action=action,
@@ -335,6 +419,7 @@ def apply_fast_action(
     station_availabilities: Dict[str, float],
     amr_inventory: Dict[str, Dict[str, int]],
     assigned_count: Optional[Dict[str, int]] = None,
+    dock_service_events: Optional[DockServiceEvents] = None,
 ) -> None:
     job = jobs[action.job_list_idx]
     material = job.type_
@@ -343,10 +428,12 @@ def apply_fast_action(
         pickup_location = job_pickup_location(job)
         start_time = amr_availabilities[action.amr]
         inbound_dock = dock_key_from_value(job.inbound_dock)
-        pickup_start = max(
-            start_time + heuristic(amr_positions[action.amr], pickup_location),
+        ready_time = max(
+            start_time + estimated_travel_time(amr_positions[action.amr], pickup_location),
             float(job.arrival_time),
-            station_availabilities.get(inbound_dock, 0.0),
+        )
+        pickup_start = ready_time + estimated_dock_wait(
+            inbound_dock, ready_time, station_availabilities, dock_service_events
         )
         pickup_end = pickup_start + job.duration
         amr_availabilities[action.amr] = pickup_end
@@ -357,18 +444,28 @@ def apply_fast_action(
         carrier_map[job.idx] = action.amr
         if assigned_count is not None:
             assigned_count[action.amr] += 1
+        if dock_service_events is not None:
+            dock_service_events.setdefault(inbound_dock, []).append(
+                (pickup_start, pickup_end, job.idx, PICKUP)
+            )
         return
 
     target_station = STATIONS[job.station]
     start_time = amr_availabilities[action.amr]
-    travel_end = start_time + heuristic(amr_positions[action.amr], target_station)
-    process_start = max(travel_end, station_availabilities.get(job.station, 0.0))
+    travel_end = start_time + estimated_travel_time(amr_positions[action.amr], target_station)
+    process_start = travel_end + estimated_dock_wait(
+        job.station, travel_end, station_availabilities, dock_service_events
+    )
     process_end = process_start + job.duration
     amr_availabilities[action.amr] = process_end
     amr_positions[action.amr] = target_station
     station_availabilities[job.station] = process_end
     amr_inventory[action.amr][material] -= 1
     completed_jobs_set.add(job.idx)
+    if dock_service_events is not None:
+        dock_service_events.setdefault(job.station, []).append(
+            (process_start, process_end, job.idx, UNLOAD)
+        )
 
 
 def operation_sequence_from_individual(individual, jobs: Sequence[Job]) -> List[int]:

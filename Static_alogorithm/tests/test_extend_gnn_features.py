@@ -14,6 +14,7 @@ if str(STATIC_DIR) not in sys.path:
 if TORCH_AVAILABLE:
     import torch  # noqa: E402
     import GA.GA as GA  # noqa: E402
+    import operation_policy  # noqa: E402
     from operation_policy import (  # noqa: E402
         action_id,
         action_mask,
@@ -31,6 +32,14 @@ else:
 
 @unittest.skipUnless(TORCH_AVAILABLE, "torch is not available in this Python environment")
 class ExtendGNNFeatureTests(unittest.TestCase):
+
+    def setUp(self):
+        # Feature-value assertions assume the uncalibrated fast model; pin
+        # identity so a fitted calibration artifact does not shift them.
+        operation_policy.set_calibration(None)
+
+    def tearDown(self):
+        operation_policy.set_calibration(operation_policy.load_calibration())
 
     def make_jobs(self):
         return [

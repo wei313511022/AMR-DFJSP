@@ -53,15 +53,18 @@ from operation_policy import (  # noqa: E402
     completion_time_lower_bound,
     decode_action_id,
     decision_time,
+    empty_dock_service_events,
+    estimated_dock_wait,
+    estimated_travel_time,
     initial_operation_state,
     job_status_value,
     load_required_operation_checkpoint,
 )
 
 
-AMR_IN_DIM = 10
+AMR_IN_DIM = 12
 JOB_IN_DIM = 11
-DOCK_IN_DIM = 7
+DOCK_IN_DIM = 9
 ACTION_IN_DIM = 3
 DISTANCE_SCALE = 20.0
 TIME_SCALE = 100.0
@@ -94,7 +97,8 @@ def _dock_norm(dock_key: str, keys: Sequence[str]) -> float:
 
 
 def _empty_dock_service_events() -> DockServiceEvents:
-    return {dock: [] for dock in DOCK_KEYS}
+    # Shared with operation_policy so apply_fast_action records into the same structure.
+    return empty_dock_service_events()
 
 
 def normalize_dock_service_events(dock_service_events: Optional[DockServiceEvents]) -> DockServiceEvents:
@@ -124,6 +128,7 @@ def compute_action_service_event(
     amr_positions: Dict[str, Tuple[int, int]],
     amr_availabilities: Dict[str, float],
     station_availabilities: Dict[str, float],
+    dock_service_events: Optional[DockServiceEvents] = None,
 ) -> Tuple[str, DockEvent]:
     job = jobs[action.job_list_idx]
     start_time = amr_availabilities[action.amr]
@@ -131,19 +136,22 @@ def compute_action_service_event(
     if action.kind == PICKUP:
         dock_key = _job_inbound_dock(job)
         dock_pos = INBOUND_DOCK_LOCATIONS[dock_key]
-        travel_end = start_time + heuristic(amr_positions[action.amr], dock_pos)
-        service_start = max(
-            travel_end,
+        ready_time = max(
+            start_time + estimated_travel_time(amr_positions[action.amr], dock_pos),
             float(job.arrival_time),
-            station_availabilities.get(dock_key, 0.0),
+        )
+        service_start = ready_time + estimated_dock_wait(
+            dock_key, ready_time, station_availabilities, dock_service_events
         )
         service_end = service_start + job.duration
         return dock_key, (service_start, service_end, job.idx, action.kind)
 
     dock_key = _job_outbound_dock(job)
     dock_pos = STATIONS[dock_key]
-    travel_end = start_time + heuristic(amr_positions[action.amr], dock_pos)
-    service_start = max(travel_end, station_availabilities.get(dock_key, 0.0))
+    ready_time = start_time + estimated_travel_time(amr_positions[action.amr], dock_pos)
+    service_start = ready_time + estimated_dock_wait(
+        dock_key, ready_time, station_availabilities, dock_service_events
+    )
     service_end = service_start + job.duration
     return dock_key, (service_start, service_end, job.idx, action.kind)
 
@@ -162,6 +170,7 @@ def record_dock_service_event(
         amr_positions,
         amr_availabilities,
         station_availabilities,
+        dock_service_events,
     )
     dock_service_events.setdefault(dock_key, []).append(event)
     return event
@@ -185,6 +194,7 @@ def _dock_feature_row(
     service_remaining = max((event[1] - current_time for event in current), default=0.0)
     committed_workload = sum(event[1] - max(event[0], current_time) for event in unfinished)
     available_delay = max(0.0, station_availabilities.get(dock_key, 0.0) - current_time)
+    dock_pos = _dock_position(dock_key)
 
     return [
         1.0 if dock_key in INBOUND_DOCK_LOCATIONS else 0.0,
@@ -194,6 +204,8 @@ def _dock_feature_row(
         min(queue_count / float(_valid_waiting_slot_count(dock_key)), 1.0),
         service_remaining / TIME_SCALE,
         committed_workload / WORKLOAD_SCALE,
+        dock_pos[0] / 10.0,
+        dock_pos[1] / 10.0,
     ]
 
 
@@ -204,6 +216,7 @@ def _action_feature_row(
     amr_positions: Dict[str, Tuple[int, int]],
     amr_availabilities: Dict[str, float],
     station_availabilities: Dict[str, float],
+    dock_service_events: Optional[DockServiceEvents] = None,
 ) -> List[float]:
     start_time = amr_availabilities[amr]
 
@@ -211,11 +224,13 @@ def _action_feature_row(
         inbound_dock = _job_inbound_dock(job)
         inbound_pos = INBOUND_DOCK_LOCATIONS[inbound_dock]
         outbound_pos = STATIONS[_job_outbound_dock(job)]
-        distance_to_service = heuristic(amr_positions[amr], inbound_pos)
+        distance_to_service = estimated_travel_time(amr_positions[amr], inbound_pos)
         amr_arrival = start_time + distance_to_service
         ready_time = max(amr_arrival, float(job.arrival_time))
-        dock_wait = max(0.0, station_availabilities.get(inbound_dock, 0.0) - ready_time)
-        downstream = heuristic(inbound_pos, outbound_pos)
+        dock_wait = estimated_dock_wait(
+            inbound_dock, ready_time, station_availabilities, dock_service_events
+        )
+        downstream = estimated_travel_time(inbound_pos, outbound_pos)
         return [
             distance_to_service / DISTANCE_SCALE,
             downstream / DISTANCE_SCALE,
@@ -224,9 +239,11 @@ def _action_feature_row(
 
     outbound_dock = _job_outbound_dock(job)
     outbound_pos = STATIONS[outbound_dock]
-    distance_to_service = heuristic(amr_positions[amr], outbound_pos)
+    distance_to_service = estimated_travel_time(amr_positions[amr], outbound_pos)
     amr_arrival = start_time + distance_to_service
-    dock_wait = max(0.0, station_availabilities.get(outbound_dock, 0.0) - amr_arrival)
+    dock_wait = estimated_dock_wait(
+        outbound_dock, amr_arrival, station_availabilities, dock_service_events
+    )
     return [
         distance_to_service / DISTANCE_SCALE,
         0.0,
@@ -319,6 +336,7 @@ def extract_state_extend_gnn(
             for other in AMR_KEYS
             if other != amr and heuristic(pos, amr_positions[other]) <= 2
         ) / float(max(len(AMR_KEYS) - 1, 1))
+        nearest_dock_distance = min(heuristic(pos, _dock_position(dock)) for dock in DOCK_KEYS)
         amr_feat.append(
             [
                 1.0 if avail > current_time else 0.0,
@@ -329,8 +347,10 @@ def extract_state_extend_gnn(
                 total_remaining / float(max(len(material_keys) * AMR_LOAD_CAPACITY, 1)),
                 active_carried / 10.0,
                 1.0 if pos in _near_dock_cells() else 0.0,
-                0.0,
+                nearest_dock_distance / DISTANCE_SCALE,
                 local_density,
+                pos[0] / 10.0,
+                pos[1] / 10.0,
             ]
         )
 
@@ -386,6 +406,7 @@ def extract_state_extend_gnn(
                         amr_positions,
                         amr_availabilities,
                         station_availabilities,
+                        dock_service_events,
                     )
                     for job in jobs
                 ]
@@ -461,6 +482,24 @@ class ExtendSchedulerGNN(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
+        # AMR<->dock interaction round (pre-LN residual attention): docks learn
+        # which AMRs are loaded/heading their way, AMRs learn about each other
+        # and about dock congestion, before jobs fuse the dock embeddings.
+        self.dock_from_amr_attn = nn.MultiheadAttention(hidden_dim, num_heads=4, batch_first=True)
+        self.dock_from_amr_norm_q = nn.LayerNorm(hidden_dim)
+        self.dock_from_amr_norm_kv = nn.LayerNorm(hidden_dim)
+        self.amr_self_attn = nn.MultiheadAttention(hidden_dim, num_heads=4, batch_first=True)
+        self.amr_self_norm = nn.LayerNorm(hidden_dim)
+        self.amr_from_dock_attn = nn.MultiheadAttention(hidden_dim, num_heads=4, batch_first=True)
+        self.amr_from_dock_norm_q = nn.LayerNorm(hidden_dim)
+        self.amr_from_dock_norm_kv = nn.LayerNorm(hidden_dim)
+        # Zero-init the residual branches so the interaction block starts as an
+        # exact identity; otherwise the randomly-initialized attention outputs
+        # (at LayerNorm scale) swamp the much smaller embedding stream and the
+        # policy trains against noise it cannot escape.
+        for attn in (self.dock_from_amr_attn, self.amr_self_attn, self.amr_from_dock_attn):
+            nn.init.zeros_(attn.out_proj.weight)
+            nn.init.zeros_(attn.out_proj.bias)
         self.gin_layers = nn.ModuleList([GINConv(hidden_dim) for _ in range(gin_layers)])
         self.op_emb = nn.Embedding(2, hidden_dim)
         self.operation_actor = nn.Sequential(
@@ -480,6 +519,14 @@ class ExtendSchedulerGNN(nn.Module):
             self.job_emb,
             self.dock_emb,
             self.job_dock_fusion,
+            self.dock_from_amr_attn,
+            self.dock_from_amr_norm_q,
+            self.dock_from_amr_norm_kv,
+            self.amr_self_attn,
+            self.amr_self_norm,
+            self.amr_from_dock_attn,
+            self.amr_from_dock_norm_q,
+            self.amr_from_dock_norm_kv,
             self.gin_layers,
             self.op_emb,
             self.operation_actor,
@@ -492,6 +539,24 @@ class ExtendSchedulerGNN(nn.Module):
 
     def encode_docks(self, dock_features):
         return self.dock_emb(dock_features)
+
+    def interact_amrs_docks(self, amr_embeddings, dock_embeddings):
+        """One pre-LN residual attention round between AMRs and docks."""
+        dock_q = self.dock_from_amr_norm_q(dock_embeddings)
+        amr_kv = self.dock_from_amr_norm_kv(amr_embeddings)
+        dock_update, _ = self.dock_from_amr_attn(dock_q, amr_kv, amr_kv)
+        dock_embeddings = dock_embeddings + dock_update
+
+        amr_q = self.amr_self_norm(amr_embeddings)
+        amr_update, _ = self.amr_self_attn(amr_q, amr_q, amr_q)
+        amr_embeddings = amr_embeddings + amr_update
+
+        amr_q = self.amr_from_dock_norm_q(amr_embeddings)
+        dock_kv = self.amr_from_dock_norm_kv(dock_embeddings)
+        amr_update, _ = self.amr_from_dock_attn(amr_q, dock_kv, dock_kv)
+        amr_embeddings = amr_embeddings + amr_update
+
+        return amr_embeddings, dock_embeddings
 
     @staticmethod
     def _gather_docks(dock_embeddings, dock_indices):
@@ -570,8 +635,9 @@ def _encode_state_tensors(model: ExtendSchedulerGNN, tensors, device):
     outbound_idx = outbound_idx.to(device)
 
     dock_embeddings = model.encode_docks(dock_feat)
-    job_embeddings = model.encode_jobs(job_feat, dock_embeddings, adj, inbound_idx, outbound_idx)
     amr_embeddings = model.encode_amrs(amr_feat)
+    amr_embeddings, dock_embeddings = model.interact_amrs_docks(amr_embeddings, dock_embeddings)
+    job_embeddings = model.encode_jobs(job_feat, dock_embeddings, adj, inbound_idx, outbound_idx)
     return (
         job_embeddings,
         amr_embeddings,
@@ -684,14 +750,6 @@ def solve_with_extend_gnn(jobs, model, deterministic=True, init_state: dict = No
         order_seq.append(Operation(action.job_id, action.kind))
         if action.kind == PICKUP:
             amr_assignment_map[action.job_id] = action.amr
-        record_dock_service_event(
-            dock_service_events,
-            action,
-            jobs,
-            amr_positions,
-            amr_availabilities,
-            station_availabilities,
-        )
         apply_fast_action(
             action,
             jobs,
@@ -702,6 +760,7 @@ def solve_with_extend_gnn(jobs, model, deterministic=True, init_state: dict = No
             amr_availabilities,
             station_availabilities,
             amr_inventory,
+            dock_service_events=dock_service_events,
         )
 
     final_assignment = [amr_assignment_map[i] for i in range(len(jobs))]

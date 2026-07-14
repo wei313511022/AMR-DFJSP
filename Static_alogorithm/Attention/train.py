@@ -42,6 +42,7 @@ from operation_policy import (
     action_mask,
     apply_fast_action as apply_operation_action,
     decode_action_id,
+    empty_dock_service_events,
     initial_operation_state,
     load_balance_step_advantages_from_actions,
     operation_sequence_from_individual,
@@ -124,6 +125,7 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
     picked_jobs_set = set()
     completed_jobs_set = set()
     carrier_map = {}
+    dock_service_events = empty_dock_service_events()
     step_log_probs = []
     step_entropies = []
     values = []
@@ -173,6 +175,7 @@ def evaluate_action_steps(jobs, model, action_seq, init_state=None, include_valu
             amr_availabilities,
             station_availabilities,
             amr_inventory,
+            dock_service_events=dock_service_events,
         )
 
     value_tensor = torch.stack(values) if values else None

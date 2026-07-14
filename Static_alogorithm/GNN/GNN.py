@@ -39,6 +39,7 @@ from operation_policy import (
     decode_action_id,
     decision_time,
     dock_congestion_features,
+    empty_dock_service_events,
     initial_operation_state,
     job_status_value,
     load_required_operation_checkpoint,
@@ -329,15 +330,18 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
         job_obj = job_map[scheduled_job_idx]
         station = job_obj.station
 
-        # AMR sequential arc: previous job on same AMR -> this job
+        # AMR sequential arc: this job aggregates from the previous job on the same AMR
+        # (GINConv row = receiver: agg[i] = sum_j adj[i][j] * x[j])
         if amr is not None and amr in last_job_per_amr:
             prev_pos = last_job_per_amr[amr]
-            adj[prev_pos][list_pos] = 1.0
+            if prev_pos != list_pos:
+                adj[list_pos][prev_pos] = 1.0
 
-        # Station sequential arc: previous job on same station -> this job
+        # Station sequential arc: this job aggregates from the previous job on the same station
         if station in last_job_per_station:
             prev_pos = last_job_per_station[station]
-            adj[prev_pos][list_pos] = 1.0
+            if prev_pos != list_pos:
+                adj[list_pos][prev_pos] = 1.0
 
         if amr is not None:
             last_job_per_amr[amr] = list_pos
@@ -371,6 +375,7 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
     carrier_map = {}
     order_seq = []
     amr_assignment_map = {}
+    dock_service_events = empty_dock_service_events()
 
     total_log_prob = 0.0
 
@@ -427,6 +432,7 @@ def solve_with_gnn(jobs, model, deterministic=True, init_state: dict = None):
             amr_availabilities,
             station_availabilities,
             amr_inventory,
+            dock_service_events=dock_service_events,
         )
 
     # Finalize Individual

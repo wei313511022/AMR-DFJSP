@@ -1,0 +1,39 @@
+{
+  "fitted_on": "2026-07-09",
+  "schedules_used": 159,
+  "schedules_skipped_invalid": 1,
+  "travel": {
+    "scale": 0.962761,
+    "offset": 1.118561,
+    "samples": 10360,
+    "r2": 0.9061,
+    "mae_before": 0.7437,
+    "mae_after": 1.042,
+    "bias_before": 0.7437,
+    "bias_after": -0.0
+  },
+  "dock_wait_penalty": [
+    0.0423,
+    0.0423,
+    1.6555,
+    3.5664
+  ],
+  "dock_wait_stats": {
+    "0": {
+      "samples": 8394,
+      "mean_extra_wait": 0.0423
+    },
+    "1": {
+      "samples": 1412,
+      "mean_extra_wait": 0.0423
+    },
+    "2": {
+      "samples": 328,
+      "mean_extra_wait": 1.6555
+    },
+    "3": {
+      "samples": 226,
+      "mean_extra_wait": 3.5664
+    }
+  }
+}

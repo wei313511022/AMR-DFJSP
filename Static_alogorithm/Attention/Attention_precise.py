@@ -104,6 +104,32 @@ class SchedulerAttention(nn.Module):
             ) for _ in range(attention_layers)
         ])
 
+        # Pre-LN for every residual sublayer: the residual stream stays at its
+        # natural scale while attention/FFN branches see normalized inputs.
+        def norms():
+            return nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(attention_layers)])
+
+        self.amr_self_norm = norms()
+        self.job_self_norm = norms()
+        self.amr_cross_norm = norms()
+        self.job_kv_norm = norms()
+        self.job_cross_norm = norms()
+        self.amr_kv_norm = norms()
+        self.amr_ffn_norm = norms()
+        self.job_ffn_norm = norms()
+
+        # Zero-init every residual branch so each layer starts as an identity;
+        # without this the random branch outputs compound across sublayers and
+        # blow up the logit scale (the historical instability of this model).
+        for attn_list in (self.amr_self_attn, self.job_self_attn, self.amr_to_job_attn, self.job_to_amr_attn):
+            for attn in attn_list:
+                nn.init.zeros_(attn.out_proj.weight)
+                nn.init.zeros_(attn.out_proj.bias)
+        for ffn_list in (self.fc_amr, self.fc_job):
+            for ffn in ffn_list:
+                nn.init.zeros_(ffn[-1].weight)
+                nn.init.zeros_(ffn[-1].bias)
+
         self.op_emb = nn.Embedding(2, hidden_dim)
 
         # Policy Head: Takes concatenated (operation, AMR, Job) embeddings and outputs logit
@@ -120,50 +146,58 @@ class SchedulerAttention(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
-    def forward(self, amr_features, job_features, job_mask, operation_mask=None):
-        """
-        amr_features: (batch, num_amrs, amr_in_dim)
-        job_features: (batch, num_jobs, job_in_dim)
-        job_mask: (batch, num_jobs) - True if job is ALREADY ASSIGNED (should be ignored)
-        
-        Returns logits for each valid (operation, amr, job) action.
-        Output shape: (batch, 2, num_amrs, num_jobs)
-        """
-        # 1. Embeddings
-        x_amr = self.amr_emb(amr_features) # (batch, num_amrs, hidden)
-        x_job = self.job_emb(job_features) # (batch, num_jobs, hidden)
+    def _encode(self, amr_features, job_features, job_mask):
+        """Shared pre-LN encoder for the policy and critic heads."""
+        x_amr = self.amr_emb(amr_features)  # (batch, num_amrs, hidden)
+        x_job = self.job_emb(job_features)  # (batch, num_jobs, hidden)
 
-        num_amrs = x_amr.size(1)
-        num_jobs = x_job.size(1)
-        
         # Prevent NaN in key_padding_mask if all jobs are masked
         if job_mask.all():
             job_attn_mask = None
         else:
             job_attn_mask = job_mask
 
-        # 2. Heterogeneous Message Passing
         for i in range(self.attention_layers):
             # a. Self-Attention
-            amr_self, _ = self.amr_self_attn[i](x_amr, x_amr, x_amr)
+            a = self.amr_self_norm[i](x_amr)
+            amr_self, _ = self.amr_self_attn[i](a, a, a)
             x_amr = x_amr + amr_self
-            
-            job_self, _ = self.job_self_attn[i](x_job, x_job, x_job, key_padding_mask=job_attn_mask)
+
+            j = self.job_self_norm[i](x_job)
+            job_self, _ = self.job_self_attn[i](j, j, j, key_padding_mask=job_attn_mask)
             x_job = x_job + job_self
-            
+
             # b. Cross-Attention (Distinct Q, K, V for each entity pair)
-            # AMRs query Jobs
-            amr_cross, _ = self.amr_to_job_attn[i](x_amr, x_job, x_job, key_padding_mask=job_attn_mask)
-            # Jobs query AMRs
-            job_cross, _ = self.job_to_amr_attn[i](x_job, x_amr, x_amr)
-            
+            aq = self.amr_cross_norm[i](x_amr)
+            jkv = self.job_kv_norm[i](x_job)
+            amr_cross, _ = self.amr_to_job_attn[i](aq, jkv, jkv, key_padding_mask=job_attn_mask)
+
+            jq = self.job_cross_norm[i](x_job)
+            akv = self.amr_kv_norm[i](x_amr)
+            job_cross, _ = self.job_to_amr_attn[i](jq, akv, akv)
+
             x_amr = x_amr + amr_cross
             x_job = x_job + job_cross
-            
+
             # c. Separate Feed-Forward Updates
-            x_amr = x_amr + self.fc_amr[i](x_amr)
-            x_job = x_job + self.fc_job[i](x_job)
-            
+            x_amr = x_amr + self.fc_amr[i](self.amr_ffn_norm[i](x_amr))
+            x_job = x_job + self.fc_job[i](self.job_ffn_norm[i](x_job))
+
+        return x_amr, x_job
+
+    def forward(self, amr_features, job_features, job_mask, operation_mask=None):
+        """
+        amr_features: (batch, num_amrs, amr_in_dim)
+        job_features: (batch, num_jobs, job_in_dim)
+        job_mask: (batch, num_jobs) - True if job is COMPLETED (should be ignored)
+
+        Returns logits for each valid (operation, amr, job) action.
+        Output shape: (batch, 2, num_amrs, num_jobs)
+        """
+        x_amr, x_job = self._encode(amr_features, job_features, job_mask)
+        num_amrs = x_amr.size(1)
+        num_jobs = x_job.size(1)
+
         op_ids = torch.arange(2, device=x_amr.device)
         x_op = self.op_emb(op_ids).view(1, 2, 1, 1, -1).expand(x_amr.size(0), -1, num_amrs, num_jobs, -1)
         x_amr_expand = x_amr.unsqueeze(1).unsqueeze(3).expand(-1, 2, -1, num_jobs, -1)
@@ -181,29 +215,7 @@ class SchedulerAttention(nn.Module):
         """
         Returns scalar state value V(s_t).
         """
-        x_amr = self.amr_emb(amr_features)
-        x_job = self.job_emb(job_features)
-
-        if job_mask.all():
-            job_attn_mask = None
-        else:
-            job_attn_mask = job_mask
-
-        for i in range(self.attention_layers):
-            amr_self, _ = self.amr_self_attn[i](x_amr, x_amr, x_amr)
-            x_amr = x_amr + amr_self
-
-            job_self, _ = self.job_self_attn[i](x_job, x_job, x_job, key_padding_mask=job_attn_mask)
-            x_job = x_job + job_self
-
-            amr_cross, _ = self.amr_to_job_attn[i](x_amr, x_job, x_job, key_padding_mask=job_attn_mask)
-            job_cross, _ = self.job_to_amr_attn[i](x_job, x_amr, x_amr)
-
-            x_amr = x_amr + amr_cross
-            x_job = x_job + job_cross
-
-            x_amr = x_amr + self.fc_amr[i](x_amr)
-            x_job = x_job + self.fc_job[i](x_job)
+        x_amr, x_job = self._encode(amr_features, job_features, job_mask)
 
         mask_float = (~job_mask).float().unsqueeze(-1)
         num_unmasked = mask_float.sum(dim=1, keepdim=True).clamp(min=1.0)

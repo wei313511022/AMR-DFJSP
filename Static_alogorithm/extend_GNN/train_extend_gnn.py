@@ -60,7 +60,6 @@ from extend_GNN.extend_GNN import (  # noqa: E402
     _encode_state_tensors,
     _empty_dock_service_events,
     extract_state_extend_gnn,
-    record_dock_service_event,
     solve_with_extend_gnn,
 )
 
@@ -141,14 +140,6 @@ def evaluate_action_steps_extend(
 
         action = decode_action_id(chosen_action, jobs)
         order_seq.append(Operation(action.job_id, action.kind))
-        record_dock_service_event(
-            dock_service_events,
-            action,
-            jobs,
-            amr_positions,
-            amr_availabilities,
-            station_availabilities,
-        )
         apply_operation_action(
             action,
             jobs,
@@ -159,6 +150,7 @@ def evaluate_action_steps_extend(
             amr_availabilities,
             station_availabilities,
             amr_inventory,
+            dock_service_events=dock_service_events,
         )
 
     value_tensor = torch.stack(values) if values else None
