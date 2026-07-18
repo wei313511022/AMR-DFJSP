@@ -54,8 +54,14 @@ JOB_RULES = (
     "least_congested_station",
     "earliest_completion_job",
     "material_match",
+    "milk_run",
     "random",
 )
+
+# milk_run: keep collecting while a nearby pickup exists and capacity remains,
+# then deliver the whole batch. Radius is in estimated travel-time units.
+MILK_RUN_MAX_LOAD = 6
+MILK_RUN_RADIUS = 6.0
 
 AMR_RULES = (
     "earliest_available",
@@ -197,6 +203,16 @@ def _job_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: 
         return (estimate.projected_completion, job.duration, job.idx)
     if job_rule == "material_match":
         return (estimate.material_match, estimate.projected_completion, job.idx)
+    if job_rule == "milk_run":
+        onboard = sum(state.inventory.get(action.amr, {}).values())
+        if action.kind == PICKUP:
+            if 0 < onboard < MILK_RUN_MAX_LOAD and estimate.travel_time <= MILK_RUN_RADIUS:
+                # Continuing a batch: cheapest nearby pickup first.
+                return (0, estimate.travel_time, estimate.projected_completion, job.idx)
+            # Starting a fresh trip only when no unload is pending anywhere.
+            return (2, estimate.projected_completion, job.duration, job.idx)
+        # Deliveries outrank fresh trips so full AMRs drain their batch.
+        return (1, estimate.projected_completion, job.duration, job.idx)
     if job_rule == "random":
         return (rng.random(), job.idx)
     raise ValueError(f"Unknown job rule: {job_rule}")

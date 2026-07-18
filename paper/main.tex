@@ -1,0 +1,78 @@
+% =========================================================================
+% CD-GNN RA-L submission -- main skeleton.
+% Build: pdflatex main && bibtex main && pdflatex main && pdflatex main
+% RA-L uses the IEEEtran journal template (single-blind). Download the
+% current template from ieee.org / RA-L author instructions and keep the
+% class options below.
+% Page budget: 6 pages + up to 2 extra (fees); references count.
+% =========================================================================
+\documentclass[journal]{IEEEtran}
+
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs,array,multirow,graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[colorlinks=false]{hyperref}
+
+\input{abstract_intro} % defines \CDGNNabstract and Section I
+
+\begin{document}
+
+\title{Learning Collision-Aware Scheduling for Autonomous Mobile Robots
+in Cross-Docking Terminals}
+% Alternative titles:
+% "CD-GNN: Execution-Grounded Graph Scheduling for AMR Cross-Docking"
+% "Scheduling Where Robots Actually Drive: Graph Policies for
+%  Collision-Coupled Cross-Docking"
+
+\author{%
+  % RA-L author block: first author, second author, ... + thanks
+  Author One$^{1}$, Author Two$^{1}$% <-this % stops a space
+  \thanks{Manuscript received XXX; revised XXX.}%
+  \thanks{$^{1}$Department, University, City, Country.
+    {\tt\small email@university.edu}}%
+}
+
+\maketitle
+
+\begin{abstract}
+\CDGNNabstract
+\end{abstract}
+
+\begin{IEEEkeywords}
+% Pick from the RA-L keyword list at submission time; these fit:
+Intelligent and Flexible Manufacturing, Planning, Scheduling and
+Coordination, Reinforcement Learning, Multi-Robot Systems
+\end{IEEEkeywords}
+
+% Section I (Introduction) comes from abstract_intro.tex via \input above.
+
+\input{related_work}                    % Section II
+\input{formulation_and_architecture_gnn} % Sections III-VI
+
+% ------------------------------------------------------------------
+\section{Experiments}
+\label{sec:experiments}
+% TODO -- planned structure (see experiment plan):
+% VII-A  Setup: instances, executor, baselines (incl. milk_run rule),
+%        metrics, statistical protocol (paired Wilcoxon, win/tie/loss)
+% VII-B  Main comparison (Table: rules / GA / attention / CD-GNN +- LS
+%        across n = 20..100)
+% VII-C  Optimality gap (CP-SAT relaxation bounds; combinatorial LBs)
+% VII-D  Quality-time Pareto (Figure: GA anytime curve vs CD-GNN point)
+% VII-E  Ablations (Table: stepwise vs episode baseline; calibration
+%        on/off; congestion features; load-balance shaping; +-LS;
+%        dense contention edges -> over-smoothing evidence)
+% VII-F  Fleet-density study (Figure: makespan + congestion tax vs m;
+%        time-budget decomposition; learned consolidation metrics)
+
+\section{Conclusion}
+\label{sec:conclusion}
+% TODO: 1 paragraph results summary + 1 paragraph limitations (single
+% layout family, static release times) + future work (dynamic arrivals,
+% dock-aware extensions under high contention).
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

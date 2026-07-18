@@ -1,0 +1,119 @@
+% =========================================================================
+% Abstract + Introduction for the CD-GNN RA-L submission.
+% Usage: abstract goes in \begin{abstract}...\end{abstract} in main.tex;
+%        \input this file for the Introduction section.
+% Numbers in [brackets] are provisional (from the 25-event 5-AMR runs of
+% July 2026) -- regenerate from the final benchmark before submission.
+% CLAIM GUARD: the "outperforms hand-crafted rules" claim requires the GNN
+% retrained against the milk_run baseline to beat ~450 at m=5; until then,
+% use the weaker phrasing marked ALT below.
+% =========================================================================
+
+% ---------------------------- ABSTRACT ----------------------------------
+% Keep <= 200 words. Structure: context (1 sentence), gap (1-2), method
+% (2-3), results (2), significance (1).
+\newcommand{\CDGNNabstract}{%
+Cross-docking terminals increasingly rely on fleets of autonomous mobile
+robots (AMRs) to transfer unit loads from inbound docks to outbound
+processing stations. Scheduling these transfers is a flexible job-shop
+problem tightly coupled to the physical floor: docks are single-server
+resources, robots consolidate loads under capacity limits, and every
+trip must be routed collision-free through shared space. Existing
+learned dispatchers idealize transport as fixed travel times, while
+multi-agent path-finding methods route rigorously but ignore scheduling
+structure. We present a graph-neural scheduling policy that closes this
+gap: a sparse dynamic disjunctive graph encodes committed precedences,
+congestion enters through calibrated features fitted against a
+collision-aware executor, and the policy is trained with a stepwise
+counterfactual baseline in which every decision is credited by
+completing the schedule with a dispatching rule and executing it under
+full collision-aware routing. On $60$-job instances with five AMRs, the
+learned policy outperforms a tuned genetic algorithm by
+[$6\%$] while constructing schedules [two orders of magnitude] faster,
+and discovers load-consolidation behavior that its own training
+baseline cannot express. A fleet-density study shows congestion costs
+growing from [$2.6\%$] to [$12\%$] of makespan as the fleet doubles,
+delimiting the regime where execution-aware scheduling pays.%
+}
+
+% ------------------------- I. INTRODUCTION ------------------------------
+
+\section{Introduction}
+\label{sec:intro}
+
+Cross-docking replaces warehouse storage with synchronized flow:
+freight arriving at inbound docks is transferred across the terminal
+and dispatched from outbound doors within hours. As terminals adopt
+fleets of autonomous mobile robots (AMRs) for this internal transfer,
+the operator faces an integrated decision problem---which robot moves
+which load, in what order---whose quality is measured not on a Gantt
+chart but on a physical floor, where robots queue at single-server
+docks, consolidate loads under capacity limits, and must never occupy
+the same cell at the same time.
+
+This problem is hard along two coupled axes. As a scheduling problem
+it generalizes the flexible job shop with transportation: jobs are
+pickup--delivery operation pairs over exclusive dock resources, and
+vehicle assignment interacts with sequencing through carrying capacity.
+As a robotics problem, realized travel and waiting times emerge from
+collision-free multi-agent routing, so the makespan of a schedule is
+defined only through its execution. Optimizing through this coupling
+is what separates deployable schedulers from paper ones: we show
+empirically that policies trained oblivious to execution density
+degrade sharply when fleets densify
+(Section~\ref{sec:experiments}).
+
+Existing work addresses the two axes separately.
+Learning-to-dispatch methods construct schedules with graph neural
+policies \cite{zhang2020l2d,song2023fjsp} and have been extended to
+transportation-aware variants \cite{moon2024hgs}, but transport is
+reduced to fixed travel-time matrices---collisions, congestion, and
+queueing are absent. Conversely, multi-agent path finding and its
+pickup--delivery variants \cite{stern2019mapf,ma2017lifelong} route
+rigorously through shared space but carry a deliberately thin task
+model with neither dock exclusivity nor consolidation. A third line
+integrates scheduling with conflict-free routing in container
+terminals via hierarchical decomposition and per-instance search
+\cite{zhong2020integrated,hierarchical2024agv}, without learning a
+reusable policy. The intersection---a learned constructive scheduler
+whose training signal reflects collision-aware execution---remains,
+to our knowledge, unexplored.
+
+We close this gap with \textsc{CD-GNN}, a graph-neural dispatcher for
+AMR-served cross-docking. Three design decisions define it. First, the
+policy plans on a lightweight surrogate whose travel and dock-wait
+estimates are \emph{calibrated} offline against a collision-aware
+executor, so the features every decision conditions on track physical
+reality. Second, credit assignment is \emph{executor-grounded}: the
+advantage of each decision is computed by completing the partial
+schedule with a strong dispatching rule and executing both variants
+under full collision-aware routing---per-step counterfactual credit
+that no lower-bound reward provides. Third, the job graph is kept
+\emph{sparse and dynamic}, encoding only committed precedences; we
+show that the seemingly natural alternative---dense edges between jobs
+sharing a dock---collapses job embeddings by over-smoothing and
+prevents policy-gradient training from ever lifting off.
+
+Our contributions are:
+\begin{itemize}
+\item a formulation of integrated dock-exclusive, capacity-coupled
+  AMR scheduling as simulation-based optimization against a
+  collision-aware executor, cast as a masked sequential decision
+  process (Section~\ref{sec:problem});
+\item \textsc{CD-GNN}, a $2.8\times10^{5}$-parameter,
+  size- and fleet-agnostic dispatching policy, together with an
+  offline calibration procedure that halves the surrogate--executor
+  makespan gap (Sections~\ref{sec:architecture}--\ref{sec:calibration});
+\item an executor-grounded stepwise counterfactual training scheme
+  whose learned policies discover load consolidation---batching up to
+  capacity---that the training baseline itself cannot express
+  (Sections~\ref{sec:training}, \ref{sec:experiments});
+\item an empirical study on $20$--$100$-job instances: the policy
+  % ALT (pre-retrain phrasing): matches a tuned genetic algorithm at
+  % two orders of magnitude less computation
+  outperforms a tuned genetic algorithm by [$6\%$] at [two orders of
+  magnitude] less computation, generalizes zero-shot across instance
+  sizes, and a fleet-density analysis with a time-budget decomposition
+  identifies when execution-aware training is necessary---and when it
+  is not (Section~\ref{sec:experiments}).
+\end{itemize}
