@@ -162,13 +162,22 @@ class ExtendGNNFeatureTests(unittest.TestCase):
         self.assertFalse(after_pickup_mask[unload_job0_amr1])
         self.assertTrue(after_pickup_mask[unload_job0_amr2])
 
-    def test_shared_dock_edges(self):
+    def test_adjacency_has_sequence_arcs_only(self):
+        # Sharing a dock alone must not create edges (dense cliques collapse
+        # job embeddings under aggregation); arcs appear only as jobs are
+        # scheduled in sequence on the same AMR or station.
         _, _, _, _, _, adj, _, _ = self.extract()
+        self.assertEqual(adj.abs().sum().item(), 0.0)
 
-        self.assertEqual(adj[0, 0, 1].item(), 1.0)
-        self.assertEqual(adj[0, 1, 0].item(), 1.0)
+        # Jobs 0 and 2 share station1; scheduling both creates a station arc.
+        order = [GA.Operation(0, GA.PICKUP), GA.Operation(2, GA.PICKUP)]
+        carrier = {0: GA.AMR_KEYS[0], 2: GA.AMR_KEYS[1]}
+        _, _, _, _, _, adj, _, _ = self.extract(carrier=carrier, order=order)
+
         self.assertEqual(adj[0, 0, 2].item(), 1.0)
         self.assertEqual(adj[0, 2, 0].item(), 1.0)
+        self.assertEqual(adj[0, 0, 1].item(), 0.0)
+        self.assertEqual(adj[0, 1, 0].item(), 0.0)
 
     def test_model_forward_shape(self):
         jobs = self.make_jobs()

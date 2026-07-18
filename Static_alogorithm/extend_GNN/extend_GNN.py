@@ -63,7 +63,7 @@ from operation_policy import (  # noqa: E402
 
 
 AMR_IN_DIM = 12
-JOB_IN_DIM = 11
+JOB_IN_DIM = 15
 DOCK_IN_DIM = 9
 ACTION_IN_DIM = 3
 DISTANCE_SCALE = 20.0
@@ -268,18 +268,11 @@ def _build_job_adjacency(
         adj[left][right] = 1.0
         adj[right][left] = 1.0
 
-    for i, left in enumerate(jobs):
-        if left.idx in completed_jobs_set:
-            continue
-        for j in range(i + 1, num_jobs):
-            right = jobs[j]
-            if right.idx in completed_jobs_set:
-                continue
-            if _job_inbound_dock(left) == _job_inbound_dock(right):
-                add_edge(i, j)
-            if _job_outbound_dock(left) == _job_outbound_dock(right):
-                add_edge(i, j)
-
+    # Sequence arcs only. Shared-dock all-pairs edges formed ~36%-dense
+    # cliques over 60 jobs; three rounds of aggregation over ~22 neighbors
+    # collapsed job embeddings to near-identical vectors (pairwise cosine
+    # 0.994) and left the actor unable to distinguish jobs. Dock relations
+    # already reach jobs through the fused dock embeddings.
     last_job_per_amr: Dict[str, int] = {}
     last_job_per_station: Dict[str, int] = {}
     job_map = {job.idx: job for job in jobs}
@@ -366,6 +359,8 @@ def extract_state_extend_gnn(
     for job in jobs:
         inbound_dock = _job_inbound_dock(job)
         outbound_dock = _job_outbound_dock(job)
+        inbound_pos = _dock_position(inbound_dock)
+        outbound_pos = _dock_position(outbound_dock)
         is_completed = job.idx in completed_jobs_set
         job_status = job_status_value(job.idx, picked_jobs_set, completed_jobs_set)
         lb_val = 0.0 if is_completed else completion_time_lower_bound(
@@ -387,6 +382,10 @@ def extract_state_extend_gnn(
                 _dock_norm(inbound_dock, INBOUND_DOCK_KEYS),
                 _dock_norm(outbound_dock, OUTBOUND_DOCK_KEYS),
                 lb_val / LOWER_BOUND_SCALE,
+                outbound_pos[0] / 10.0,
+                outbound_pos[1] / 10.0,
+                inbound_pos[0] / 10.0,
+                inbound_pos[1] / 10.0,
             ]
         )
         job_mask.append(is_completed)
@@ -445,8 +444,8 @@ class GINConv(nn.Module):
         self.norm = nn.LayerNorm(hidden_dim)
 
     def forward(self, x, adj):
-        # Shared-dock edges can form dense cliques; mean aggregation keeps
-        # message scale stable as job count and dock contention grow.
+        # Mean aggregation keeps message scale stable as the sequence-arc
+        # graph grows over the episode.
         degree = adj.sum(dim=-1, keepdim=True).clamp(min=1.0)
         agg = torch.bmm(adj, x) / degree
         return self.norm(self.mlp((1.0 + self.eps) * x + agg))
@@ -568,7 +567,10 @@ class ExtendSchedulerGNN(nn.Module):
         job_base = self.job_emb(job_features)
         inbound_docks = self._gather_docks(dock_embeddings, inbound_dock_idx_by_job)
         outbound_docks = self._gather_docks(dock_embeddings, outbound_dock_idx_by_job)
-        x = self.job_dock_fusion(torch.cat([job_base, inbound_docks, outbound_docks], dim=-1))
+        # Residual fusion: only ~10 distinct dock embeddings are shared by all
+        # jobs, so a replacing fusion drowns per-job identity in what jobs
+        # have in common. Keep job_base and add dock context on top.
+        x = job_base + self.job_dock_fusion(torch.cat([job_base, inbound_docks, outbound_docks], dim=-1))
         for gin in self.gin_layers:
             x = x + gin(x, adj)
         return x

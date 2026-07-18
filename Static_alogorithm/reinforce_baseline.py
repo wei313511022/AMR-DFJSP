@@ -146,9 +146,12 @@ def compute_dispatch_baseline_comparison(
     baseline_mode: str = "stepwise",
     seed: int = 42,
     check_collision: bool = True,
+    invalid_penalty: float = 0.0,
 ) -> BaselineComparison:
     if baseline_mode not in {"stepwise", "episode"}:
         raise ValueError("baseline_mode must be 'stepwise' or 'episode'")
+    if invalid_penalty < 0:
+        raise ValueError("invalid_penalty must be non-negative")
 
     full_baseline = complete_with_dispatch_rule(
         jobs,
@@ -165,9 +168,15 @@ def compute_dispatch_baseline_comparison(
     )
 
     episode_advantage = baseline_makespan - sampled_makespan
+    # Advantages (not the logged improvement/win metrics) additionally charge
+    # invalid jobs, so training optimizes the same trade-off validation scores.
+    penalized_episode_advantage = (
+        (baseline_makespan + invalid_penalty * baseline_invalid)
+        - (sampled_makespan + invalid_penalty * sampled_invalid)
+    )
     sampled_operation_order = operation_order_from_individual(sampled_individual, jobs)
     if baseline_mode == "episode":
-        step_advantages = [episode_advantage for _ in sampled_operation_order]
+        step_advantages = [penalized_episode_advantage for _ in sampled_operation_order]
     else:
         step_advantages = []
         prefix_operations: List[Operation] = []
@@ -181,7 +190,7 @@ def compute_dispatch_baseline_comparison(
                 baseline_rule=baseline_rule,
                 seed=seed,
             )
-            rule_next_makespan, _ = evaluate_makespan(
+            rule_next_makespan, rule_next_invalid = evaluate_makespan(
                 rule_next_individual, jobs, check_collision=check_collision
             )
 
@@ -195,11 +204,14 @@ def compute_dispatch_baseline_comparison(
                 baseline_rule=baseline_rule,
                 seed=seed,
             )
-            sampled_next_makespan, _ = evaluate_makespan(
+            sampled_next_makespan, sampled_next_invalid = evaluate_makespan(
                 sampled_next_individual, jobs, check_collision=check_collision
             )
 
-            step_advantages.append(rule_next_makespan - sampled_next_makespan)
+            step_advantages.append(
+                (rule_next_makespan + invalid_penalty * rule_next_invalid)
+                - (sampled_next_makespan + invalid_penalty * sampled_next_invalid)
+            )
             prefix_operations.append(op)
             if op.kind == PICKUP:
                 prefix_assignment[op.job_idx] = sampled_individual.amr_assignment[op.job_idx]

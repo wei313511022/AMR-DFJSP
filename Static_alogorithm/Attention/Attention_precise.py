@@ -117,6 +117,10 @@ class SchedulerAttention(nn.Module):
         self.amr_kv_norm = norms()
         self.amr_ffn_norm = norms()
         self.job_ffn_norm = norms()
+        # Final LN of the pre-LN recipe: without it the residual stream grows
+        # unboundedly across epochs and the head's logit scale runs away.
+        self.amr_final_norm = nn.LayerNorm(hidden_dim)
+        self.job_final_norm = nn.LayerNorm(hidden_dim)
 
         # Zero-init every residual branch so each layer starts as an identity;
         # without this the random branch outputs compound across sublayers and
@@ -183,7 +187,7 @@ class SchedulerAttention(nn.Module):
             x_amr = x_amr + self.fc_amr[i](self.amr_ffn_norm[i](x_amr))
             x_job = x_job + self.fc_job[i](self.job_ffn_norm[i](x_job))
 
-        return x_amr, x_job
+        return self.amr_final_norm(x_amr), self.job_final_norm(x_job)
 
     def forward(self, amr_features, job_features, job_mask, operation_mask=None):
         """

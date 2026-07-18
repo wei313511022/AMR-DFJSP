@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import random
 import sys
@@ -203,7 +204,20 @@ def train_reinforce(args):
     win_rates = []
     chart_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "extend_gnn_training_metrics.png")
 
+    prev_val_score = None
+    consecutive_worse = 0
+    rollback_factor = 1.0
+
+    def _actor_lr(epoch: int) -> float:
+        progress = (epoch - 1) / max(args.epochs - 1, 1)
+        cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
+        lr = args.lr_min + (args.lr_actor - args.lr_min) * cosine
+        return max(lr * rollback_factor, args.lr_min)
+
     for epoch in range(1, args.epochs + 1):
+        current_lr = _actor_lr(epoch)
+        for group in optimizer_actor.param_groups:
+            group["lr"] = current_lr
         trajectories = []
         batch_advantages = []
         batch_sampled = []
@@ -225,6 +239,7 @@ def train_reinforce(args):
                 baseline_rule=args.baseline_rule,
                 baseline_mode=args.baseline_mode,
                 seed=args.seed + batch_idx,
+                invalid_penalty=args.train_invalid_penalty,
             )
             trajectories.append(
                 (
@@ -295,7 +310,8 @@ def train_reinforce(args):
             f"| Win Rate: {win_rate:.2%} | Actor Loss: {avg_actor_loss:.4f} "
             f"| Entropy: {avg_entropy:.4f} "
             f"| Invalid S/B: {avg_sampled_invalid:.2f}/{avg_baseline_invalid:.2f} "
-            f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
+            f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f} "
+            f"| LR: {current_lr:.2e}"
         )
 
         if _should_validate(epoch, args, validation_events):
@@ -320,6 +336,30 @@ def train_reinforce(args):
                 best_metric=best_makespan,
                 metric_label="Val Score",
             )
+
+            # Rollback-on-divergence: REINFORCE has no trust region, so a
+            # sustained validation slide means the policy left the good basin
+            # and its own samples no longer point back. Resume from the best
+            # checkpoint with smaller steps instead of wasting the rest of
+            # the run (previously: collapse at ~epoch 400, 0% win ever after).
+            if prev_val_score is not None and validation_score > prev_val_score:
+                consecutive_worse += 1
+            else:
+                consecutive_worse = 0
+            prev_val_score = validation_score
+
+            best_path = args.best_model_path or LEGACY_BEST_MODEL_PATH
+            if consecutive_worse >= args.rollback_patience and os.path.exists(best_path):
+                rollback_factor *= 0.5
+                model.load_state_dict(torch.load(best_path, map_location=device))
+                optimizer_actor = optim.Adam(_actor_params(model), lr=_actor_lr(epoch))
+                consecutive_worse = 0
+                prev_val_score = None
+                print(
+                    f"   -> Validation worsened {args.rollback_patience} checks in a row; "
+                    f"rolled back to best model (Val Score: {best_makespan:.2f}) "
+                    f"and reduced LR (rollback factor {rollback_factor:.3f})."
+                )
         elif not validation_events:
             best_makespan = maybe_save_best_model(
                 model=model,
@@ -500,6 +540,12 @@ def train(args):
         raise ValueError("--validation_interval must be at least 1")
     if args.validation_invalid_penalty < 0:
         raise ValueError("--validation_invalid_penalty must be non-negative")
+    if args.lr_min <= 0 or args.lr_min > args.lr_actor:
+        raise ValueError("--lr_min must be positive and at most --lr_actor")
+    if args.rollback_patience < 1:
+        raise ValueError("--rollback_patience must be at least 1")
+    if args.train_invalid_penalty < 0:
+        raise ValueError("--train_invalid_penalty must be non-negative")
     if args.rl_method == "ppo":
         train_ppo(args)
     else:
@@ -517,6 +563,9 @@ def build_parser():
     parser.add_argument("--epochs", type=int, default=2000)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr_actor", type=float, default=3e-4)
+    parser.add_argument("--lr_min", type=float, default=3e-5, help="Floor of the cosine actor LR decay (also the floor after rollback halving)")
+    parser.add_argument("--rollback_patience", type=int, default=3, help="Consecutive worsening validations before reloading the best checkpoint and halving the LR")
+    parser.add_argument("--train_invalid_penalty", type=float, default=200.0, help="Per-invalid-job penalty folded into training advantages (validation uses --validation_invalid_penalty)")
     parser.add_argument("--lr_critic", type=float, default=3e-4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--init_checkpoint", type=str, default="")

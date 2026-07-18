@@ -1,0 +1,72 @@
+% =========================================================================
+% Related Work section for the CD-GNN RA-L submission.
+% Usage: \input{related_work} after the introduction.
+% Citation keys refer to references.bib in this directory.
+% =========================================================================
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Learning to Dispatch for Shop Scheduling}
+
+Constructive deep-reinforcement-learning dispatchers for shop
+scheduling originate with L2D \cite{zhang2020l2d}, which encodes the
+job-shop disjunctive graph with a GIN \cite{xu2019gin}, dispatches one
+eligible operation per step, and trains with PPO on a dense
+lower-bound-difference reward; the learned policy is size-agnostic and
+outperforms priority dispatching rules. Subsequent work extends the
+paradigm to flexible job shops with heterogeneous operation--machine
+graphs and joint operation--machine actions \cite{song2023fjsp}, and a
+recent survey traces this line \cite{smit2024gnnsurvey}. These methods
+schedule abstract machines: material transport, vehicles, and floor
+space are absent from both model and evaluation. Our graph
+construction inherits the adding-arc scheme of this lineage, but our
+policy additionally assigns the transporting robot, and its training
+signal is grounded in physically executed schedules rather than graph
+lower bounds.
+
+\subsection{Scheduling with Transportation (FJSP-T)}
+
+Integrating material handling into shop scheduling dates to the
+simultaneous machine-and-AGV formulation of Bilge and Ulusoy
+\cite{bilge1995time,ulusoy1997ga}, followed by decades of exact and
+metaheuristic approaches. Recent deep-learning methods address the
+same formulation end to end: notably, the heterogeneous graph
+scheduler of Moon \emph{et al.} \cite{moon2024hgs} models operations,
+machines, and vehicles as a heterogeneous graph and selects composite
+(operation, machine, vehicle) actions, an action structure our actor
+shares. Throughout this line---classical and learned
+alike---transportation is reduced to a fixed travel-time matrix;
+\cite{moon2024hgs} assumes identical loaded travel times for all
+vehicles between any machine pair. Collision avoidance, congestion,
+and queueing at handover points, which dominate dense robotic
+terminals, are outside these models.
+
+\subsection{Multi-Agent Path Finding and Pickup--Delivery}
+
+The complementary literature solves transport with full physical
+rigor. Multi-agent path finding (MAPF) computes collision-free
+space--time trajectories \cite{stern2019mapf}, and its lifelong
+pickup-and-delivery variant (MAPD) serves online task streams in
+warehouse grids \cite{ma2017lifelong}, with recent learning-guided
+planners improving scalability. The task model, however, is
+deliberately thin: one agent serves one task, and neither
+single-server handover resources with service durations nor
+capacitated load consolidation is represented---precisely the
+structure that makes cross-docking a scheduling problem.
+
+\subsection{Integrated Scheduling and Conflict-Free Routing}
+
+A smaller line, largely in automated container terminals and flexible
+manufacturing, couples task scheduling with conflict-free vehicle
+routing \cite{zhong2020integrated,hierarchical2024agv,
+nishi2015capacitated}. These approaches decompose hierarchically and
+re-solve per instance with search or metaheuristics; the routing
+feasibility is enforced, but no constructive policy is learned, and
+solution times grow with instance size. To our knowledge, no prior
+method trains a constructive scheduling policy whose learning signal
+is the makespan realized under collision-aware execution, nor
+addresses the dock-exclusive, capacity-coupled structure of AMR-served
+cross-docking. This work occupies that intersection: rich scheduling
+structure from the FJSP-T line, physical execution from the MAPF line,
+and end-to-end learning from the dispatching line.

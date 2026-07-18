@@ -1,0 +1,661 @@
+% =========================================================================
+% Problem Formulation + Proposed Architecture (GNN.py -> "CD-GNN")
+% -------------------------------------------------------------------------
+% GNN-version rewrite of formulation_and_architecture.tex for the RA-L
+% submission built on SchedulerGNN (Static_alogorithm/GNN/GNN.py).
+% Usage: \input{formulation_and_architecture_gnn} inside an IEEEtran doc.
+% Requires in the preamble:
+%   \usepackage{amsmath,amssymb,bm}
+%   \usepackage{booktabs,array,multirow,graphicx}
+%   \usepackage{algorithm}
+%   \usepackage{algpseudocode}
+% Citation keys are placeholders -- suggested BibTeX entries are listed in
+% comments at the end. "CD-GNN" (Cross-Docking GNN) is a placeholder model
+% name; rename globally if you prefer.
+% Sections: Problem Formulation, Architecture, Surrogate Calibration,
+% Policy Optimization (incl. post-processing local search).
+% =========================================================================
+
+\section{Problem Formulation}
+\label{sec:problem}
+
+\begin{table*}[t]
+\caption{Summary of Notation}
+\label{tab:notation}
+\centering
+\footnotesize
+\begin{tabular}{@{}l p{0.295\textwidth} @{\qquad} l p{0.295\textwidth}@{}}
+\toprule
+Symbol & Meaning & Symbol & Meaning \\
+\midrule
+\multicolumn{2}{@{}l}{\itshape Problem setting} &
+\multicolumn{2}{@{}l}{\itshape Architecture} \\
+$\mathcal{W}$ & grid workspace (four-connected unit cells) &
+  $\bm{x}^{A}_k,\bm{x}^{J}_j$ & AMR / job input features ($\mathbb{R}^{8},\mathbb{R}^{16}$) \\
+$\Delta(u,v)$ & Manhattan distance between positions $u,v$ &
+  $h$ & hidden width of all embeddings ($h{=}128$) \\
+$\mathcal{J},\ n$ & job set; number of jobs &
+  $\bm{h}^{A}_k$ & AMR embedding \\
+$\mathcal{M},\ m$ & AMR fleet; fleet size &
+  $\bm{g}^{(l)}_j$ & job embedding after $l$ GIN layers \\
+$\mathcal{T}$ & set of material types &
+  $\mathcal{G}_t=(\mathcal{J},E_t)$ & dynamic precedence graph at step $t$ \\
+$\mathcal{D}^{\mathrm{in}},\mathcal{D}^{\mathrm{out}},\mathcal{D}$ & inbound docks; outbound docks; their union &
+  $\mathcal{P}(j)$ & committed predecessors of job $j$ in $\mathcal{G}_t$ \\
+$\tau_j$ & material type of job $j$ &
+  $\epsilon^{(l)},\ L$ & learnable GIN self-weight; number of GIN layers \\
+$o_j,\ d_j$ & inbound and outbound dock of job $j$ &
+  $\mathrm{LN}$ & layer normalization \\
+$r_j$ & release time of job $j$ &
+  $\bm{e}_{\omega}$ & learned operation-type embedding \\
+$p_j=p(\tau_j)$ & dock service duration of job $j$ &
+  $z_{\omega,k,j}$ & logit of action $(\omega,k,j)$ \\
+$\pi_j,\ \delta_j$ & pickup and delivery operations of job $j$ &
+  $V_{\phi}$ & critic (state-value) network, parameters $\phi$ \\
+$Q$ & per-type AMR carrying capacity &
+  & \\
+$\bm{a},\ a_j$ & AMR assignment vector; AMR assigned to job $j$ &
+  \multicolumn{2}{@{}l}{\itshape Training and refinement} \\
+$\sigma,\ \sigma_t$ & operation sequence; prefix committed up to step $t$ &
+  $R,\ R(\sigma_{1:t})$ & dispatching rule; completion of prefix $\sigma_{1:t}$ by $R$ \\
+$s^{\pi}_j,c^{\pi}_j$ & start / completion of pickup service of job $j$ &
+  $C[\cdot]$ & shorthand for $C_{\max}(\Phi(\cdot))$ \\
+$s^{\delta}_j,c^{\delta}_j$ & start / completion of delivery service of job $j$ &
+  $A_t,\ \hat{A}_t$ & stepwise counterfactual advantage; standardized \\
+$t_k(u,v)$ & realized travel time of AMR $k$ from $u$ to $v$ &
+  $A^{\mathrm{lb}}_t$ & load-balance shaping advantage \\
+$\Phi$ & collision-aware executor &
+  $\lambda_{\mathrm{lb}},\ \lambda_{H}$ & shaping and entropy coefficients \\
+$C_{\max},\ F_k$ & makespan; finish time of AMR $k$ incl.\ depot return &
+  $\mathcal{H}_t$ & entropy of the masked policy at step $t$ \\
+$W_d$ & number of physical waiting cells at dock $d$ &
+  $\mathcal{L}(\theta)$ & training loss \\
+\multicolumn{2}{@{}l}{\itshape Sequential decision process} &
+  $B,\ E$ & batch size (episodes); number of training epochs \\
+$s_t,\ a_t$ & state and action at decision epoch $t$ &
+  $T_{\mathrm{val}},\ \kappa$ & validation interval; infeasibility penalty \\
+$\omega$ & operation type, $\omega\in\{\textsc{pick},\textsc{deliver}\}$ &
+  $I_{\mathrm{cf}},\ I_{\mathrm{ca}}$ & collision-free / collision-aware refinement budgets \\
+$\Lambda(s_t)$ & feasible-action set (mask) in state $s_t$ &
+  $\mathbf{1}[\cdot]$ & indicator function \\
+$\hat{\Psi}$ & calibrated surrogate transition model &
+  & \\
+$\mathcal{E}_d$ & committed service events $(s_e,c_e,j_e,\omega_e)$ at dock $d$ &
+  & \\
+$\hat{b}_k,\ x_k$ & next-available time and position of AMR $k$ &
+  & \\
+$\rho$ & ready time of an AMR at a dock &
+  & \\
+$\hat{t}(u,v)$ & calibrated travel-time estimate \eqref{eq:travelcal} &
+  & \\
+$\hat{w}_d(\rho)$ & queue-aware dock-wait estimate \eqref{eq:waitcal} &
+  & \\
+$q_d(\rho)$ & services still unfinished at time $\rho$ at dock $d$ &
+  & \\
+$\alpha,\ \beta$ & travel-calibration scale and offset &
+  & \\
+$\varphi(\cdot)$ & dock-wait penalty table over queue depths &
+  & \\
+$\pi_{\theta}$ & scheduling policy with parameters $\theta$ &
+  & \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{System Description}
+
+We consider the internal transfer problem of a cross-docking terminal
+served by a fleet of autonomous mobile robots (AMRs). Table~\ref{tab:notation}
+summarizes the notation used throughout the paper. The terminal floor
+is modeled as a four-connected unit grid $\mathcal{W}$ in which a set of
+\emph{inbound docks} $\mathcal{D}^{\mathrm{in}}$ is located along one
+boundary and a set of \emph{outbound docks} (processing stations)
+$\mathcal{D}^{\mathrm{out}}$ along the opposite boundary; the AMR depots
+lie between them. Consistent with cross-docking practice, the floor is
+free of static obstacles, so congestion arises from vehicle interference
+and dock contention rather than from the layout itself. AMRs travel at
+unit speed between adjacent cells, and the distance between two
+positions $u,v$ is the Manhattan metric $\Delta(u,v)$.
+
+A set of transfer jobs $\mathcal{J}=\{1,\dots,n\}$ must be moved across
+the terminal by a fleet $\mathcal{M}=\{1,\dots,m\}$ of homogeneous AMRs.
+Each job $j\in\mathcal{J}$ represents one unit load of a material type
+$\tau_j\in\mathcal{T}$ that becomes available at its inbound dock
+$o_j\in\mathcal{D}^{\mathrm{in}}$ at release time $r_j\ge 0$ and must be
+delivered to a designated outbound dock
+$d_j\in\mathcal{D}^{\mathrm{out}}$. Handling a unit load of type $\tau$
+occupies a dock for a type-dependent service duration $p(\tau)$; we
+write $p_j=p(\tau_j)$ and assume the loading service at the inbound dock
+and the unloading/processing service at the outbound dock take the same
+time, reflecting symmetric handling of a unit load. Each job therefore
+consists of an ordered pair of operations: a \emph{pickup} operation
+$\pi_j$ executed at $o_j$ and a \emph{delivery} operation $\delta_j$
+executed at $d_j$, both performed by the same AMR (no transshipment).
+An AMR may consolidate loads subject to a per-type carrying capacity
+$Q$: at no time may it carry more than $Q$ units of any single material
+type.
+
+Docks are exclusive single-server resources: at most one AMR may be in
+service at a dock at any time, and services are non-preemptive. An AMR
+arriving at an occupied dock queues in a bounded set of waiting cells
+adjacent to that dock; when the waiting line is saturated, the AMR must
+hold at an upstream position and re-approach later. Finally, AMR motion
+must be collision-free: at any unit time step, each grid cell may be
+occupied by at most one AMR.
+
+\subsection{Formal Statement}
+
+A solution is a pair $(\bm{a},\sigma)$, where
+$\bm{a}=(a_1,\dots,a_n)\in\mathcal{M}^{n}$ assigns each job to an AMR
+and $\sigma$ is a total order over the $2n$ operations
+$\{\pi_j,\delta_j\}_{j\in\mathcal{J}}$ that determines the sequence in
+which operations are committed. Let $s^{\pi}_j,c^{\pi}_j$
+(resp.\ $s^{\delta}_j,c^{\delta}_j$) denote the service start and
+completion times of $\pi_j$ (resp.\ $\delta_j$) induced by executing
+$(\bm{a},\sigma)$. A feasible execution satisfies:
+\begin{align}
+c^{\pi}_j &= s^{\pi}_j + p_j, \qquad
+c^{\delta}_j = s^{\delta}_j + p_j,
+&& \forall j\in\mathcal{J}, \label{eq:nonpreempt}\\
+s^{\pi}_j &\ge r_j,
+&& \forall j\in\mathcal{J}, \label{eq:release}\\
+s^{\delta}_j &\ge c^{\pi}_j,
+&& \forall j\in\mathcal{J}, \label{eq:precedence}
+\end{align}
+\begin{align}
+\big|\{\,j : a_j{=}k,\ \tau_j{=}\tau,\ c^{\pi}_j \le u < c^{\delta}_j \}\big| &\le Q,
+&& \forall k,\tau,u, \label{eq:capacity}\\
+\big[s_e, c_e\big) \cap \big[s_{e'}, c_{e'}\big) &= \emptyset,
+&& \forall e\ne e' \ \text{at the same dock}, \label{eq:exclusive}
+\end{align}
+where \eqref{eq:nonpreempt} enforces non-preemptive services,
+\eqref{eq:release} release dates, \eqref{eq:precedence} pickup-before-%
+delivery precedence, \eqref{eq:capacity} the per-type carrying capacity,
+and \eqref{eq:exclusive} dock exclusivity over all service events $e$.
+In addition, for any two operations $u\prec v$ executed consecutively by
+the same AMR $k$,
+\begin{equation}
+s_v \;\ge\; c_u + t_k\big(\mathrm{loc}(u),\mathrm{loc}(v)\big),
+\label{eq:travel}
+\end{equation}
+where $t_k(\cdot,\cdot)\ge\Delta(\cdot,\cdot)$ is the realized travel
+time of AMR $k$, which may exceed the Manhattan distance due to
+collision avoidance, queuing detours, and dock-clearing maneuvers.
+
+The realized travel and waiting times are not fixed constants but are
+determined by a high-fidelity \emph{executor} $\Phi$, which routes every
+AMR leg with space--time $\mathrm{A}^{*}$ search over a shared
+reservation table (at most one AMR per cell per time step), manages the
+bounded dock waiting lines, and inserts upstream holding maneuvers when
+lines are saturated. The problem is therefore a simulation-based
+optimization: find
+\begin{equation}
+(\bm{a}^{*},\sigma^{*}) \;=\;
+\arg\min_{(\bm{a},\sigma)} \; C_{\max}\big(\Phi(\bm{a},\sigma)\big),
+\label{eq:objective}
+\end{equation}
+where the makespan $C_{\max}=\max_{k\in\mathcal{M}} F_k$ and $F_k$ is
+the time at which AMR $k$ completes its final activity, including its
+return trip to the depot. The problem generalizes both the capacitated
+pickup-and-delivery problem and parallel-machine scheduling with
+sequence-dependent setups, and is therefore NP-hard; the coupling to
+collision-free multi-agent routing further compounds its difficulty
+\cite{stern2019mapf}.
+
+\subsection{Sequential Decision Formulation}
+\label{sec:mdp}
+
+We cast the construction of $(\bm{a},\sigma)$ as an episodic sequential
+decision process with exactly $2n$ decision epochs, one per committed
+operation. At epoch $t$, the state
+\begin{equation}
+s_t=\big(\{\bm{x}^{A}_{k}\},\, \{\bm{x}^{J}_{j}\},\,
+\{\mathcal{E}_d\},\, \sigma_{t}\big)
+\label{eq:state}
+\end{equation}
+collects the AMR states (position, next-available time, per-type
+inventory), the job states (unpicked / onboard / delivered, carrier
+identity), the set of committed dock service events
+$\mathcal{E}_d=\{(s_e,c_e,j_e,\omega_e)\}$ at each dock $d$, and the
+partial operation sequence $\sigma_t$.
+
+An action is a triple
+\begin{equation}
+a_t=(\omega,k,j)\in\{\textsc{pick},\textsc{deliver}\}\times\mathcal{M}\times\mathcal{J},
+\label{eq:action}
+\end{equation}
+giving a flat action space of size $2mn$ restricted by a feasibility
+mask $\Lambda(s_t)$: $(\textsc{pick},k,j)$ is legal iff $j$ is unpicked
+and AMR $k$ carries fewer than $Q$ units of type $\tau_j$;
+$(\textsc{deliver},k,j)$ is legal iff $j$ is onboard AMR $k$. The mask
+guarantees by construction that every complete episode yields a feasible
+solution, so no repair mechanism is required.
+
+Transitions follow a deterministic surrogate model $\hat{\Psi}$ that
+advances the acting AMR's clock using a \emph{calibrated} travel-time
+estimate $\hat{t}(\cdot,\cdot)$ and a queue-aware dock-wait estimate
+$\hat{w}_d(\cdot)$ fitted offline against the executor $\Phi$
+(Section~\ref{sec:calibration}); committing an action appends the
+corresponding service window to $\mathcal{E}_d$. For a pickup, the
+service start of job $j$ by AMR $k$ located at $x_k$ with next-available
+time $\hat{b}_k$ is
+\begin{equation}
+s^{\pi}_j=\underbrace{\max\!\big(\hat{b}_k+\hat{t}(x_k,o_j),\, r_j\big)}_{\text{ready time }\rho}
+\;+\;\hat{w}_{o_j}(\rho),
+\label{eq:surrogate}
+\end{equation}
+and analogously for deliveries at $d_j$. After $2n$ steps the completed
+solution is evaluated by the executor, and the learning objective is to
+minimize the expected executed makespan
+$\mathbb{E}_{\pi_\theta}\!\left[C_{\max}(\Phi(\bm{a},\sigma))\right]$;
+the policy-gradient training procedure and its dispatch-rule baseline
+are described in Section~\ref{sec:training}.
+
+% =========================================================================
+
+\section{Sparse-Graph Multi-Pointer Dispatcher}
+\label{sec:architecture}
+
+\subsection{Overview and Design Rationale}
+
+Learning-to-dispatch architectures for shop scheduling encode
+operations as nodes of a disjunctive graph and learn a construction
+policy over it \cite{zhang2020l2d,song2023fjsp}. Transferring this
+paradigm to AMR-served cross-docking raises a representation question:
+how should the tight resource coupling---$m$ vehicles contending for
+$|\mathcal{D}|$ single-server docks under collision-constrained
+motion---enter the graph? A seemingly natural answer is to join every
+pair of jobs that share a dock. We found this to be
+counterproductive: with $n/|\mathcal{D}|$ jobs per dock, such
+contention edges form dense cliques, and message passing over them
+drives all job embeddings toward a common average (pairwise cosine
+similarity above $0.99$ at initialization in our measurements),
+leaving the policy unable to discriminate between candidate jobs
+precisely at the opening decisions that dominate the makespan.
+Over-smoothing under dense neighborhoods is a known failure mode of
+deep graph networks \cite{li2018deeper,oono2020oversmoothing}; in this
+problem it appears already at three message-passing rounds.
+
+The proposed scheduler, hereafter \textsc{CD-GNN}, therefore keeps the
+graph \emph{sparse and dynamic}: edges encode only scheduling
+precedences that have actually been committed, while resource
+congestion enters through calibrated, decision-grade node features.
+The model comprises (i)~a job encoder over a dynamic
+\emph{precedence graph} processed by residual graph isomorphism
+network (GIN) layers \cite{xu2019gin}; (ii)~a lightweight fleet
+encoder; and (iii)~a factored multi-pointer actor that scores each
+masked (operation, AMR, job) triple \cite{kool2019attention}. The full
+model is deliberately lean: $2.8\times10^{5}$ parameters
+($2.5\times10^{5}$ actor, $3.3\times10^{4}$ critic) with hidden width
+$h=128$ throughout, permutation-invariant in the job and AMR sets, and
+applicable unchanged to any instance size.
+
+% TODO: architecture overview figure
+% \begin{figure*}[t]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/cdgnn_architecture}
+%   \caption{Overview of \textsc{CD-GNN}. Job features (including
+%   calibrated congestion estimates) are encoded and refined over the
+%   dynamic precedence graph by residual GIN layers; AMR features are
+%   encoded independently; the multi-pointer actor scores each feasible
+%   (operation, AMR, job) triple under the feasibility mask.}
+%   \label{fig:architecture}
+% \end{figure*}
+
+\subsection{Congestion-Aware State Representation}
+\label{sec:features}
+
+At every decision epoch the state \eqref{eq:state} is rendered into two
+feature families, summarized in Table~\ref{tab:features}. All features
+are normalized to comparable magnitudes by fixed scales.
+
+\emph{Job nodes} ($\bm{x}^{J}_j\in\mathbb{R}^{16}$). Each job encodes
+its service duration, lifecycle status (unpicked/onboard/delivered) and
+carrier identity, its material type, and the coordinates of both its
+supply position and its destination station, giving the network direct
+geometric grounding. Resource congestion enters through four derived
+features: the current availability delays of the job's inbound and
+outbound docks, and the number of still-unpicked competitor jobs
+committed to each of the two docks. A calibrated completion-time
+estimate (Section~\ref{sec:calibration}) summarizes how quickly the job
+could finish if served next, providing a value-like signal that the
+network would otherwise need several layers to reconstruct.
+
+\emph{AMR nodes} ($\bm{x}^{A}_k\in\mathbb{R}^{8}$). Each AMR encodes a
+busy indicator and its time until available, per-type inventory
+ratios, its coordinates, and the number of jobs currently assigned to
+it, which exposes fleet-utilization imbalance to the policy.
+
+\begin{table}[t]
+\caption{Node Features of \textsc{CD-GNN}}
+\label{tab:features}
+\centering
+\footnotesize
+\begin{tabular}{@{}llc@{}}
+\toprule
+& Feature & Scale \\
+\midrule
+\multirow{12}{*}{\rotatebox{90}{Job $\bm{x}^{J}_j\!\in\!\mathbb{R}^{16}$}}
+& existence flag & -- \\
+& service duration $p_j$ & $1/25$ \\
+& carrier index (0 if unpicked) & $1/m$ \\
+& destination position $(x,y)$ ($\times2$) & $1/10$ \\
+& supply position $(x,y)$ ($\times2$) & $1/10$ \\
+& material type one-hot ($\times3$) & -- \\
+& lifecycle status $\{0,\tfrac12,1\}$ & -- \\
+& completion-time estimate & $1/500$ \\
+& inbound dock availability delay & $1/100$ \\
+& outbound dock availability delay & $1/100$ \\
+& inbound dock committed queue & $1/m$ \\
+& outbound dock committed queue & $1/m$ \\
+\midrule
+\multirow{7}{*}{\rotatebox{90}{AMR $\bm{x}^{A}_k\!\in\!\mathbb{R}^{8}$}}
+& busy indicator & -- \\
+& time until available & $1/50$ \\
+& inventory ratio, per type ($\times3$) & $1/Q$ \\
+& position $(x,y)$ ($\times2$) & $1/10$ \\
+& assigned-job count & $1/10$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Dynamic Precedence Graph and Job Encoder}
+\label{sec:graph}
+
+Job features pass through a linear map
+$\bm{g}^{(0)}_j=\bm{W}_{\!J}\,\bm{x}^{J}_j\in\mathbb{R}^{h}$ and AMR
+features through a linear encoder
+$\bm{h}^{A}_k=\bm{W}_{\!A}\,\bm{x}^{A}_k\in\mathbb{R}^{h}$.
+
+Jobs are coupled by the \emph{committed} structure of the partial
+schedule. Following the adding-arc construction of disjunctive-graph
+dispatching \cite{zhang2020l2d}, the graph
+$\mathcal{G}_t=(\mathcal{J},E_t)$ starts empty and grows one or two
+directed arcs per decision: when an operation of job $j$ is committed,
+an arc is added from the previously scheduled job on the same AMR to
+$j$, and from the previously scheduled job on the same outbound dock to
+$j$. Each job thus aggregates information from its immediate
+predecessors $\mathcal{P}(j)$ on both resources it occupies---the
+vehicle sequence and the dock sequence---while uncommitted jobs
+interact only through the shared congestion features of
+Section~\ref{sec:features}, never through dense same-dock edges.
+
+Message passing applies $L=3$ residual GIN layers with layer
+normalization,
+\begin{equation}
+\bm{g}^{(l+1)}_j=\bm{g}^{(l)}_j+
+\mathrm{LN}\!\left(\mathrm{MLP}^{(l)}\!\Big(
+(1{+}\epsilon^{(l)})\,\bm{g}^{(l)}_j+
+\sum_{i\in\mathcal{P}(j)}\!\bm{g}^{(l)}_i
+\Big)\right)\!,
+\label{eq:gin}
+\end{equation}
+retaining the injective sum aggregation of GIN \cite{xu2019gin}: with
+at most two predecessors per node, message magnitudes stay bounded
+irrespective of instance size, so the scale-invariance concerns that
+arise with dense contention edges do not apply.
+
+\subsection{Multi-Pointer Action Scoring and Value Estimation}
+\label{sec:actor}
+
+Let $\bm{e}_{\omega}\in\mathbb{R}^{h}$ be a learned embedding of the
+operation type. The actor scores every candidate triple by
+\begin{equation}
+z_{\omega,k,j}=\mathrm{MLP}_{\pi}\!\big(\big[\,\bm{e}_{\omega}\,\|\,
+\bm{g}^{(L)}_{j}\,\|\,\bm{h}^{A}_{k}\big]\big),
+\label{eq:logit}
+\end{equation}
+and the policy is the masked softmax
+\begin{equation}
+\pi_{\theta}(a\,|\,s_t)=
+\frac{\exp(z_{a})\,\mathbf{1}[a\in\Lambda(s_t)]}
+{\sum_{a'\in\Lambda(s_t)}\exp(z_{a'})}.
+\label{eq:policy}
+\end{equation}
+The critic estimates the state value from pooled entity summaries,
+\begin{equation}
+V_{\phi}(s_t)=\mathrm{MLP}_{V}\!\big(\big[\,
+\overline{\bm{g}}^{\mathrm{(unf)}} \,\|\, \overline{\bm{h}}^{A}\big]\big),
+\label{eq:critic}
+\end{equation}
+where $\overline{\bm{g}}^{\mathrm{(unf)}}$ averages the embeddings of
+unfinished jobs only. A full episode requires exactly $2n$ forward
+passes; each pass scores all $2mn$ actions in a single batched
+evaluation of \eqref{eq:logit}.
+
+% =========================================================================
+
+\section{Surrogate Model Calibration}
+\label{sec:calibration}
+
+\subsection{The Two-Simulator Gap}
+
+The policy constructs schedules on the surrogate $\hat{\Psi}$ of
+Section~\ref{sec:mdp}, whereas solution quality is defined by the
+executor $\Phi$ of \eqref{eq:objective}. An uncalibrated surrogate that
+advances clocks by Manhattan distances and single-scalar dock
+availabilities is systematically optimistic: it ignores collision
+detours, dock-clearing maneuvers, waiting-line approach paths, and the
+upstream holds triggered when waiting lines saturate. The congestion
+features of Section~\ref{sec:features}---and therefore every decision
+the policy makes---would then be conditioned on clocks that drift
+further from reality as congestion grows, precisely in the regime where
+scheduling decisions matter most. Rather than paying the computational
+cost of embedding the full executor in the training loop, we close most
+of this gap with two lightweight corrections fitted offline.
+
+\subsection{Calibrated Travel and Dock-Wait Estimators}
+
+\emph{Travel.} Realized leg times are modeled as an affine function of
+the Manhattan distance, clamped from below by the metric itself:
+\begin{equation}
+\hat{t}(u,v)=\max\!\big(\Delta(u,v),\ \alpha\,\Delta(u,v)+\beta\big).
+\label{eq:travelcal}
+\end{equation}
+
+\emph{Dock waiting.} The wait experienced by an AMR that becomes ready
+at a dock $d$ at time $\rho$ is modeled as the committed availability
+delay plus a penalty indexed by the queue depth at readiness,
+\begin{equation}
+\hat{w}_d(\rho)=\max\!\big(0,\ \mathrm{avail}_d-\rho\big)
++\varphi\!\big(\min(q_d(\rho),\,3)\big),
+\label{eq:waitcal}
+\end{equation}
+where $q_d(\rho)=|\{e\in\mathcal{E}_d : c_e>\rho\}|$ counts committed
+services unfinished at $\rho$, and
+$\varphi:\{0,1,2,3^{+}\}\to\mathbb{R}_{\ge0}$ is a monotone lookup
+table. The bounded table shape is deliberate: waiting-line detours and
+upstream holds produce a cost cliff once the line saturates, a
+nonlinearity that a linear congestion model cannot express.
+
+\subsection{Fitting Procedure}
+
+Calibration data are obtained by replaying complete schedules through
+both simulators and aligning them per operation. Schedules are drawn
+from heterogeneous sources---five dispatching-rule pairs and the
+current learned policies---across instance sizes
+$n\in\{10,20,40,60\}$, so that the fitted correction covers the state
+distribution that policies actually visit. For every operation, the
+raw surrogate supplies the Manhattan leg distance, the base wait, and
+the queue depth at readiness; the executor's logged timeline is
+partitioned, per AMR, into legs terminating at each service start,
+within which movement entries sum to the realized travel and the
+remainder is attributed to waiting. Executions containing infeasible
+operations are discarded. The travel parameters $(\alpha,\beta)$ are
+fitted by least squares and the penalties $\varphi(\cdot)$ as clipped
+bin means with monotonicity enforced across depths.
+
+In our environment, fitting on $10{,}360$ operation pairs from $159$
+schedules yielded $\alpha=0.963$, $\beta=1.12$ ($R^{2}=0.91$) and
+$\varphi=(0.04,\,0.04,\,1.66,\,3.57)$; the step between depths one and
+two locates the waiting-line saturation cliff. The correction removes
+the mean per-leg travel bias entirely ($+0.744\to0.000$ time units)
+and halves the end-to-end makespan drift between surrogate and
+executor (mean absolute error $24.3\to12.1$ on held-out schedules).
+The calibration is a frozen artifact: it is fitted once before
+training, adds no learned components to the training loop, and is
+shared by \emph{all} policies and by the dispatching-rule baseline of
+Section~\ref{sec:training}, so every method plans in the same
+corrected world. After training converges, the fit can be re-estimated
+from the new policies' schedules to confirm stability.
+
+% =========================================================================
+
+\section{Policy Optimization and Refinement}
+\label{sec:training}
+
+\subsection{Objective and Gradient Estimator}
+
+The policy $\pi_\theta$ is trained to minimize the expected executed
+makespan $\mathbb{E}_{\pi_\theta}[C_{\max}(\Phi(\bm{a},\sigma))]$ with
+the REINFORCE estimator \cite{williams1992reinforce}. During training,
+episodes are generated by sampling from the masked policy
+\eqref{eq:policy} on the calibrated surrogate; at validation and
+deployment, actions are selected greedily. The gradient quality of
+REINFORCE hinges on its baseline; we use a counterfactual baseline
+built from a strong dispatching rule and evaluated by the executor
+itself.
+
+\subsection{Counterfactual Dispatch-Rule Baseline}
+\label{sec:baseline}
+
+Let $R$ denote a deterministic dispatching heuristic (job rule and AMR
+rule; we use earliest-completion for both) and let
+$R(\sigma_{1:t})$ denote the complete solution obtained by executing
+the partial sequence $\sigma_{1:t}$ and completing all remaining
+operations with $R$. Define the shorthand
+$C[\cdot]=C_{\max}(\Phi(\cdot))$. The advantage of the action taken at
+step $t$ is the improvement of committing that action and then
+following the rule, relative to following the rule immediately:
+\begin{equation}
+A_t \;=\; C\big[R(\sigma_{1:t-1})\big]\;-\;
+C\big[R(\sigma_{1:t-1}\oplus a_t)\big].
+\label{eq:advantage}
+\end{equation}
+Both completions are evaluated by the collision-aware executor, so the
+learning signal is grounded in true solution quality rather than in
+surrogate clocks. Unlike episode-level rollout baselines
+\cite{rennie2017self,kool2019attention}, \eqref{eq:advantage} assigns
+credit per decision: an early pickup that congests a dock is penalized
+at the step where it is committed, not diluted across the episode.
+The price is $\mathcal{O}(n)$ executor evaluations per episode, which
+dominates training cost; we consider the sharper credit assignment a
+favorable trade at the instance sizes studied here, and
+Section~\ref{sec:training-details} lists a cheaper actor--critic
+alternative.
+
+\subsection{Loss Function}
+
+Advantages are standardized to zero mean and unit variance across all
+steps of a batch of $B$ episodes. The per-batch loss combines the
+policy gradient with a load-balancing shaping term and an entropy
+bonus:
+\begin{equation}
+\mathcal{L}(\theta)=
+-\frac{1}{B}\sum_{b=1}^{B}\sum_{t=1}^{2n}
+\Big[\log\pi_\theta(a_t^b|s_t^b)\,
+\big(\hat{A}_t^{\,b}+\lambda_{\mathrm{lb}}A_t^{\mathrm{lb},b}\big)
++\lambda_{H}\,\mathcal{H}_t^{b}\Big],
+\label{eq:loss}
+\end{equation}
+where $\hat{A}_t$ is the standardized advantage,
+$\mathcal{H}_t$ is the entropy of the masked policy over feasible
+actions, and the shaping term
+$A^{\mathrm{lb}}_t=\min_{k'}c_{k'}-c_{k}$ (for pickups; zero for
+deliveries) compares the assignment count $c_k$ of the chosen AMR with
+the least-loaded AMR, discouraging degenerate fleet utilization early
+in training \cite{ng1999shaping}. We use
+$\lambda_{\mathrm{lb}}=0.1$ and $\lambda_{H}=0.01$.
+
+\begin{algorithm}[t]
+\caption{Training with counterfactual dispatch baseline}
+\label{alg:training}
+\begin{algorithmic}[1]
+\Require policy $\pi_\theta$, rule $R$, executor $\Phi$, surrogate $\hat{\Psi}$
+\State fit calibration $(\alpha,\beta,\varphi)$ offline; freeze (Sec.~\ref{sec:calibration})
+\For{$\mathrm{epoch}=1,\dots,E$}
+  \For{$b=1,\dots,B$}
+    \State sample instance; roll out $\sigma^b\!\sim\!\pi_\theta$ on $\hat{\Psi}$
+    \For{$t=1,\dots,2n$}
+      \State $A^b_t \gets C[R(\sigma^b_{1:t-1})]-C[R(\sigma^b_{1:t-1}\oplus a^b_t)]$
+    \EndFor
+  \EndFor
+  \State standardize $\{A^b_t\}$ over the batch
+  \State update $\theta$ by Adam on $\mathcal{L}(\theta)$ in \eqref{eq:loss}; clip $\lVert\nabla\rVert\le1$
+  \If{$\mathrm{epoch}\bmod T_{\mathrm{val}}=0$}
+    \State greedy-decode held-out instances; score by
+    $C_{\max}+\kappa\cdot(\text{infeasible ops})$; keep best
+  \EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Training Protocol}
+\label{sec:training-details}
+
+Algorithm~\ref{alg:training} summarizes the procedure. Only the actor
+parameters (encoders, GIN layers, operation embedding, and actor head)
+receive gradients under REINFORCE; the critic \eqref{eq:critic} is
+reserved for an optional proximal-policy-optimization variant
+\cite{schulman2017ppo} that replaces \eqref{eq:advantage} with
+critic-based advantages when the executor evaluations of the stepwise
+baseline are prohibitive. We train with Adam \cite{kingma2015adam}
+(learning rate $3\times10^{-4}$, batch $B=16$, gradient-norm clip
+$1.0$) for $2{,}000$ epochs. Every $T_{\mathrm{val}}=50$ epochs the
+policy is evaluated by greedy decoding on a fixed held-out validation
+set, disjoint from the training pool, and scored by the executed
+makespan plus a penalty of $\kappa=10^{3}$ per infeasible operation;
+the checkpoint with the best validation score is retained. Computing
+the entropy in \eqref{eq:loss} over the feasible-action support only
+keeps the bonus comparable as the mask tightens toward the end of an
+episode.
+
+\subsection{Post-Processing Local Search}
+\label{sec:localsearch}
+
+At deployment, the greedy-decoded schedule is refined by a two-stage
+first-improvement local search that reuses the neighborhood operators
+of our genetic-algorithm baseline, so that quality differences between
+methods are attributable to the constructed solutions rather than to
+the refinement. A move either swaps two operations in $\sigma$, at
+least one of which belongs to the AMR that currently determines the
+makespan, or relocates a contiguous block of same-AMR, same-type
+operations; the AMR assignment $\bm{a}$ is left unchanged. The first
+stage performs $I_{\mathrm{cf}}=10^{3}$ trials under the fast
+collision-free evaluator to explore broadly; the second performs
+$I_{\mathrm{ca}}=10^{2}$ trials under the full executor $\Phi$ to
+polish under true routing. The refinement adds approximately two
+seconds per instance and is entirely optional: all learned-policy
+results are reported both with and without it.
+
+% =========================================================================
+% Suggested BibTeX entries (replace keys above with your bibliography):
+%
+% @inproceedings{xu2019gin, Xu, Hu, Leskovec, Jegelka, "How Powerful Are
+%   Graph Neural Networks?", ICLR 2019}
+% @inproceedings{zhang2020l2d, Zhang et al., "Learning to Dispatch for
+%   Job Shop Scheduling via Deep Reinforcement Learning", NeurIPS 2020}
+% @article{song2023fjsp, Song et al., "Flexible Job-Shop Scheduling via
+%   Graph Neural Network and Deep Reinforcement Learning", IEEE TII 2023}
+% @inproceedings{li2018deeper, Li, Han, Wu, "Deeper Insights into Graph
+%   Convolutional Networks for Semi-Supervised Learning", AAAI 2018}
+% @inproceedings{oono2020oversmoothing, Oono, Suzuki, "Graph Neural
+%   Networks Exponentially Lose Expressive Power for Node
+%   Classification", ICLR 2020}
+% @inproceedings{stern2019mapf, Stern et al., "Multi-Agent Pathfinding:
+%   Definitions, Variants, and Benchmarks", SoCS 2019}
+% @article{williams1992reinforce, Williams, "Simple Statistical
+%   Gradient-Following Algorithms for Connectionist Reinforcement
+%   Learning", Machine Learning 8, 1992}
+% @inproceedings{rennie2017self, Rennie et al., "Self-Critical Sequence
+%   Training for Image Captioning", CVPR 2017}
+% @inproceedings{kool2019attention, Kool, van Hoof, Welling, "Attention,
+%   Learn to Solve Routing Problems!", ICLR 2019}
+% @inproceedings{ng1999shaping, Ng, Harada, Russell, "Policy Invariance
+%   Under Reward Transformations: Theory and Application to Reward
+%   Shaping", ICML 1999}
+% @article{schulman2017ppo, Schulman et al., "Proximal Policy
+%   Optimization Algorithms", arXiv:1707.06347}
+% @inproceedings{kingma2015adam, Kingma, Ba, "Adam: A Method for
+%   Stochastic Optimization", ICLR 2015}
+% =========================================================================
