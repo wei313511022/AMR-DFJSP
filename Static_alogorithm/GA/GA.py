@@ -19,11 +19,9 @@ from functools import lru_cache
 
 # Constants Setup
 AMR_STARTS = {
-    "AMR1": (2, 9),
-    "AMR2": (2, 7),
-    "AMR3": (2, 5),
-    "AMR4": (2, 3),
-    "AMR5": (2, 1),
+    "AMR1": (2, 8),
+    "AMR2": (2, 5),
+    "AMR3": (2, 2),
 }
 AMR_KEYS = list(AMR_STARTS.keys())
 STATIONS = {

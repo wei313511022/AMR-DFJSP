@@ -1,0 +1,22 @@
+Training on: cuda
+Loaded 1000 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_inbox_60.jsonl
+Loaded 50 dispatch events from /home/wei/AMR-DFJSP/test_case/static/dispatch_validation_60.jsonl
+Loaded 50 validation event(s).
+Starting GNN REINFORCE training with dispatch baseline 'milk_run+earliest_completion' (stepwise).
+Traceback (most recent call last):
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 733, in <module>
+    train(build_parser().parse_args())
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 679, in train
+    train_reinforce(args)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/GNN/train_gnn.py", line 375, in train_reinforce
+    comparison = compute_dispatch_baseline_comparison(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 186, in compute_dispatch_baseline_comparison
+    rule_next_individual = complete_with_dispatch_rule(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/reinforce_baseline.py", line 133, in complete_with_dispatch_rule
+    action, _ = dr.choose_operation(jobs, state, job_rule, amr_rule, rng)
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/dispatching_rules/dispatching_rules.py", line 248, in choose_operation
+    actions = legal_actions(
+  File "/home/wei/AMR-DFJSP/Static_alogorithm/operation_policy.py", line 217, in legal_actions
+    OperationAction(
+  File "<string>", line 3, in __init__
+KeyboardInterrupt
