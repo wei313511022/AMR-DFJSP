@@ -50,6 +50,11 @@ from neural_local_improvement import apply_neural_local_improvement
 NUM_AMRS = len(AMR_KEYS)
 STATION_KEYS = list(STATIONS.keys())
 
+# Normaliser for the deadline-slack feature. Same order of magnitude as
+# LOWER_BOUND_SCALE so the two time-valued features share a scale.
+DEADLINE_SCALE = 500.0
+JOB_FEATURE_DIM = 18
+
 # Overwrite describe_solution locally to pass save_img
 def describe_solution_gnn(individual: Individual, jobs: List[Job], solve_time: float = None, show_gantt: bool = False, save_img: str = None) -> Tuple[float, float]:
     availability, decoded_timeline, queue_infos, path_logs, invalid_count = decode_schedule_tick_by_tick(individual, jobs, need_log=True, check_collision=True)
@@ -223,6 +228,8 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
      13: outbound_dock_available_delay / 100.0
      14: inbound_dock_queue_length / num_amrs
      15: outbound_dock_queue_length / num_amrs
+     16: deadline slack (D_g - t) / DEADLINE_SCALE, clipped to [-1, 1]   [v2]
+     17: shipment progress = delivered / |g|                             [v2]
 
     AMR Features (8):
      0: status_val
@@ -239,6 +246,19 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
        on the same AMR or same workstation in sequence.
     """
     num_jobs = len(jobs)
+
+    # --- Shipment bookkeeping (scenario v2) ---
+    # Progress is the fraction of a shipment already delivered; slack is how much
+    # time remains before its trailer departs. Together these let the policy prefer
+    # the batch that closes out a departing shipment over the merely nearby one.
+    shipment_size, shipment_done = {}, {}
+    for job in jobs:
+        sid = getattr(job, "shipment_id", -1)
+        if sid < 0:
+            continue
+        shipment_size[sid] = shipment_size.get(sid, 0) + 1
+        if job.idx in completed_jobs_set:
+            shipment_done[sid] = shipment_done.get(sid, 0) + 1
 
     # --- AMR Features ---
     amr_feat = []
@@ -307,6 +327,7 @@ def extract_state_gnn(jobs, picked_jobs_set, completed_jobs_set, carrier_map, am
             lb_val / LOWER_BOUND_SCALE,
             *dock_features,
         ]
+
         job_feat.append(feat)
         job_mask.append(is_completed)
 

@@ -1,72 +1,137 @@
 % =========================================================================
-% Related Work section for the CD-GNN RA-L submission.
-% Usage: \input{related_work} after the introduction.
-% Citation keys refer to references.bib in this directory.
+% Section II -- Related Work.
+% Usage: \input{related_work} in main.tex, after \input{introduction}.
+%
+% Organising principle: the problem-side subsections are ordered by how much
+% of the realised transfer time each line represents -- travel only, travel
+% plus routing excess, transport-faithful but assignment-given. The gap is
+% stated once, at the end, and is deliberately narrow.
+%
+% TWO CLAIMS THAT MUST NOT REAPPEAR FROM EARLIER DRAFTS:
+%   (i)  that the MAPD literature lacks capacitated agents or service
+%        durations -- false; both exist.
+%   (ii) that the architecture is a contribution -- GIN/transformer encoders
+%        with composite operation-machine-vehicle actions are standard as of
+%        2026 (yuan2026gin, matrans2026). Section II-A concedes this openly.
 % =========================================================================
 
 \section{Related Work}
 \label{sec:related}
 
-\subsection{Learning to Dispatch for Shop Scheduling}
+\subsection{Learned Constructive Dispatching}
 
-Constructive deep-reinforcement-learning dispatchers for shop
-scheduling originate with L2D \cite{zhang2020l2d}, which encodes the
-job-shop disjunctive graph with a GIN \cite{xu2019gin}, dispatches one
-eligible operation per step, and trains with PPO on a dense
-lower-bound-difference reward; the learned policy is size-agnostic and
-outperforms priority dispatching rules. Subsequent work extends the
-paradigm to flexible job shops with heterogeneous operation--machine
-graphs and joint operation--machine actions \cite{song2023fjsp}, and a
-recent survey traces this line \cite{smit2024gnnsurvey}. These methods
-schedule abstract machines: material transport, vehicles, and floor
-space are absent from both model and evaluation. Our graph
-construction inherits the adding-arc scheme of this lineage, but our
-policy additionally assigns the transporting robot, and its training
-signal is grounded in physically executed schedules rather than graph
-lower bounds.
+Constructive deep-reinforcement-learning dispatchers originate with
+L2D~\cite{zhang2020l2d}, which encodes the job-shop disjunctive graph with a
+graph isomorphism network~\cite{xu2019gin}, commits one eligible operation
+per decision epoch, and trains with a dense reward given by the change in a
+makespan lower bound. Extensions to flexible job shops introduced
+heterogeneous operation--machine graphs and composite
+actions~\cite{song2023fjsp}; a recent survey traces the resulting family of
+graph representations, architectures and training schemes~\cite{smit2024gnnsurvey}.
 
-\subsection{Scheduling with Transportation (FJSP-T)}
+The transport-aware branch is well developed. Moon \emph{et
+al.}~\cite{moon2024hgs} model operations, machines and vehicles as a
+heterogeneous graph with composite actions; Yuan \emph{et
+al.}~\cite{yuan2026gin} pair a graph isomorphism encoder with a hierarchical
+action space and proximal policy optimisation; Yang \emph{et
+al.}~\cite{yang2026cosched} add incremental graph updates for rescheduling;
+and transformer encoders with dual-agent decompositions have been applied to
+joint job and AGV dispatching~\cite{matrans2026}. Link \emph{et
+al.}~\cite{link2026coordination} ask when joint training of the two
+decisions is necessary at all, finding its advantage over modular training
+narrows in bottleneck regimes.
 
-Integrating material handling into shop scheduling dates to the
-simultaneous machine-and-AGV formulation of Bilge and Ulusoy
-\cite{bilge1995time,ulusoy1997ga}, followed by decades of exact and
-metaheuristic approaches. Recent deep-learning methods address the
-same formulation end to end: notably, the heterogeneous graph
-scheduler of Moon \emph{et al.} \cite{moon2024hgs} models operations,
-machines, and vehicles as a heterogeneous graph and selects composite
-(operation, machine, vehicle) actions, an action structure our actor
-shares. Throughout this line---classical and learned
-alike---transportation is reduced to a fixed travel-time matrix;
-\cite{moon2024hgs} assumes identical loaded travel times for all
-vehicles between any machine pair. Collision avoidance, congestion,
-and queueing at handover points, which dominate dense robotic
-terminals, are outside these models.
+We treat this body of work as settled and adopt its encoder and action
+structure unmodified, claiming no novelty for that choice;
+Section~\ref{sec:experiments} reports a controlled encoder comparison at
+matched parameter count for precisely this reason. What distinguishes the
+present work is the learning signal. The lower-bound-difference reward
+of~\cite{zhang2020l2d} is available because an abstract machine model admits
+consistent evaluation of a partial schedule; under a collision-aware
+executor it does not, for the reason given in
+Section~\ref{sec:consequences}.
 
-\subsection{Multi-Agent Path Finding and Pickup--Delivery}
+\subsection{Scheduling with Transport}
 
-The complementary literature solves transport with full physical
-rigor. Multi-agent path finding (MAPF) computes collision-free
-space--time trajectories \cite{stern2019mapf}, and its lifelong
-pickup-and-delivery variant (MAPD) serves online task streams in
-warehouse grids \cite{ma2017lifelong}, with recent learning-guided
-planners improving scalability. The task model, however, is
-deliberately thin: one agent serves one task, and neither
-single-server handover resources with service durations nor
-capacitated load consolidation is represented---precisely the
-structure that makes cross-docking a scheduling problem.
+Integrating material handling into shop scheduling dates to the simultaneous
+machine-and-vehicle formulation of Bilge and Ulusoy~\cite{bilge1995time} and
+the genetic-algorithm treatment that followed~\cite{ulusoy1997ga}, which
+established that scheduling and vehicle assignment interact and must be
+decided jointly, and supplied the instance family still used as a benchmark.
 
-\subsection{Integrated Scheduling and Conflict-Free Routing}
+Across this line, classical and learned alike, transport is represented by a
+fixed travel-time matrix and handover is instantaneous. The idealisation is
+inherited from the founding formulations and has been carried forward
+largely unexamined. Quantifying its cost, and establishing where that cost
+is concentrated, is the empirical contribution of this paper.
 
-A smaller line, largely in automated container terminals and flexible
-manufacturing, couples task scheduling with conflict-free vehicle
-routing \cite{zhong2020integrated,hierarchical2024agv,
-nishi2015capacitated}. These approaches decompose hierarchically and
-re-solve per instance with search or metaheuristics; the routing
-feasibility is enforced, but no constructive policy is learned, and
-solution times grow with instance size. To our knowledge, no prior
-method trains a constructive scheduling policy whose learning signal
-is the makespan realized under collision-aware execution, nor
-addresses the dock-exclusive, capacity-coupled structure of AMR-served
-cross-docking. This work occupies that intersection: rich scheduling
-structure from the FJSP-T line, physical execution from the MAPF line,
-and end-to-end learning from the dispatching line.
+\subsection{Conflict-Free Routing and Multi-Agent Path Finding}
+
+A complementary literature represents motion exactly. Multi-agent path
+finding computes collision-free space--time trajectories over shared
+graphs~\cite{stern2019mapf}, and its lifelong pickup-and-delivery variant
+serves online task streams in warehouse grids~\cite{ma2017lifelong};
+capacitated agents and station queueing have both been treated within this
+family, and learned components now appear inside the planner itself, for
+instance by decoding priority orders for prioritised planning from an
+attention network~\cite{rlrhpp2026}. These methods model the transport layer
+faithfully, but assume the task assignment as given and are posed as online
+service of an arriving stream rather than offline construction of a complete
+schedule.
+
+Closest to our premise is Noda~\cite{noda2026deferral}, who observes in the
+deadline-constrained MAPD setting that immediate commitment can degrade
+downstream service through congestion and reservation interactions, and
+proposes a one-parameter deferral gate over token-passing baselines. That
+work and ours begin from the same observation and diverge in what follows:
+\cite{noda2026deferral} exploits the interaction online through a tuned
+threshold, whereas we measure its magnitude and composition and use them to
+correct the training signal of an offline constructive policy.
+
+A further line couples scheduling with conflict-free routing directly, by
+local and random search for capacitated AGV
+systems~\cite{miyamoto2016local}, by integrated scheduling in container
+terminals~\cite{zhong2020integrated}, by a hierarchical framework placing a
+reinforcement-learning assignment layer above a conflict-free path
+generator~\cite{li2024hierarchical}, and by time-space network models for
+just-in-time delivery~\cite{nishida2023jit}. Two properties separate this
+group from the present work. First, routing feasibility is enforced per
+instance by search or mathematical programming, so no reusable policy is
+produced; the hierarchical scheme of~\cite{li2024hierarchical} learns an
+assignment layer, but trains it against a separate routing stage rather than
+against the realised schedule. Second, and more consequentially, service
+points are taken to be uncontended: loading and unloading begin on arrival,
+so no queue forms at a pickup or delivery node~\cite{nishida2023jit}.
+Waiting is thus represented where vehicles meet in transit and omitted where
+they meet at a server, which Section~\ref{sec:experiments} identifies as the
+larger of the two effects.
+
+\subsection{Credit Assignment without an Intermediate Reward}
+
+When an objective is available only on complete solutions, policy-gradient
+methods~\cite{williams1992reinforce} require a baseline computed by rollout.
+Self-critical sequence training compares a sampled trajectory against a
+greedily decoded one~\cite{rennie2017self}, and the attention model of Kool
+\emph{et al.}~\cite{kool2019attention} applies the same device to routing
+problems using a deterministic rollout of a frozen policy. Our estimator
+belongs to this family and differs in two respects: the baseline completes
+each \emph{prefix} with a dispatching rule rather than completing only the
+initial state, yielding a per-decision rather than per-episode advantage;
+and both branches are evaluated by the collision-aware executor rather than
+by the model on which the policy acts. The novelty claimed is the grounding,
+not the rollout. Auxiliary shaping terms are used with care, since shaping
+alters the optimal policy unless it takes potential form~\cite{ng1999shaping};
+the corresponding ablation appears in Section~\ref{sec:experiments}.
+
+\subsection{Position of This Work}
+
+The problem-side literatures each retain a different portion of the realised
+transfer time: learned dispatching retains travel; integrated conflict-free
+routing retains travel and routing excess; multi-agent path finding retains
+both but fixes the assignment. None represents queueing at capacitated,
+exclusive service points \emph{and} learns a reusable constructive policy
+against the router that will execute it. This paper occupies that
+intersection. Its contribution is not the combination, nor the architecture,
+but the measurement that motivates the combination: the omitted terms are
+large, they grow with fleet density, and they are dominated by the component
+the scheduling decision determines.

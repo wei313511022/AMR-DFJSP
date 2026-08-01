@@ -1,5 +1,6 @@
 import argparse
 import csv
+import math
 import os
 import random
 import time
@@ -31,6 +32,7 @@ from GA.GA import (  # noqa: E402
     load_dispatch_events,
     make_jobs,
     plot_gantt,
+    rack_can_load,
 )
 from operation_policy import (  # noqa: E402
     OperationAction,
@@ -55,13 +57,30 @@ JOB_RULES = (
     "earliest_completion_job",
     "material_match",
     "milk_run",
+    "edd",              # scenario v2: earliest shipment deadline
+    "atc",              # scenario v2: apparent tardiness cost
     "random",
 )
 
 # milk_run: keep collecting while a nearby pickup exists and capacity remains,
 # then deliver the whole batch. Radius is in estimated travel-time units.
-MILK_RUN_MAX_LOAD = 6
-MILK_RUN_RADIUS = 6.0
+# NOTE: the load ceiling is now the rack itself (nested suffix constraint), so the
+# baseline and the learned policy operate under identical physics. The previous
+# MILK_RUN_MAX_LOAD = 6 total-count check let this rule play by different rules
+# than the policy it was benchmarked against.
+MILK_RUN_RADIUS = 3.0
+# Tuned at the v2 rack (1 slot per class). Report this as a RATIO to inter-door
+# spacing, not as a bare number: doors sit 4-5 cells apart and the calibrated
+# metric inflates a 4-cell gap to 4.97, so every radius in [0, 4] means the same
+# thing -- "consolidate only at the door you are already at". Measured (8 inst.):
+#   radius 1-4  exec 358.2  tard 150.1  F 508.3   <- same-door batching
+#   radius 5    exec 361.6  tard 153.3  F 514.9   <- reaches adjacent doors
+#   radius 9    exec 385.4  tard 185.7  F 571.1   <- reaches two doors away
+#   radius 20   exec 2378   tard 12421           <- never drains, mega-tours
+# Diverting to another door never pays: the detour costs more than the trip saved.
+
+# ATC look-ahead parameter, in units of mean service time.
+ATC_KAPPA = 2.0
 
 AMR_RULES = (
     "earliest_available",
@@ -69,15 +88,21 @@ AMR_RULES = (
     "material_match",
     "earliest_completion",
     "least_loaded",
-    "home_material",
     "random",
 )
 
-HOME_MATERIAL_AMR = {
-    "A": "AMR1",
-    "B": "AMR2",
-    "C": "AMR3",
-}
+# `home_material` (size class -> dedicated robot) was removed in scenario v2: it is
+# incoherent once every AMR carries a rack with all three slot classes, and it was
+# the worst performer in every benchmark (lpt+home_material at n=100: 3281 vs 1176
+# for lpt+material_match), which made the whole rule family look weaker than it is.
+
+
+def _onboard_count(entry) -> int:
+    """Total parcels aboard, accepting {class: int} or {class: [ids]} inventories."""
+    total = 0
+    for v in (entry or {}).values():
+        total += len(v) if isinstance(v, (list, tuple, set)) else int(v or 0)
+    return total
 
 
 @dataclass
@@ -127,7 +152,7 @@ def estimate_assignment(job: Job, amr: str, state: RuleState) -> AssignmentEstim
     material = job.type_
     curr_pos = state.amr_positions[amr]
     avail = state.amr_availabilities[amr]
-    capacity_blocked = state.inventory[amr].get(material, 0) >= AMR_LOAD_CAPACITY
+    capacity_blocked = not rack_can_load(state.inventory[amr], material)
     pickup_location = job_pickup_location(job)
     to_pickup = estimated_travel_time(curr_pos, pickup_location)
     inbound_dock = dock_key_from_value(job.inbound_dock)
@@ -204,15 +229,33 @@ def _job_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: 
     if job_rule == "material_match":
         return (estimate.material_match, estimate.projected_completion, job.idx)
     if job_rule == "milk_run":
-        onboard = sum(state.inventory.get(action.amr, {}).values())
+        onboard = _onboard_count(state.inventory.get(action.amr, {}))
+        has_room = rack_can_load(state.inventory.get(action.amr, {}), job.type_)
         if action.kind == PICKUP:
-            if 0 < onboard < MILK_RUN_MAX_LOAD and estimate.travel_time <= MILK_RUN_RADIUS:
+            if onboard > 0 and has_room and estimate.travel_time <= MILK_RUN_RADIUS:
                 # Continuing a batch: cheapest nearby pickup first.
                 return (0, estimate.travel_time, estimate.projected_completion, job.idx)
             # Starting a fresh trip only when no unload is pending anywhere.
             return (2, estimate.projected_completion, job.duration, job.idx)
         # Deliveries outrank fresh trips so full AMRs drain their batch.
         return (1, estimate.projected_completion, job.duration, job.idx)
+    if job_rule == "edd":
+        # Earliest shipment departure first; deliveries preferred over new pickups
+        # so a nearly complete shipment is finished rather than deferred.
+        priority = 0 if action.kind == UNLOAD else 1
+        return (float(job.deadline), priority, estimate.projected_completion, job.idx)
+    if job_rule == "atc":
+        # Apparent tardiness cost, adapted for transport: urgency decays with slack,
+        # and is amortised over the true cost to serve (handling PLUS travel). The
+        # travel term matters here in a way it does not in classical shop ATC --
+        # without it the index chases short parcels across the floor and thrashes.
+        slack = float(job.deadline) - estimate.projected_completion
+        mean_p = max(1e-6, sum(TYPE_DURATION.values()) / max(1, len(TYPE_DURATION)))
+        urgency = math.exp(-max(0.0, slack) / (ATC_KAPPA * mean_p))
+        cost_to_serve = max(1e-6, job.duration + estimate.travel_time)
+        score = urgency / cost_to_serve
+        priority = 0 if action.kind == UNLOAD else 1
+        return (-score, priority, estimate.projected_completion, job.idx)
     if job_rule == "random":
         return (rng.random(), job.idx)
     raise ValueError(f"Unknown job rule: {job_rule}")
@@ -230,9 +273,6 @@ def _amr_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: 
         return (estimate.projected_completion, estimate.travel_time, action.amr)
     if amr_rule == "least_loaded":
         return (estimate.assigned_count, state.amr_availabilities[action.amr], estimate.projected_completion, action.amr)
-    if amr_rule == "home_material":
-        preferred = HOME_MATERIAL_AMR.get(job.type_)
-        return (0 if action.amr == preferred else 1, estimate.projected_completion, action.amr)
     if amr_rule == "random":
         return (rng.random(), action.amr)
     raise ValueError(f"Unknown AMR rule: {amr_rule}")
@@ -407,9 +447,6 @@ def choose_amr(job: Job, state: RuleState, amr_rule: str, rng: random.Random) ->
                 amr,
             ),
         )
-    elif amr_rule == "home_material":
-        preferred = HOME_MATERIAL_AMR.get(job.type_)
-        chosen = preferred if preferred in estimates else min(AMR_KEYS)
     elif amr_rule == "random":
         chosen = rng.choice(list(AMR_KEYS))
     else:

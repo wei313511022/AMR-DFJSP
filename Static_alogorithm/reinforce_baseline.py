@@ -23,6 +23,25 @@ from dispatching_rules import dispatching_rules as dr
 DEFAULT_BASELINE_RULE = "earliest_completion_job+earliest_completion"
 
 
+def score_solution(
+    individual: Individual,
+    jobs: Sequence[Job],
+    check_collision: bool = True,
+    use_objective: bool = False,
+) -> Tuple[float, int]:
+    """Single scoring entry point for the counterfactual baseline.
+
+    With `use_objective` (scenario v2) the credit assigned to a decision reflects
+    makespan AND shipment tardiness, so the policy is rewarded for closing out
+    departing trailers rather than only for finishing early. Set False to recover
+    the pure-makespan v1 behaviour.
+    """
+    if use_objective:
+        value, invalid, _ = evaluate_objective(individual, jobs, check_collision)
+        return value, invalid
+    return evaluate_makespan(individual, jobs, check_collision)
+
+
 @dataclass(frozen=True)
 class BaselineComparison:
     baseline_individual: Individual
@@ -81,6 +100,46 @@ def evaluate_makespan(
         check_collision=check_collision,
     )
     return max(availability.values()), invalid_count
+
+
+# Scenario v2: the training signal is the scalarised objective of eq. (15),
+#   F = C_max + w_T * sum_g T_g  (+ kappa * nu, charged separately by the caller)
+# Experiments report the terms separately; only the gradient sees the sum.
+TARDINESS_WEIGHT = 1.0
+
+
+def evaluate_objective(
+    individual: Individual,
+    jobs: Sequence[Job],
+    check_collision: bool = True,
+    tardiness_weight: float = None,
+) -> Tuple[float, int, float]:
+    """Return (scalarised objective without the infeasibility term, nu, tardiness)."""
+    w = TARDINESS_WEIGHT if tardiness_weight is None else tardiness_weight
+    completion: Dict[int, float] = {}
+    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
+        individual,
+        list(jobs),
+        need_log=False,
+        check_collision=check_collision,
+        completion_out=completion,
+    )
+    makespan = max(availability.values())
+
+    deadline_of, done_of = {}, {}
+    for job in jobs:
+        sid = getattr(job, "shipment_id", -1)
+        if sid < 0:
+            continue
+        deadline_of[sid] = float(getattr(job, "deadline", 0.0))
+        c = completion.get(job.idx)
+        if c is not None:
+            done_of[sid] = max(done_of.get(sid, 0.0), c)
+
+    tardiness = sum(
+        max(0.0, c_g - deadline_of.get(sid, 0.0)) for sid, c_g in done_of.items()
+    )
+    return makespan + w * tardiness, invalid_count, tardiness
 
 
 def complete_with_dispatch_rule(
@@ -147,6 +206,7 @@ def compute_dispatch_baseline_comparison(
     seed: int = 42,
     check_collision: bool = True,
     invalid_penalty: float = 0.0,
+    use_objective: bool = False,
 ) -> BaselineComparison:
     if baseline_mode not in {"stepwise", "episode"}:
         raise ValueError("baseline_mode must be 'stepwise' or 'episode'")
@@ -160,11 +220,11 @@ def compute_dispatch_baseline_comparison(
         baseline_rule=baseline_rule,
         seed=seed,
     )
-    baseline_makespan, baseline_invalid = evaluate_makespan(
-        full_baseline, jobs, check_collision=check_collision
+    baseline_makespan, baseline_invalid = score_solution(
+        full_baseline, jobs, check_collision=check_collision, use_objective=use_objective
     )
-    sampled_makespan, sampled_invalid = evaluate_makespan(
-        sampled_individual, jobs, check_collision=check_collision
+    sampled_makespan, sampled_invalid = score_solution(
+        sampled_individual, jobs, check_collision=check_collision, use_objective=use_objective
     )
 
     episode_advantage = baseline_makespan - sampled_makespan
@@ -190,8 +250,9 @@ def compute_dispatch_baseline_comparison(
                 baseline_rule=baseline_rule,
                 seed=seed,
             )
-            rule_next_makespan, rule_next_invalid = evaluate_makespan(
-                rule_next_individual, jobs, check_collision=check_collision
+            rule_next_makespan, rule_next_invalid = score_solution(
+                rule_next_individual, jobs, check_collision=check_collision,
+                use_objective=use_objective,
             )
 
             sampled_prefix_assignment = dict(prefix_assignment)
@@ -204,8 +265,9 @@ def compute_dispatch_baseline_comparison(
                 baseline_rule=baseline_rule,
                 seed=seed,
             )
-            sampled_next_makespan, sampled_next_invalid = evaluate_makespan(
-                sampled_next_individual, jobs, check_collision=check_collision
+            sampled_next_makespan, sampled_next_invalid = score_solution(
+                sampled_next_individual, jobs, check_collision=check_collision,
+                use_objective=use_objective,
             )
 
             step_advantages.append(

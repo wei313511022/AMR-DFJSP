@@ -9,6 +9,10 @@ from GA.GA import (
     AMR_KEYS,
     AMR_LOAD_CAPACITY,
     AMR_STARTS,
+    rack_can_load,
+    SIZE_ORDER,
+    SUFFIX_CAP,
+    TOTAL_SLOTS_PER_AMR,
     INBOUND_DOCK_LOCATIONS,
     PICKUP,
     STATIONS,
@@ -226,7 +230,9 @@ def legal_actions(
             continue
 
         for amr_idx, amr in enumerate(AMR_KEYS):
-            if amr_inventory[amr].get(job.type_, 0) >= AMR_LOAD_CAPACITY:
+            # Nested slot rack: a class-s parcel needs a free slot of class s or
+            # larger, so the binding test is over suffix sums, not a per-class cap.
+            if not rack_can_load(amr_inventory[amr], job.type_):
                 continue
             actions.append(
                 OperationAction(

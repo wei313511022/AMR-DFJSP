@@ -60,6 +60,46 @@ SUPPLY_LOCATIONS = {
     "C": INBOUND_DOCK_LOCATIONS["dock3"],
 }
 AMR_LOAD_CAPACITY = 3
+# --- scenario v2: nested slot rack -------------------------------------------
+# Each AMR carries SLOT_CAPACITY[s] slots of size class s. A parcel of class s
+# occupies one slot of class s OR LARGER (downward substitution), so the binding
+# constraints are the suffix sums:  n_C <= 3,  n_B+n_C <= 6,  n_A+n_B+n_C <= 9.
+# Defined here (not in scenario_v2) to avoid a circular import: scenario_v2
+# imports GA, so GA must own the primitive.
+SIZE_ORDER = ("A", "B", "C")                      # smallest -> largest
+# One slot per size class -> suffix caps C<=1, B+C<=2, A+B+C<=3.
+# A 3x3 rack (9 slots) was measured to be well past the useful batch size: at 9
+# slots milk_run reaches makespan 445.7 / tardiness 273.3, at 3 slots 365.3 / 141.2.
+# Over-consolidation delays the first-picked parcel through every later pickup and
+# holds an inbound door across consecutive services, which is the binding resource.
+SLOT_CAPACITY = {"A": 1, "B": 1, "C": 1}
+SUFFIX_CAP = {s: sum(SLOT_CAPACITY[t] for t in SIZE_ORDER[i:])
+              for i, s in enumerate(SIZE_ORDER)}
+TOTAL_SLOTS_PER_AMR = sum(SLOT_CAPACITY.values())
+USE_NESTED_CAPACITY = True   # set False to recover the v1 strict per-class rule
+
+
+def _slot_counts(entry) -> Dict[str, int]:
+    """Normalise an inventory entry: {class: int} or {class: [job ids]}."""
+    out = {}
+    for s in SIZE_ORDER:
+        v = entry.get(s, 0) if entry else 0
+        out[s] = len(v) if isinstance(v, (list, tuple, set)) else int(v or 0)
+    return out
+
+
+def rack_can_load(entry, size_class: str) -> bool:
+    """True iff one more parcel of `size_class` fits the rack."""
+    counts = _slot_counts(entry)
+    counts[size_class] = counts.get(size_class, 0) + 1
+    if not USE_NESTED_CAPACITY:
+        return counts[size_class] <= SLOT_CAPACITY.get(size_class, AMR_LOAD_CAPACITY)
+    for i, s in enumerate(SIZE_ORDER):
+        if sum(counts.get(t, 0) for t in SIZE_ORDER[i:]) > SUFFIX_CAP[s]:
+            return False
+    return True
+
+
 PICKUP = "pickup"
 UNLOAD = "unload"
 WAIT_LINE_DEPTH = 3
@@ -89,11 +129,14 @@ MAX_DEPTH = 100
 @dataclass(frozen=True)
 class Job:
     idx: int
-    type_: str
+    type_: str          # parcel SIZE CLASS (A small, B medium, C large)
     duration: float
     station: str
     inbound_dock: str = "dock1"
     arrival_time: float = 0.0
+    # --- scenario v2: outbound shipment membership and trailer departure time ---
+    shipment_id: int = -1      # -1 = no shipment (v1 instances)
+    deadline: float = 0.0      # D_g; only meaningful when shipment_id >= 0
 
 @dataclass(frozen=True)
 class Operation:
@@ -1101,7 +1144,10 @@ def decode_schedule_tick_by_tick_legacy(individual: Individual, jobs: List[Job],
     return avail, timelines, queue_infos, path_logs, invalid_jobs_count
 
 
-def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = False, init_state: dict = None) -> Tuple[Dict[str, float], List[Tuple], List[Tuple[int, float]], Dict[str, List[Tuple[int, int]]], int]:
+def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = False, init_state: dict = None, completion_out: Optional[Dict[int, float]] = None) -> Tuple[Dict[str, float], List[Tuple], List[Tuple[int, float]], Dict[str, List[Tuple[int, int]]], int]:
+    # `completion_out`, when a dict is supplied, is filled with the DELIVERY
+    # completion time c^delta_j of every parcel actually served. Optional so the
+    # existing 5-tuple return signature stays intact for all current callers.
     job_map = {job.idx: job for job in jobs}
     operations = repair_operation_order(individual.order, jobs)
     timelines: List[Tuple] = []
@@ -1334,7 +1380,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             return
 
         station_pos = STATIONS[job.station]
-        execute_dock_service(
+        _delivery_end = execute_dock_service(
             amr,
             job,
             job.station,
@@ -1350,6 +1396,8 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
             f"Job{job.idx} {job.type_}({int(job.duration)}s)",
         )
         inventory[amr][job.type_].remove(job.idx)
+        if completion_out is not None and _delivery_end is not None:
+            completion_out[job.idx] = float(_delivery_end)
         current_position[amr] = station_pos
         completed.add(key)
 
@@ -1378,7 +1426,7 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         job = job_map[op.job_idx]
         amr = individual.amr_assignment[op.job_idx]
 
-        while inventory_count(inventory, amr, job.type_) >= AMR_LOAD_CAPACITY:
+        while not rack_can_load(inventory[amr], job.type_):
             unload_op = find_pending_unload(amr, operations, completed, inventory, individual.amr_assignment, job_map)
             if unload_op is None:
                 invalid_jobs_count += 1
@@ -1423,8 +1471,52 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
     return availability, timelines, queue_infos, path_logs, invalid_jobs_count
 
 
-def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = True, init_state: dict = None):
-    return decode_schedule(individual, jobs, need_log=need_log, check_collision=check_collision, init_state=init_state)
+def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_log: bool = False, check_collision: bool = True, init_state: dict = None, completion_out: Optional[Dict[int, float]] = None):
+    return decode_schedule(individual, jobs, need_log=need_log, check_collision=check_collision, init_state=init_state, completion_out=completion_out)
+
+
+# --- scenario v2 objective ---------------------------------------------------
+# F = C_max + w_T * sum_g T_g + kappa * nu   (eq. 15 in problem_formulation.tex)
+# Used only as a training signal; experiments report the three terms separately.
+TARDINESS_WEIGHT = 1.0
+INFEASIBILITY_PENALTY = 100.0
+
+
+def evaluate_solution(individual: Individual, jobs: List[Job], check_collision: bool = True,
+                      init_state: dict = None) -> Dict[str, float]:
+    """Full v2 evaluation: makespan, tardiness, late shipments, unroutable count."""
+    completion: Dict[int, float] = {}
+    availability, _, _, _, invalid_count = decode_schedule(
+        individual, jobs, need_log=False, check_collision=check_collision,
+        init_state=init_state, completion_out=completion,
+    )
+    makespan = max(availability.values()) - (init_state["time"] if init_state else 0)
+
+    deadline_of, completion_of_shipment = {}, {}
+    for job in jobs:
+        sid = job.shipment_id
+        if sid < 0:
+            continue
+        deadline_of[sid] = float(job.deadline)
+        c = completion.get(job.idx)
+        if c is not None:
+            completion_of_shipment[sid] = max(completion_of_shipment.get(sid, 0.0), c)
+
+    tardiness, late = 0.0, 0
+    for sid, c_g in completion_of_shipment.items():
+        t = max(0.0, c_g - deadline_of.get(sid, 0.0))
+        tardiness += t
+        late += 1 if t > 0 else 0
+
+    return {
+        "makespan": makespan,
+        "tardiness": tardiness,
+        "late_shipments": float(late),
+        "invalid_jobs": float(invalid_count),
+        "objective": makespan
+                     + TARDINESS_WEIGHT * tardiness
+                     + INFEASIBILITY_PENALTY * invalid_count,
+    }
 
 
 def fitness(individual: Individual, jobs: List[Job], check_collision: bool = False, init_state: dict = None) -> Tuple[float, List[Tuple]]:
@@ -1804,7 +1896,11 @@ def load_dispatch_events(path: Path = DISPATCH_INBOX) -> List[Dict[str, object]]
             duration = float(TYPE_DURATION[type_])
             inbound_dock = dock_key_from_value(raw_job.get("inbound_dock", raw_job.get("dock")))
             arrival_time = float(raw_job.get("arrival_time", 0.0))
-            jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key, inbound_dock=inbound_dock, arrival_time=arrival_time))
+            shipment_id = int(raw_job.get("shipment_id", -1))
+            deadline = float(raw_job.get("deadline", 0.0))
+            jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key,
+                            inbound_dock=inbound_dock, arrival_time=arrival_time,
+                            shipment_id=shipment_id, deadline=deadline))
         if jobs:
             events.append({"index": idx, "dispatch_time": float(data.get("dispatch_time", 0.0)), "jobs": jobs})
     return events

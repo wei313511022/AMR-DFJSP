@@ -1,0 +1,139 @@
+% =========================================================================
+% Section I -- Introduction.
+% Usage: \input{introduction} in main.tex, before \input{related_work}.
+%
+% Positioning: the antagonist is the transport ABSTRACTION, not prior authors.
+% The load-bearing claim is compositional, not merely one of completeness --
+% the omitted error is dominated by service-point queueing, which the
+% assignment decision determines. Without that, the natural response to this
+% paper is "use a better router", which is a different contribution.
+%
+% Numbers are deliberately qualitative here. Insert the measured range only
+% after the contention sweep has been re-run under the current door rows.
+% =========================================================================
+
+\section{Introduction}
+\label{sec:intro}
+
+\IEEEPARstart{F}{leets} of autonomous mobile robots (AMRs) increasingly
+perform the internal transfer of unit loads in transfer halls and terminals:
+freight arriving at a bank of inbound doors is carried across a shared floor
+and consolidated at outbound stations. The operator must decide which robot
+carries which load, and in which order --- an assignment and sequencing
+problem whose quality is not realised on a Gantt chart but on a physical
+floor, where robots contend for exclusive service points and must never
+occupy the same cell at the same instant.
+
+Constructive deep-reinforcement-learning dispatchers have become the
+standard learned approach to the scheduling half of this problem. Beginning
+with L2D~\cite{zhang2020l2d}, such methods encode the disjunctive graph with
+a graph neural network~\cite{xu2019gin}, commit one operation per decision
+epoch, and generalise across instance sizes~\cite{song2023fjsp,%
+smit2024gnnsurvey}. Transport-aware variants are now mature, spanning
+composite operation--machine--vehicle actions over heterogeneous graphs,
+graph isomorphism encoders trained with proximal policy optimisation, and
+transformer encoders with dual-agent decompositions~\cite{moon2024hgs,%
+yuan2026gin,yang2026cosched,matrans2026}, and continuing a line that
+originates with the simultaneous machine-and-vehicle models of Bilge and
+Ulusoy~\cite{bilge1995time,ulusoy1997ga}.
+
+The realised time to transfer a load is the sum of three terms: free-space
+travel, the excess incurred when collision-free routing forces a detour or a
+wait, and the time spent queueing for an exclusive service point. Existing
+formulations may be partitioned by which of the three they retain.
+
+The learned-dispatching line retains only the first, representing vehicle
+motion by a fixed travel-time matrix and treating handover as immediate ---
+an idealisation inherited from the founding simultaneous
+formulations~\cite{bilge1995time,ulusoy1997ga} and largely unexamined since.
+A separate literature on integrated scheduling with conflict-free routing in
+container terminals and flexible manufacturing systems recovers the second,
+planning routes exactly on a guide-path
+network~\cite{zhong2020integrated,li2024hierarchical,miyamoto2016local,%
+nishida2023jit}. The third, however, is discharged by assumption even there:
+loading and unloading are taken to begin the moment a vehicle arrives, so
+that service points impose no queue~\cite{nishida2023jit}. Waiting is
+therefore modelled where vehicles meet in transit and excluded where they
+meet at a server --- which, as we show, is where most of it occurs.
+
+The omission is usually justified as a second-order correction. We show that
+in a dense AMR fleet it is neither second-order nor uniformly distributed.
+On an unobstructed floor --- the configuration least favourable to the
+argument, since free-space distance is there most nearly exact --- the
+omitted terms account for a substantial fraction of realised makespan, and
+that fraction grows monotonically with the ratio of robots to service
+points.
+
+Its composition matters more than its magnitude. Decomposing the gap using
+the executor's own accounting shows that the majority is service-point
+queueing rather than interference in transit, and that the queueing share
+\emph{increases} with density. The distinction determines the appropriate
+response: excess travel is a routing cost, remediable by a stronger path
+planner, whereas queueing at an exclusive server is a scheduling cost, since
+which robot is dispatched to which door, and in what order, fixes who waits
+behind whom. The dominant error in the standard abstraction therefore lies
+in precisely the quantity an assignment policy governs.
+
+Correcting the training signal is not merely a matter of substituting a more
+accurate simulator. Because the routing of an early leg depends on
+reservations created by legs not yet committed, the makespan is defined only
+on \emph{complete} solutions, and no consistent evaluation of a partial
+sequence exists. The dense lower-bound-difference rewards that drive
+constructive shop dispatchers~\cite{zhang2020l2d} are therefore unavailable
+in principle, and credit must instead be assigned by rollout --- which we
+ground in the executor itself.
+
+Multi-agent path finding and its lifelong pickup-and-delivery variants form
+a third group, computing collision-free space--time trajectories for online
+task streams in warehouse grids~\cite{stern2019mapf,ma2017lifelong}, more
+recently with learned components inside the planner~\cite{rlrhpp2026}. These
+methods, including capacitated variants, model transport faithfully but take
+the assignment as given. Within that setting Noda~\cite{noda2026deferral}
+observes that immediate commitment can degrade service through congestion
+and reservation interactions, and defers assignment by a tuned threshold: an
+online heuristic that exploits the interaction without quantifying it. The
+integrated methods enforce routing feasibility exactly but re-solve each
+instance by search, learning no reusable policy. What remains unaddressed is
+a constructive scheduling policy whose learning signal is the makespan
+realised under the router that will execute it.
+
+We claim no architectural novelty. The policy is a graph encoder with a
+composite operation--robot action, as in~\cite{song2023fjsp,moon2024hgs,%
+yuan2026gin}; our contention is that in this setting the training signal,
+not the encoder, determines performance, and we test that claim directly.
+The contributions are as follows.
+
+\begin{itemize}
+\item A formulation of AMR transfer with capacitated consolidation and
+  exclusive service points as simulation-based optimisation against a
+  collision-aware executor, together with an \emph{execution penalty}
+  (Definition~\ref{def:penalty}) defined against the idealised transport
+  model that the learned-dispatching literature assumes
+  (Section~\ref{sec:problem}).
+\item An empirical characterisation of that penalty: its magnitude, its
+  monotone growth in the contention ratio $\eta$, and its decomposition into
+  queueing and routing components, establishing that the queueing term
+  dominates and that its share increases with density
+  (Section~\ref{sec:experiments}).
+\item An execution-grounded training scheme in which the advantage of each
+  committed decision is obtained by completing the prefix under a
+  dispatching rule and executing both variants under the collision-aware
+  executor, together with a surrogate transition model calibrated offline
+  against that executor (Sections~\ref{sec:calibration},
+  \ref{sec:training}).
+\item An evaluation against tuned dispatching rules, a consolidation
+  baseline and a metaheuristic at matched computational budget; and a
+  factorial ablation over training signal (idealised versus executor-%
+  grounded) and state observability (with and without congestion features),
+  separating what the policy is shown from what it is rewarded for
+  (Section~\ref{sec:experiments}).
+\end{itemize}
+
+The remainder of the paper is organised as follows.
+Section~\ref{sec:related} reviews learned dispatching, multi-agent path
+finding, and integrated scheduling with conflict-free routing.
+Section~\ref{sec:problem} states the problem and defines the execution
+penalty. Sections~\ref{sec:architecture}--\ref{sec:training} describe the
+policy, its calibrated surrogate, and the training scheme.
+Section~\ref{sec:experiments} reports results, and
+Section~\ref{sec:conclusion} concludes.
