@@ -1,139 +1,91 @@
 % =========================================================================
 % Section I -- Introduction.
-% Usage: \input{introduction} in main.tex, before \input{related_work}.
-%
-% Positioning: the antagonist is the transport ABSTRACTION, not prior authors.
-% The load-bearing claim is compositional, not merely one of completeness --
-% the omitted error is dominated by service-point queueing, which the
-% assignment decision determines. Without that, the natural response to this
-% paper is "use a better router", which is a different contribution.
-%
-% Numbers are deliberately qualitative here. Insert the measured range only
-% after the contention sweep has been re-run under the current door rows.
+% Claims are deliberately scoped to the cited formulations and to the
+% controlled instance family. Insert numerical findings only after the final
+% experimental protocol has been frozen and executed.
 % =========================================================================
 
 \section{Introduction}
 \label{sec:intro}
 
-\IEEEPARstart{F}{leets} of autonomous mobile robots (AMRs) increasingly
-perform the internal transfer of unit loads in transfer halls and terminals:
-freight arriving at a bank of inbound doors is carried across a shared floor
-and consolidated at outbound stations. The operator must decide which robot
-carries which load, and in which order --- an assignment and sequencing
-problem whose quality is not realised on a Gantt chart but on a physical
-floor, where robots contend for exclusive service points and must never
-occupy the same cell at the same instant.
+Fleets of autonomous mobile robots (AMRs) increasingly perform internal
+transfers in factories and terminals. In the setting studied here, parcels
+arriving at inbound doors must be consolidated on capacitated robots and
+delivered to outbound stations across a shared floor. The scheduler selects
+the carrier and order of each pickup and delivery. Its decisions are executed
+in a physical system in which robots require collision-free trajectories and
+loading points are exclusive servers with finite waiting space.
 
-Constructive deep-reinforcement-learning dispatchers have become the
-standard learned approach to the scheduling half of this problem. Beginning
-with L2D~\cite{zhang2020l2d}, such methods encode the disjunctive graph with
-a graph neural network~\cite{xu2019gin}, commit one operation per decision
-epoch, and generalise across instance sizes~\cite{song2023fjsp,%
-smit2024gnnsurvey}. Transport-aware variants are now mature, spanning
-composite operation--machine--vehicle actions over heterogeneous graphs,
-graph isomorphism encoders trained with proximal policy optimisation, and
-transformer encoders with dual-agent decompositions~\cite{moon2024hgs,%
-yuan2026gin,yang2026cosched,matrans2026}, and continuing a line that
-originates with the simultaneous machine-and-vehicle models of Bilge and
-Ulusoy~\cite{bilge1995time,ulusoy1997ga}.
+Learned constructive dispatchers offer fast inference and generalisation
+across scheduling instances. Beginning with L2D~\cite{zhang2020l2d}, this line
+encodes the evolving schedule with a graph neural network, commits one action
+per decision epoch, and trains from schedule cost. Flexible-job-shop variants
+extend the action to operation--machine and operation--machine--vehicle
+choices~\cite{song2023fjsp,moon2024hgs,yuan2026gin,matrans2026}. In the cited
+transport-aware formulations, vehicle motion is represented primarily by
+fixed pairwise travel times. Such a model is efficient, but it omits delays
+created by route reservations and by non-preemptive service at shared pickup
+and delivery points.
 
-The realised time to transfer a load is the sum of three terms: free-space
-travel, the excess incurred when collision-free routing forces a detour or a
-wait, and the time spent queueing for an exclusive service point. Existing
-formulations may be partitioned by which of the three they retain.
+Assignment and routing have also been coupled directly. Integrated MAPD
+informs task assignment with routed delivery cost, including for capacitated
+robots~\cite{chen2021integrated}; reinforcement-learning frameworks place a
+task-assignment policy above a conflict-free path generator or jointly learn
+assignment and path-planning agents~\cite{li2024hierarchical,
+wang2026collaborative}. These studies establish that routing-aware assignment
+is not itself new. Their primary settings are online task allocation or
+per-instance optimisation. The question addressed here is narrower: how much
+does an idealised transport model distort the value and ordering of
+\emph{complete offline schedules} when capacity, non-zero service, finite
+waiting space, and collision-aware execution act together?
 
-The learned-dispatching line retains only the first, representing vehicle
-motion by a fixed travel-time matrix and treating handover as immediate ---
-an idealisation inherited from the founding simultaneous
-formulations~\cite{bilge1995time,ulusoy1997ga} and largely unexamined since.
-A separate literature on integrated scheduling with conflict-free routing in
-container terminals and flexible manufacturing systems recovers the second,
-planning routes exactly on a guide-path
-network~\cite{zhong2020integrated,li2024hierarchical,miyamoto2016local,%
-nishida2023jit}. The third, however, is discharged by assumption even there:
-loading and unloading are taken to begin the moment a vehicle arrives, so
-that service points impose no queue~\cite{nishida2023jit}. Waiting is
-therefore modelled where vehicles meet in transit and excluded where they
-meet at a server --- which, as we show, is where most of it occurs.
+We study this question through a paired comparison. For the same assignment
+and operation sequence, an idealised decode charges free-space travel and
+starts service on arrival, whereas the deployment executor plans
+space--time paths and enforces exclusive service. The resulting
+\emph{execution penalty} measures value error without conflating it with a
+change in schedule. More importantly, we compare the orderings induced by the
+two evaluators: if they disagree, idealised training is not merely
+miscalibrated but can prefer the wrong decision. Queueing time and routing
+excess are reported as operational diagnostics rather than asserted to form
+an additive causal decomposition of makespan.
 
-The omission is usually justified as a second-order correction. We show that
-in a dense AMR fleet it is neither second-order nor uniformly distributed.
-On an unobstructed floor --- the configuration least favourable to the
-argument, since free-space distance is there most nearly exact --- the
-omitted terms account for a substantial fraction of realised makespan, and
-that fraction grows monotonically with the ratio of robots to service
-points.
+Executor-relative learning introduces a credit-assignment problem. A complete
+schedule has an unambiguous executed makespan, but a partial sequence admits
+many completions and therefore has no unique executor-consistent incremental
+cost. Dense lower-bound differences used in constructive shop scheduling are
+available for the idealised model, not for the terminal objective considered
+here. A terminal return remains valid but provides weak action-level credit.
+We therefore complete each relevant prefix under a fixed dispatching rule and
+evaluate paired policy and baseline completions with the unchanged deployment
+executor. A calibrated surrogate is used only to construct state features at
+the intermediate decision epochs; it does not replace the executor in the
+terminal comparison.
 
-Its composition matters more than its magnitude. Decomposing the gap using
-the executor's own accounting shows that the majority is service-point
-queueing rather than interference in transit, and that the queueing share
-\emph{increases} with density. The distinction determines the appropriate
-response: excess travel is a routing cost, remediable by a stronger path
-planner, whereas queueing at an exclusive server is a scheduling cost, since
-which robot is dispatched to which door, and in what order, fixes who waits
-behind whom. The dominant error in the standard abstraction therefore lies
-in precisely the quantity an assignment policy governs.
-
-Correcting the training signal is not merely a matter of substituting a more
-accurate simulator. Because the routing of an early leg depends on
-reservations created by legs not yet committed, the makespan is defined only
-on \emph{complete} solutions, and no consistent evaluation of a partial
-sequence exists. The dense lower-bound-difference rewards that drive
-constructive shop dispatchers~\cite{zhang2020l2d} are therefore unavailable
-in principle, and credit must instead be assigned by rollout --- which we
-ground in the executor itself.
-
-Multi-agent path finding and its lifelong pickup-and-delivery variants form
-a third group, computing collision-free space--time trajectories for online
-task streams in warehouse grids~\cite{stern2019mapf,ma2017lifelong}, more
-recently with learned components inside the planner~\cite{rlrhpp2026}. These
-methods, including capacitated variants, model transport faithfully but take
-the assignment as given. Within that setting Noda~\cite{noda2026deferral}
-observes that immediate commitment can degrade service through congestion
-and reservation interactions, and defers assignment by a tuned threshold: an
-online heuristic that exploits the interaction without quantifying it. The
-integrated methods enforce routing feasibility exactly but re-solve each
-instance by search, learning no reusable policy. What remains unaddressed is
-a constructive scheduling policy whose learning signal is the makespan
-realised under the router that will execute it.
-
-We claim no architectural novelty. The policy is a graph encoder with a
-composite operation--robot action, as in~\cite{song2023fjsp,moon2024hgs,%
-yuan2026gin}; our contention is that in this setting the training signal,
-not the encoder, determines performance, and we test that claim directly.
-The contributions are as follows.
+We claim no novelty for the graph encoder, composite action, or the general
+idea of routing-aware reward. The contribution lies in measuring the
+decision error of the idealised abstraction and in attributing
+executor-relative terminal performance to individual commitments in this
+offline, service-constrained setting. Specifically, the paper contributes:
 
 \begin{itemize}
-\item A formulation of AMR transfer with capacitated consolidation and
-  exclusive service points as simulation-based optimisation against a
-  collision-aware executor, together with an \emph{execution penalty}
-  (Definition~\ref{def:penalty}) defined against the idealised transport
-  model that the learned-dispatching literature assumes
-  (Section~\ref{sec:problem}).
-\item An empirical characterisation of that penalty: its magnitude, its
-  monotone growth in the contention ratio $\eta$, and its decomposition into
-  queueing and routing components, establishing that the queueing term
-  dominates and that its share increases with density
-  (Section~\ref{sec:experiments}).
-\item An execution-grounded training scheme in which the advantage of each
-  committed decision is obtained by completing the prefix under a
-  dispatching rule and executing both variants under the collision-aware
-  executor, together with a surrogate transition model calibrated offline
-  against that executor (Sections~\ref{sec:calibration},
-  \ref{sec:training}).
-\item An evaluation against tuned dispatching rules, a consolidation
-  baseline and a metaheuristic at matched computational budget; and a
-  factorial ablation over training signal (idealised versus executor-%
-  grounded) and state observability (with and without congestion features),
-  separating what the policy is shown from what it is rewarded for
-  (Section~\ref{sec:experiments}).
+\item A formulation of offline capacitated AMR transfer with class-substitutable
+  rack space, exclusive finite-waiting service points, and a fixed
+  collision-aware executor, together with a paired execution-penalty metric.
+\item An evaluation protocol for both value error and decision error, using
+  makespan penalty, schedule-rank correlation, routability, and separately
+  recorded queueing and routing delays over controlled fleet-density sweeps.
+\item A paired prefix-conditioned rollout estimator in which policy and
+  baseline completions are evaluated under the same deployment executor,
+  with a calibrated surrogate supplying intermediate state features.
+\item A factorial evaluation that separates training signal (idealised or
+  executor-relative) from state observability (without or with congestion
+  features), together with comparisons at matched computational budget.
 \end{itemize}
 
-The remainder of the paper is organised as follows.
-Section~\ref{sec:related} reviews learned dispatching, multi-agent path
-finding, and integrated scheduling with conflict-free routing.
-Section~\ref{sec:problem} states the problem and defines the execution
-penalty. Sections~\ref{sec:architecture}--\ref{sec:training} describe the
-policy, its calibrated surrogate, and the training scheme.
-Section~\ref{sec:experiments} reports results, and
-Section~\ref{sec:conclusion} concludes.
+Section~\ref{sec:related} positions the work relative to learned scheduling,
+integrated task and path planning, and terminal-reward credit assignment.
+Section~\ref{sec:problem} defines the problem and evaluation measures.
+Sections~\ref{sec:architecture}--\ref{sec:training} present the policy,
+surrogate, and training estimator; Section~\ref{sec:experiments} reports the
+evaluation; and Section~\ref{sec:conclusion} concludes.

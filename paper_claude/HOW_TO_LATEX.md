@@ -1,8 +1,7 @@
 # LaTeX, from zero
 
-This folder is the working source for an anonymous IEEE RA-L initial submission.
-Compile after every substantive edit and resolve the first reported error before
-continuing.
+Everything here has been compiled and verified. If something breaks, it is almost
+certainly one of the four things in "When it breaks" at the bottom.
 
 ---
 
@@ -34,11 +33,9 @@ the fly = Yes". Then install **TeXstudio** (texstudio.org) as the editor.
 the browser, compiles for you. Upload the `paper/` folder as a project. If you have any
 doubt, start here — you can move to a local install later.
 
-RA-L initial submissions use `ieeeconf.cls`, not the final journal layout. Download
-the current `ieeeconf.zip` pack from the official RA-L Information for Authors page
-and upload the class file with the project if your TeX installation does not provide
-it. The document class in `main.tex` follows the required initial-submission line:
-`\documentclass[letterpaper,10pt,conference]{ieeeconf}`.
+You also need **IEEEtran.cls**, the IEEE format file. MiKTeX and full TeX Live already
+have it. Overleaf has it. If you get `File 'IEEEtran.cls' not found`, download
+`IEEEtran.zip` from ctan.org/pkg/ieeetran and put `IEEEtran.cls` next to `main.tex`.
 
 ---
 
@@ -47,11 +44,8 @@ it. The document class in `main.tex` follows the required initial-submission lin
 ```
 paper/
   main.tex                  <- the master file; you compile THIS one
-  introduction.tex          <- Section I
-  related_work.tex          <- Section II
-  problem_formulation.tex   <- Section III
-  references.bib            <- bibliography database
-  fig_layout.pdf            <- vector layout figure
+  problem_formulation.tex   <- Section III, written and verified
+  references.bib            <- your 20 citations
   HOW_TO_LATEX.md           <- this file
 ```
 
@@ -188,11 +182,12 @@ Your paper is two narrow columns, which causes the one problem you'll hit repeat
 **things that are too wide.**
 
 - A wide table or figure: use `table*` / `figure*` instead of `table` / `figure`. These
-  span both columns but can normally appear only at the top of a page.
+  span both columns but can only appear at the top of a page. Your notation table
+  already uses `table*`.
 - A wide equation: split it. I did this twice in your formulation — see `eq:ideal`,
   where I introduced $\tilde{C}_k$ as an intermediate so the line fits.
-- The warning is `Overfull \hbox (34pt too wide)`. Inspect every overfull box in the
-  rendered PDF; even a small excess can be visible in a narrow IEEE column.
+- The warning is `Overfull \hbox (34pt too wide)`. Under about 10pt you can ignore it;
+  above that, something visibly pokes into the margin.
 
 ---
 
@@ -224,16 +219,19 @@ If the build gets stuck in a strange state, delete the junk files (`.aux`, `.log
 
 ## 8. What is already done and what is not
 
-Written and revised: introduction, related work, and problem formulation. The abstract
-and conclusion are provisional and contain comments marking where measured results
-must be inserted.
+Verified compiling: `main.tex` + `problem_formulation.tex` + `references.bib`, producing
+a 5-page PDF with the bibliography resolving and no undefined references.
 
-Not written: architecture, calibration, training, and experiments. `main.tex` has
-commented-out `\input` lines and temporary stub labels so forward references resolve
-while drafting. **Delete each stub label when its real section is added**, otherwise
-LaTeX will report a duplicate label and may link to the wrong location.
+Still placeholders in `main.tex`: abstract, introduction, related work, conclusion. Each
+is marked `% TODO` with a note on what it needs.
 
-Before submission, confirm all of the following: the paper is anonymous; the PDF is no
-more than six pages unless extra-page charges are intended; every result claim has a
-number and uncertainty; all citations resolve; no `TODO`, placeholder, author identity,
-or `VERIFY` note remains; and PaperCept's PDF checker accepts the file.
+Not written: architecture, calibration, training, experiments. `main.tex` has
+commented-out `\input` lines ready for them, and a block of stub `\label`s near the
+bottom so the forward references from Section III resolve to something instead of
+printing `??`. **Delete each stub label as you write the real section**, otherwise you
+will have two labels with the same name and the references will point to the wrong
+place.
+
+One correction carried forward: the old related-work text claimed the MAPD literature
+lacks capacity and service times. That is false — capacitated MAPD and sortation-centre
+station queueing both exist. The note in `main.tex` says what to claim instead.

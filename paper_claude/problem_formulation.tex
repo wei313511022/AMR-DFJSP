@@ -1,0 +1,391 @@
+% =========================================================================
+% Problem Formulation -- scenario v3 (RA-L register).
+% Capacitated multi-robot pickup and delivery with exclusive service points,
+% evaluated against a collision-aware executor.
+%
+% Usage: \input{problem_formulation} inside an IEEEtran document.
+% Preamble requires:
+%   \usepackage{amsmath,amssymb,bm}
+%   \usepackage{booktabs,array,multirow,graphicx}
+%   \newtheorem{definition}{Definition}
+%   \newtheorem{proposition}{Proposition}
+%   \newtheorem{remark}{Remark}
+%   \newtheorem{assumption}{Assumption}
+%
+% Notation note: the admissible-action set is \mathcal{A}(s_t); the execution
+% penalty is \Lambda. These were previously both \Lambda.
+% =========================================================================
+
+\section{Problem Formulation}
+\label{sec:problem}
+
+\begin{table*}[t]
+\caption{Notation}
+\label{tab:notation}
+\centering
+\footnotesize
+\begin{tabular}{@{}l p{0.29\textwidth} @{\qquad} l p{0.29\textwidth}@{}}
+\toprule
+Symbol & Definition & Symbol & Definition \\
+\midrule
+\multicolumn{2}{@{}l}{\itshape Facility and fleet} &
+\multicolumn{2}{@{}l}{\itshape Execution and evaluation} \\
+$\mathcal{W}$ & four-connected unit grid workspace &
+  $\Phi$ & collision-aware executor, \eqref{eq:executor} \\
+$\Delta(u,v)$ & Manhattan distance on $\mathcal{W}$ &
+  $\tilde{\Phi},\ \tilde{C}$ & idealised transport model; its makespan \\
+$\mathcal{D}^{\mathrm{in}},\mathcal{D}^{\mathrm{out}},\mathcal{D}$ & inbound doors; outbound stations; union &
+  $C_{\max}$ & executed makespan \\
+$\mathcal{M},\ m$ & AMR fleet; fleet size &
+  $\nu$ & unroutable parcels \\
+$W_d$ & waiting cells adjacent to $d\in\mathcal{D}$ &
+  $\Lambda,\Lambda_{\mathrm{q}},\Lambda_{\mathrm{r}}$ & execution penalty; queueing / routing parts \\
+$b_k$ & charging bay of AMR $k$ &
+  $\kappa$ & infeasibility weight \\
+$\eta=m/|\mathcal{D}^{\mathrm{in}}|$ & contention ratio &
+  \multicolumn{2}{@{}l}{\itshape Decision process} \\
+\multicolumn{2}{@{}l}{\itshape Parcels and rack} &
+  $s_t,\ a_t$ & state; action at epoch $t$ \\
+$\mathcal{J},\ n$ & parcel set; cardinality &
+  $\omega\in\{\textsc{pick},\textsc{del}\}$ & operation type \\
+$\mathcal{S}=\{A,B,C\}$ & size classes, $A\prec B\prec C$ &
+  $\mathcal{A}(s_t)$ & admissible-action set \\
+$\sigma_j,\ p_j=p(\sigma_j)$ & size class; service duration of $j$ &
+  $\hat{\Psi}$ & calibrated surrogate transition model \\
+$o_j,\ d_j$ & inbound door; outbound station of $j$ &
+  $\pi_\theta$ & policy with parameters $\theta$ \\
+$Q_s,\ N^k_s(t)$ & rack bays of class $s$; class-$s$ load of $k$ &
+  $\mathcal{E}_d$ & committed service events at $d$ \\
+$\bm{a},\ \pi$ & assignment vector; operation sequence &
+  $\bm{x}^{A}_k,\bm{x}^{J}_j$ & AMR / parcel feature vectors \\
+$\rho_j,\ \delta_j$ & pickup and delivery operation of $j$ & & \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{fig_layout}
+  \caption{Instance family used throughout. A $20\times19$ four-connected grid
+  carries five inbound doors on one wall and five outbound stations opposite,
+  on rows $y\in\{2,6,10,14,18\}$; the floor is otherwise unobstructed. Shaded
+  cells are the bounded waiting sets $W_d$, which occupy the two rows adjacent
+  to each service point and extend four cells along the wall. The one-cell
+  inset from each boundary is deliberate: a door on row $1$ or $19$ would lose
+  one waiting row to the grid edge and hold half the queue capacity of the
+  others, making the servers non-exchangeable for reasons extraneous to the
+  scheduling problem. Charging bays form $2\times2$ pods at $x\in\{4,5\}$, one
+  beside each door row, clearing $\bigcup_d W_d$ by one cell and leaving the
+  centre lane free; Assumption~(A6) explains why this placement is a
+  constraint rather than a preference. The dashed arrow shows one parcel's
+  operation pair $\rho_j\!\rightarrow\!\delta_j$. At the headline fleet
+  $m=16$ the contention ratio is $\eta=3.2$.}
+  \label{fig:layout}
+\end{figure}
+
+\subsection{System Model}
+\label{sec:system}
+
+A fleet of autonomous mobile robots (AMRs) transfers unit loads across an
+open transfer hall; Fig.~\ref{fig:layout} shows the instance family. The floor is a four-connected unit grid $\mathcal{W}$
+carrying inbound doors $\mathcal{D}^{\mathrm{in}}$ on one wall and outbound
+stations $\mathcal{D}^{\mathrm{out}}$ on the opposite wall; we write
+$\mathcal{D}=\mathcal{D}^{\mathrm{in}}\cup\mathcal{D}^{\mathrm{out}}$. The
+hall holds no storage and contains no static obstacles. AMRs traverse one
+cell per unit time, so free-space travel between cells $u,v$ costs
+$\Delta(u,v)$.
+
+Each service point $d\in\mathcal{D}$ is an exclusive single server with
+non-preemptive service. An AMR arriving at an occupied point occupies one of
+a bounded set $W_d$ of adjacent waiting cells, and holds at an upstream cell
+when $W_d$ is saturated. We require $|W_d|=w$ for all $d\in\mathcal{D}$, so
+that service points are exchangeable up to location: a server with reduced
+queue capacity would attract shorter queues for a reason extraneous to the
+scheduling decision, confounding any measurement of how assignment governs
+waiting. Since the floor is unobstructed, contention arises solely from the
+fleet-to-server ratio
+\begin{equation}
+\eta \;=\; m \,/\, |\mathcal{D}^{\mathrm{in}}| ,
+\label{eq:eta}
+\end{equation}
+which we use throughout as the density parameter of the instance family.
+
+Each AMR carries a compartmented rack with $Q_s$ bays of size class
+$s\in\mathcal{S}=\{A,B,C\}$, ordered by physical size $A\prec B\prec C$. A
+class-$s$ parcel occupies one bay of class $s$ or larger; substitution is
+downward only. With $N^k_s(t)$ denoting the class-$s$ parcels aboard AMR $k$
+at time $t$, the rack admits one constraint per class threshold,
+\begin{equation}
+\sum_{s \succeq \varsigma} N^k_s(t)
+\;\le\;
+\sum_{s \succeq \varsigma} Q_s,
+\qquad \forall\, k\in\mathcal{M},\ \varsigma\in\mathcal{S},\ t\ge 0 .
+\label{eq:nested}
+\end{equation}
+For the unit rack $Q_A=Q_B=Q_C=1$ used here, \eqref{eq:nested} reduces to
+$N_C\le1$, $N_B+N_C\le2$, $N_A+N_B+N_C\le3$. The nested structure couples
+consolidation decisions across classes: assigning the class-$C$ bay to a
+smaller parcel is admissible but forecloses the only bay a class-$C$ parcel
+can occupy.
+
+Parcel $j\in\mathcal{J}=\{1,\dots,n\}$ has size class $\sigma_j$, inbound
+door $o_j$ and outbound station $d_j$, with $(o_j,d_j)$ drawn independently
+of $\sigma_j$. Handling $j$ occupies a service point for $p_j=p(\sigma_j)$,
+identical at both ends. Parcel $j$ thus comprises an ordered operation pair,
+a pickup $\rho_j$ at $o_j$ and a delivery $\delta_j$ at $d_j$, executed by a
+single AMR; transshipment is not permitted. All parcels are available at
+$t=0$.
+
+Each AMR $k$ has a dedicated bay $b_k\in\mathcal{W}$ and returns to it upon
+completing its assigned work.
+
+\subsection{Solution Encoding and Feasibility}
+\label{sec:formal}
+
+A solution is a pair $(\bm{a},\pi)$, where
+$\bm{a}=(a_1,\dots,a_n)\in\mathcal{M}^{n}$ assigns parcels to AMRs and $\pi$
+is a total order on the $2n$ operations
+$\{\rho_j,\delta_j\}_{j\in\mathcal{J}}$ specifying the sequence of
+commitment. Let $s^{\rho}_j,c^{\rho}_j$ and $s^{\delta}_j,c^{\delta}_j$
+denote service start and completion times. A feasible execution satisfies
+\begin{align}
+c^{\rho}_j &= s^{\rho}_j + p_j, \ \ c^{\delta}_j = s^{\delta}_j + p_j,
+&& \forall j, \label{eq:nonpreempt}\\
+s^{\delta}_j &\ge c^{\rho}_j, && \forall j, \label{eq:precedence}\\
+[s_e,c_e) \cap [s_{e'},c_{e'}) &= \emptyset, && \forall e\ne e',
+\label{eq:exclusive}
+\end{align}
+for every service point $d\in\mathcal{D}$, where $e,e'$ range over the
+service events committed at $d$;
+together with \eqref{eq:nested}, and, for operations $u\prec v$ consecutive
+on AMR $k$,
+\begin{equation}
+s_v \;\ge\; c_u + t_k\big(\ell(u),\ell(v)\big),
+\qquad t_k(\cdot,\cdot)\ \ge\ \Delta(\cdot,\cdot),
+\label{eq:travel}
+\end{equation}
+where $\ell(\cdot)$ denotes operation location and $t_k$ the realised travel
+time, which exceeds free-space distance under collision avoidance, queue
+detours, and door-clearing manoeuvres.
+
+\subsection{Execution Semantics and Objective}
+\label{sec:execution}
+
+The quantities $t_k$ and the waiting times implied by \eqref{eq:exclusive}
+are not problem data; they are generated by an executor $\Phi$ that routes
+each leg by space--time $\mathrm{A}^{*}$ against a shared reservation table
+admitting at most one AMR per cell per time step, manages the queues $W_d$,
+and inserts upstream holds under saturation. Prioritised planning of this
+form is incomplete, so $\Phi$ is a partial map; we extend it to a total map
+by reporting the number $\nu$ of parcels for which no conflict-free routing
+was found:
+\begin{equation}
+\Phi:\ (\bm{a},\pi)\ \longmapsto\ \big(C_{\max},\ \{c^{\delta}_j\},\ \nu\big).
+\label{eq:executor}
+\end{equation}
+
+\begin{remark}[Executor-relative feasibility]
+\label{rem:relative}
+A schedule with $\nu>0$ under $\Phi$ may admit a conflict-free routing under
+a complete planner such as conflict-based search. Feasibility as used here is
+therefore defined relative to a fixed executor, which we adopt so that the
+scheduler is optimised against the planner with which it is deployed. We
+report $\nu$ with every result and exclude runs with $\nu>0$ from makespan
+statistics, since the executor charges a constant penalty per unroutable
+parcel rather than an elapsed time.
+\end{remark}
+
+The problem is a simulation-based optimisation over a discrete space:
+\begin{equation}
+(\bm{a}^{*},\pi^{*}) \;=\;
+\arg\min_{(\bm{a},\pi)}\; C_{\max}\big(\Phi(\bm{a},\pi)\big) + \kappa\,\nu ,
+\label{eq:objective}
+\end{equation}
+with $C_{\max}=\max_{k\in\mathcal{M}}F_k$ and $F_k$ the completion time of
+AMR $k$ including its return to $b_k$. The term $\kappa\nu$ acts only as a
+training signal; $C_{\max}$ and $\nu$ are reported separately.
+
+Problem \eqref{eq:objective} contains the capacitated pickup-and-delivery
+problem and parallel-machine scheduling with sequence-dependent setups as
+special cases, and is therefore NP-hard. Evaluating a single candidate
+requires solving a multi-agent path-finding instance.
+
+\subsection{Idealised Transport Model and Execution Penalty}
+\label{sec:penalty}
+
+Learned constructive dispatchers for shop scheduling with transport
+represent vehicle motion by a fixed travel-time matrix and treat handover as
+instantaneous and uncontended. We state this abstraction explicitly, since
+the discrepancy between it and $\Phi$ is the quantity this paper measures.
+
+\begin{definition}[Idealised transport model]
+\label{def:ideal}
+Let $\pi^{k}=(u^{k}_{1},\dots,u^{k}_{n_k})$ be the subsequence of $\pi$
+assigned to AMR $k$, and set $\ell(u^{k}_{0})=b_k$. The model
+$\tilde{\Phi}$ advances each AMR independently, charging free-space distance
+for travel and starting each service on arrival, giving
+\begin{equation}
+\tilde{C}_k = \sum_{i=1}^{n_k} \big(\Delta^{k}_{i} + p_{u^{k}_{i}}\big)
+\;+\; \Delta\big(\ell(u^{k}_{n_k}),b_k\big),
+\quad
+\tilde{C} = \max_{k} \tilde{C}_k,
+\label{eq:ideal}
+\end{equation}
+where $\Delta^{k}_{i}=\Delta(\ell(u^{k}_{i-1}),\ell(u^{k}_{i}))$ is the
+free-space travel of leg $i$.
+Neither service-point exclusivity \eqref{eq:exclusive} nor inter-robot
+interference is represented in $\tilde{\Phi}$.
+\end{definition}
+
+\begin{definition}[Execution penalty]
+\label{def:penalty}
+For a solution $(\bm{a},\pi)$ with $\nu=0$,
+\begin{equation}
+\Lambda(\bm{a},\pi) \;=\;
+\frac{C_{\max}\big(\Phi(\bm{a},\pi)\big) - \tilde{C}(\bm{a},\pi)}
+     {\tilde{C}(\bm{a},\pi)} .
+\label{eq:penalty}
+\end{equation}
+\end{definition}
+
+Since $\Phi$ and $\tilde{\Phi}$ are applied to the same $(\bm{a},\pi)$,
+\eqref{eq:penalty} is a paired statistic isolating the cost of physical
+execution from schedule quality. Using the executor's own time accounting,
+$\Lambda$ separates into a queueing component $\Lambda_{\mathrm{q}}$,
+aggregating occupancy of the waiting cells $W_d$ and upstream holds, and a
+routing component $\Lambda_{\mathrm{r}}$, the excess of realised travel over
+free-space distance:
+\begin{equation}
+\Lambda \;=\; \Lambda_{\mathrm{q}} + \Lambda_{\mathrm{r}} .
+\label{eq:decomp}
+\end{equation}
+
+\begin{remark}[Choice of comparator]
+\label{rem:comparator}
+Comparing $\Phi$ against a collision-free decode that retains
+\eqref{eq:exclusive} yields $\Lambda_{\mathrm{r}}$ alone, since queueing is
+then present in both terms. As the abstraction under examination omits
+service-point contention as well as interference, $\tilde{\Phi}$ of
+Definition~\ref{def:ideal} is the appropriate comparator.
+\end{remark}
+
+The decomposition \eqref{eq:decomp} is operationally significant:
+$\Lambda_{\mathrm{r}}$ is determined by the path planner, whereas
+$\Lambda_{\mathrm{q}}$ is determined by the assignment and sequencing
+decision, which fixes the order in which AMRs contend for each server.
+Section~\ref{sec:experiments} reports both as functions of $\eta$.
+
+\subsection{Sequential Decision Process}
+\label{sec:mdp}
+
+We construct $(\bm{a},\pi)$ over $2n$ decision epochs, one per committed
+operation. The state at epoch $t$ is
+\begin{equation}
+s_t=\big(\{\bm{x}^{A}_{k}\},\ \{\bm{x}^{J}_{j}\},\ \{\mathcal{E}_d\},\ \pi_{1:t}\big),
+\label{eq:state}
+\end{equation}
+comprising per-AMR features (position, next-available time, per-class rack
+occupancy), per-parcel features (status, carrier, size class), the committed
+service events $\mathcal{E}_d$ at each server, and the committed prefix
+$\pi_{1:t}$. An action is a triple
+\begin{equation}
+a_t=(\omega,k,j)\in\{\textsc{pick},\textsc{del}\}\times\mathcal{M}\times\mathcal{J},
+\label{eq:action}
+\end{equation}
+restricted to the admissible set $\mathcal{A}(s_t)$: $(\textsc{pick},k,j)$
+is admissible iff $j$ is unserved and AMR $k$ has a free bay of class
+$\sigma_j$ or larger under \eqref{eq:nested}; $(\textsc{del},k,j)$ iff $j$ is
+aboard $k$. As the delivering AMR is determined by the carrier, at most
+$n+mn$ of the $2mn$ action slots are admissible in any state. Transitions
+follow a deterministic surrogate $\hat{\Psi}$ that advances the acting AMR's
+clock by a calibrated travel estimate and a queue-aware wait estimate fitted
+offline against $\Phi$ (Section~\ref{sec:calibration}), and appends the
+induced service window to $\mathcal{E}_d$.
+
+\begin{proposition}[Combinatorial closure of the mask]
+\label{prop:mask}
+Every trajectory of length $2n$ with $a_t\in\mathcal{A}(s_t)$ for all $t$
+yields a pair $(\bm{a},\pi)$ satisfying
+\eqref{eq:nonpreempt}--\eqref{eq:nested}. No repair operator is required.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Admissibility of $(\textsc{del},k,j)$ requires $j$ aboard $k$, which by
+construction occurs only after $(\textsc{pick},k,j)$, giving
+\eqref{eq:precedence} and single-carrier service. Admissibility of
+$(\textsc{pick},k,j)$ enforces \eqref{eq:nested} at commitment, and
+\eqref{eq:nested} is monotone under delivery. Constraints
+\eqref{eq:nonpreempt} and \eqref{eq:exclusive} are enforced by $\hat{\Psi}$
+and $\Phi$ when service windows are appended to $\mathcal{E}_d$.
+\end{proof}
+
+Proposition~\ref{prop:mask} does not extend to routability, which is
+determined only by $\Phi$; see Remark~\ref{rem:relative}.
+
+\subsection{Structural Consequences for Learning}
+\label{sec:consequences}
+
+Three properties of \eqref{eq:objective}--\eqref{eq:state} restrict the
+admissible class of estimators.
+
+\begin{remark}[Absence of an intermediate reward]
+\label{rem:noreward}
+By \eqref{eq:executor}, the objective is defined only on complete solutions:
+the routing of a leg depends on reservations created by legs committed
+later, so $\Phi$ admits no consistent evaluation of a prefix. Dense
+lower-bound-difference rewards, as used by constructive job-shop
+dispatchers, are therefore unavailable for \eqref{eq:objective}.
+\end{remark}
+
+\begin{remark}[Status of the surrogate]
+\label{rem:surrogate}
+Transitions use $\hat{\Psi}$ while the objective uses $\Phi$, and
+$\hat{\Psi}\neq\Phi$. The process defined by
+\eqref{eq:state}--\eqref{eq:action} is consequently not a Markov decision
+process with respect to \eqref{eq:objective}, but a deterministic
+construction process with terminal black-box cost, in which $\hat{\Psi}$
+supplies the features conditioning each decision. This is required by
+computational budget: $\hat{\Psi}$ is evaluated at all $2n$ epochs, whereas
+$\Phi$ is evaluated once per rollout.
+\end{remark}
+
+\begin{remark}[Rollout-based credit assignment]
+\label{rem:rollout}
+Remarks~\ref{rem:noreward} and \ref{rem:surrogate} imply that the
+contribution of an individual decision admits no closed-form estimate: with
+no per-step reward and a terminal cost non-differentiable in the decision
+variables, it can be estimated only by completing the prefix and executing
+the result. This motivates the executor-grounded stepwise counterfactual
+baseline of Section~\ref{sec:training}.
+\end{remark}
+
+Finally, substituting $\tilde{\Phi}$ for $\Phi$ in \eqref{eq:objective} does
+not act as a monotone rescaling. Contention is generated by the assignment
+decisions themselves, so the substitution alters the induced order over
+solutions; Section~\ref{sec:experiments} reports the rank correlation
+between $\tilde{\Phi}$- and $\Phi$-orderings of a common schedule set as a
+function of $\eta$.
+
+\subsection{Assumptions}
+\label{sec:assumptions}
+
+\begin{enumerate}[label=(A\arabic*),leftmargin=2.6em]
+\item The fleet is homogeneous and moves at unit speed on a four-connected
+grid; turning cost, acceleration, and localisation error are not modelled.
+\item Battery state is not modelled; bays serve only as parking.
+\item Service durations are deterministic and class-dependent.
+\item One parcel is handled per service event.
+\item All parcels are available at $t=0$; release dates are absent.
+\item Idle AMRs occupy their bays for the remainder of the horizon and
+cannot be displaced by the planner.
+\end{enumerate}
+
+Assumption (A5) renders the problem static and fully observed, which admits
+the one-pass constructive policy of Section~\ref{sec:architecture};
+relaxation to an online arrival stream is discussed in
+Section~\ref{sec:conclusion}. Assumption (A6) is a property of the executor
+rather than of the facility, and constrains admissible bay placement: bays
+must neither form a contiguous run spanning a row or column of $\mathcal{W}$,
+which would partition the free space, nor intersect $\bigcup_{d}W_d$, which
+would render a queue position permanently unreachable. Section~\ref{sec:experiments}
+quantifies the sensitivity of measured results to this constraint.

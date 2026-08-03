@@ -9,20 +9,19 @@
 %     pdflatex main
 %     pdflatex main
 %
-% Initial RA-L submissions use the RAS conference template and are anonymous.
-% Download ieeeconf.zip from the RA-L Information for Authors page if
-% ieeeconf.cls is not installed with your TeX distribution.
+% You need IEEEtran.cls in this folder or installed in your TeX distribution.
+% A full TeX Live / MiKTeX install already has it. Otherwise download
+% "IEEEtran.zip" from CTAN and copy IEEEtran.cls next to this file.
 %
 % Page budget: RA-L allows 6 pages + up to 2 extra at a fee. References count.
 % =========================================================================
 
-\documentclass[letterpaper,10pt,conference]{ieeeconf}
-\IEEEoverridecommandlockouts
-\overrideIEEEmargins
+\documentclass[journal]{IEEEtran}
 
 % ---- maths ----
 \usepackage{amsmath}     % align, equation, \text
 \usepackage{amssymb}     % \mathcal, \succeq
+\usepackage{amsthm}      % proof environment
 \usepackage{bm}          % \bm for bold vectors
 
 % ---- tables and figures ----
@@ -30,7 +29,9 @@
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{graphicx}    % \includegraphics
-\usepackage{cite}        % compressed IEEE-style citation ranges
+
+% ---- lists ----
+\usepackage{enumitem}    % custom labels, e.g. (A1) (A2)
 
 % ---- algorithms (uncomment when you add pseudocode) ----
 % \usepackage{algorithm}
@@ -39,37 +40,35 @@
 % ---- links: keep colorlinks=false for IEEE submission ----
 \usepackage[colorlinks=false]{hyperref}
 
+% ---- theorem environments used by the formulation section ----
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
 \begin{document}
 
-\title{Execution-Grounded Policy Learning for Capacitated
+\title{Execution-Grounded Policy Learning for Capacitated\\
 Multi-Robot Pickup and Delivery}
 
-% RA-L uses double-anonymous review. Restore names and affiliations only
-% after acceptance, following the final-submission template.
-\author{Anonymous Authors}
+\author{%
+  Wei Chen$^{1}$%
+  \thanks{Manuscript received XX XX, 2026.}%
+  \thanks{$^{1}$Department, University, City, Country.
+    {\tt\small tommy1213.chen@gmail.com}}%
+}
 
 \maketitle
 
 \begin{abstract}
-Learned dispatchers for robot-assisted material handling commonly evaluate
-transport with fixed travel times, whereas deployed robots share paths and
-exclusive service points. This paper studies offline capacitated multi-robot
-pickup and delivery under a fixed collision-aware executor. We compare each
-complete schedule with an idealised transport decode to measure execution
-error and schedule-ranking inconsistency. A constructive policy uses a
-calibrated surrogate to form decision-state features, while a paired
-prefix-conditioned rollout evaluates policy and baseline completions under
-the unchanged deployment executor. The evaluation separates the effect of
-congestion observability from that of executor-relative training and reports
-both makespan error and operational queueing and routing delays.
-% TODO(results): Replace the preceding evaluation sentence with two measured
-% result sentences (effect size, uncertainty, and tested instance range).
+% TODO. Structure: context (1 sentence), gap (1--2), method (2--3),
+% results (2), significance (1). Keep under 200 words.
+Placeholder abstract.
 \end{abstract}
 
-\begin{keywords}
+\begin{IEEEkeywords}
 Intelligent and Flexible Manufacturing, Planning, Scheduling and
 Coordination, Reinforcement Learning, Multi-Robot Systems
-\end{keywords}
+\end{IEEEkeywords}
 
 % =========================== SECTIONS ===================================
 % Each \input pulls in one file. Comment a line out to exclude that
@@ -88,16 +87,7 @@ Coordination, Reinforcement Learning, Multi-Robot Systems
 
 \section{Conclusion}
 \label{sec:conclusion}
-This paper formulates offline capacitated multi-robot pickup and delivery
-with explicit service-point contention and evaluation by a fixed
-collision-aware executor. It distinguishes the value error of an idealised
-transport model from its more consequential decision error---changes in the
-ordering of complete schedules---and introduces a paired prefix-conditioned
-rollout for executor-relative credit assignment. The controlled evaluation
-separates improvements due to congestion features from those due to the
-training objective.
-% TODO(results): Add the principal numerical findings, uncertainty, tested
-% range, and the strongest limitation after the experiments are complete.
+Placeholder conclusion.
 
 % ---- stub labels so cross-references resolve while drafting -------------
 % The formulation refers forward to sections you have not written yet.
