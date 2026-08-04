@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,25 +21,51 @@ from operation_policy import OperationAction, action_id
 from dispatching_rules import dispatching_rules as dr
 
 
-DEFAULT_BASELINE_RULE = "earliest_completion_job+earliest_completion"
+DEFAULT_BASELINE_RULE = "milk_run+earliest_completion"
+
+# Learning-rate schedule shared by ALL trainers, so an architecture comparison
+# is not confounded by one model getting a better training loop than another.
+# Previously only extend_GNN annealed its LR; GNN and Attention ran a constant
+# rate for the whole run.
+DEFAULT_LR = 3e-4
+DEFAULT_LR_MIN = 3e-5
+
+
+def cosine_actor_lr(epoch: int, epochs: int, lr_max: float, lr_min: float) -> float:
+    """Half-cosine decay from `lr_max` at epoch 1 to `lr_min` at epoch `epochs`.
+
+    Nearly flat at both ends and steepest in the middle: the run keeps a high
+    rate long enough to explore, then finishes at a stable low rate instead of
+    one that is still falling underneath it.
+
+    `lr_min` is a FLOOR, not zero. In RL the data distribution is the policy, so
+    it keeps moving; annealing to zero freezes the model mid-drift rather than
+    at a solution. Setting lr_min == lr_max makes the schedule constant, which
+    is the clean way to disable it for an ablation.
+
+    Note the schedule is defined against the DECLARED `epochs`, not wall-clock:
+    stopping early means never reaching the low-rate phase, and two runs with
+    different epoch counts follow different trajectories and are not comparable.
+    """
+    if epochs <= 1:
+        return lr_max
+    progress = (epoch - 1) / (epochs - 1)
+    cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
+    return lr_min + (lr_max - lr_min) * cosine
 
 
 def score_solution(
     individual: Individual,
     jobs: Sequence[Job],
     check_collision: bool = True,
-    use_objective: bool = False,
 ) -> Tuple[float, int]:
     """Single scoring entry point for the counterfactual baseline.
 
-    With `use_objective` (scenario v2) the credit assigned to a decision reflects
-    makespan AND shipment tardiness, so the policy is rewarded for closing out
-    departing trailers rather than only for finishing early. Set False to recover
-    the pure-makespan v1 behaviour.
+    Returns (makespan, nu). The objective is pure makespan under the executor;
+    the caller charges nu separately. The v2 `use_objective` switch, which mixed
+    shipment tardiness into the credit assigned to each decision, is gone along
+    with deadlines.
     """
-    if use_objective:
-        value, invalid, _ = evaluate_objective(individual, jobs, check_collision)
-        return value, invalid
     return evaluate_makespan(individual, jobs, check_collision)
 
 
@@ -102,44 +129,6 @@ def evaluate_makespan(
     return max(availability.values()), invalid_count
 
 
-# Scenario v2: the training signal is the scalarised objective of eq. (15),
-#   F = C_max + w_T * sum_g T_g  (+ kappa * nu, charged separately by the caller)
-# Experiments report the terms separately; only the gradient sees the sum.
-TARDINESS_WEIGHT = 1.0
-
-
-def evaluate_objective(
-    individual: Individual,
-    jobs: Sequence[Job],
-    check_collision: bool = True,
-    tardiness_weight: float = None,
-) -> Tuple[float, int, float]:
-    """Return (scalarised objective without the infeasibility term, nu, tardiness)."""
-    w = TARDINESS_WEIGHT if tardiness_weight is None else tardiness_weight
-    completion: Dict[int, float] = {}
-    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
-        individual,
-        list(jobs),
-        need_log=False,
-        check_collision=check_collision,
-        completion_out=completion,
-    )
-    makespan = max(availability.values())
-
-    deadline_of, done_of = {}, {}
-    for job in jobs:
-        sid = getattr(job, "shipment_id", -1)
-        if sid < 0:
-            continue
-        deadline_of[sid] = float(getattr(job, "deadline", 0.0))
-        c = completion.get(job.idx)
-        if c is not None:
-            done_of[sid] = max(done_of.get(sid, 0.0), c)
-
-    tardiness = sum(
-        max(0.0, c_g - deadline_of.get(sid, 0.0)) for sid, c_g in done_of.items()
-    )
-    return makespan + w * tardiness, invalid_count, tardiness
 
 
 def complete_with_dispatch_rule(
@@ -206,7 +195,6 @@ def compute_dispatch_baseline_comparison(
     seed: int = 42,
     check_collision: bool = True,
     invalid_penalty: float = 0.0,
-    use_objective: bool = False,
 ) -> BaselineComparison:
     if baseline_mode not in {"stepwise", "episode"}:
         raise ValueError("baseline_mode must be 'stepwise' or 'episode'")
@@ -221,10 +209,10 @@ def compute_dispatch_baseline_comparison(
         seed=seed,
     )
     baseline_makespan, baseline_invalid = score_solution(
-        full_baseline, jobs, check_collision=check_collision, use_objective=use_objective
+        full_baseline, jobs, check_collision=check_collision
     )
     sampled_makespan, sampled_invalid = score_solution(
-        sampled_individual, jobs, check_collision=check_collision, use_objective=use_objective
+        sampled_individual, jobs, check_collision=check_collision
     )
 
     episode_advantage = baseline_makespan - sampled_makespan
@@ -252,7 +240,6 @@ def compute_dispatch_baseline_comparison(
             )
             rule_next_makespan, rule_next_invalid = score_solution(
                 rule_next_individual, jobs, check_collision=check_collision,
-                use_objective=use_objective,
             )
 
             sampled_prefix_assignment = dict(prefix_assignment)
@@ -267,7 +254,6 @@ def compute_dispatch_baseline_comparison(
             )
             sampled_next_makespan, sampled_next_invalid = score_solution(
                 sampled_next_individual, jobs, check_collision=check_collision,
-                use_objective=use_objective,
             )
 
             step_advantages.append(

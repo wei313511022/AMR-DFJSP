@@ -43,6 +43,7 @@ from GA import GA as ga_normal  # noqa: E402
 from GA.GA_precise import evolve_precise  # noqa: E402
 from dispatching_rules import dispatching_rules as dr  # noqa: E402
 from neural_local_improvement import apply_neural_local_improvement  # noqa: E402
+import ideal_evaluator as ie  # noqa: E402
 
 
 DEFAULT_JOB_COUNTS = (20, 40, 60, 80, 100)
@@ -79,6 +80,15 @@ def stable_case_seed(seed: int, job_count: int, sample_index: int) -> int:
 
 
 def generate_case_record(job_count: int, sample_index: int, seed: int) -> Dict[str, object]:
+    """Deterministic benchmark instance drawn against the LIVE GA facility.
+
+    Stations and docks come from GA's globals, so this follows whatever layout
+    is installed -- v3 by default. Any case file generated before the v3 layout
+    landed names the same docks and stations but at the old coordinates, so
+    regenerate with --generate rather than reusing stale files.
+
+    Uniform over size classes, all releases at t = 0: matches scenario_v3.
+    """
     rng = random.Random(stable_case_seed(seed, job_count, sample_index))
     job_types = sorted(TYPE_DURATION.keys())
     station_ids = list(range(1, len(STATIONS) + 1))
@@ -245,14 +255,16 @@ def load_cases(case_dir: Path, job_count: int, limit: Optional[int] = None):
     return events
 
 
-def evaluate_individual(individual: Individual, jobs: Sequence[Job]) -> Tuple[float, int]:
-    availability, _, _, _, invalid_count = decode_schedule_tick_by_tick(
-        individual,
-        list(jobs),
-        need_log=False,
-        check_collision=True,
-    )
-    return max(availability.values()), invalid_count
+def evaluate_individual(individual: Individual, jobs: Sequence[Job]) -> Dict[str, float]:
+    """Executed makespan, idealised makespan, Lambda, Omega_q/Omega_r, and nu.
+
+    Returns the full metric dict from ideal_evaluator so every algorithm in the
+    grid is measured against the same idealised reference the paper uses. The
+    caller must filter on `routable` before averaging `executed` or `penalty`:
+    on a failed leg the decoder charges MAX_DEPTH (=100) per failure, so those
+    numbers are penalty constants, not durations.
+    """
+    return ie.evaluate(individual, list(jobs))
 
 
 def run_dispatch_rule(jobs: Sequence[Job], rule_name: str, seed: int) -> Tuple[Individual, float]:
@@ -631,11 +643,29 @@ def summarize(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
     summary_rows = []
     for (job_count, algorithm), group in sorted(grouped.items(), key=lambda item: (item[0][0], item[0][1])):
         successful = [row for row in group if row["status"] != "failed"]
+        # "valid" == the executor routed every leg (nu = 0). EVERY duration-valued
+        # aggregate is computed over these rows only. A run with nu > 0 has had
+        # MAX_DEPTH (=100) added to an AMR's availability per failed leg, so its
+        # "makespan" is a penalty constant, not elapsed time -- averaging it in
+        # produces a number that looks like congestion and is not. This project
+        # has already been burnt by that once: a 33.9% "congestion tax" collapsed
+        # to 16.3% when the failed runs were dropped.
         valid = [row for row in successful if str(row["valid"]).lower() == "true"]
         feasible_makespans = [float(row["makespan"]) for row in valid]
-        all_makespans = [
-            parsed
-            for parsed in (safe_float(str(row["makespan"])) for row in successful)
+        ideals = [
+            parsed for parsed in (safe_float(str(row.get("ideal_makespan", "nan"))) for row in valid)
+            if parsed is not None
+        ]
+        penalties = [
+            parsed for parsed in (safe_float(str(row.get("penalty", "nan"))) for row in valid)
+            if parsed is not None
+        ]
+        omega_qs = [
+            parsed for parsed in (safe_float(str(row.get("omega_q", "nan"))) for row in valid)
+            if parsed is not None
+        ]
+        omega_rs = [
+            parsed for parsed in (safe_float(str(row.get("omega_r", "nan"))) for row in valid)
             if parsed is not None
         ]
         solve_times = [
@@ -657,7 +687,10 @@ def summarize(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
                 "valid_rate": valid_runs / runs if runs else 0.0,
                 "mean_feasible_makespan": mean_or_nan(feasible_makespans),
                 "std_feasible_makespan": pstdev_or_nan(feasible_makespans),
-                "mean_all_makespan": mean_or_nan(all_makespans),
+                "mean_feasible_ideal": mean_or_nan(ideals),
+                "mean_feasible_penalty": mean_or_nan(penalties),
+                "mean_feasible_omega_q": mean_or_nan(omega_qs),
+                "mean_feasible_omega_r": mean_or_nan(omega_rs),
                 "mean_computation_time": mean_or_nan(solve_times),
                 "mean_invalid_jobs": mean_or_nan(invalids),
             }
@@ -680,6 +713,10 @@ def write_detail_csv(path: Path, rows: Sequence[Dict[str, object]]) -> None:
         "algorithm",
         "status",
         "makespan",
+        "ideal_makespan",
+        "penalty",
+        "omega_q",
+        "omega_r",
         "computation_time",
         "invalid_jobs",
         "valid",
@@ -701,7 +738,10 @@ def write_summary_csv(path: Path, rows: Sequence[Dict[str, object]]) -> None:
         "valid_rate",
         "mean_feasible_makespan",
         "std_feasible_makespan",
-        "mean_all_makespan",
+        "mean_feasible_ideal",
+        "mean_feasible_penalty",
+        "mean_feasible_omega_q",
+        "mean_feasible_omega_r",
         "mean_computation_time",
         "mean_invalid_jobs",
     ]
@@ -714,7 +754,10 @@ def write_summary_csv(path: Path, rows: Sequence[Dict[str, object]]) -> None:
                 "valid_rate",
                 "mean_feasible_makespan",
                 "std_feasible_makespan",
-                "mean_all_makespan",
+                "mean_feasible_ideal",
+                "mean_feasible_penalty",
+                "mean_feasible_omega_q",
+                "mean_feasible_omega_r",
                 "mean_computation_time",
                 "mean_invalid_jobs",
             ):
@@ -731,6 +774,10 @@ def make_result_row(
     solve_time,
     invalid_jobs: int,
     valid: bool,
+    ideal=float("nan"),
+    penalty=float("nan"),
+    omega_q=float("nan"),
+    omega_r=float("nan"),
 ) -> Dict[str, object]:
     return {
         "job_count": job_count,
@@ -738,6 +785,10 @@ def make_result_row(
         "algorithm": algorithm,
         "status": status,
         "makespan": format_float(makespan),
+        "ideal_makespan": format_float(ideal),
+        "penalty": format_float(penalty),
+        "omega_q": format_float(omega_q),
+        "omega_r": format_float(omega_r),
         "computation_time": format_float(solve_time),
         "invalid_jobs": invalid_jobs,
         "valid": "true" if valid else "false",
@@ -776,7 +827,9 @@ def run(args: argparse.Namespace) -> None:
                 seed = args.seed + job_count * 1000 + int(sample_index) * 37 + event_pos
                 try:
                     individual, solve_time = run_algorithm(algorithm, jobs, args, context, seed)
-                    makespan, invalid_count = evaluate_individual(individual, jobs)
+                    metrics = evaluate_individual(individual, jobs)
+                    makespan = metrics["executed"]
+                    invalid_count = int(metrics["nu"])
                     valid = invalid_count == 0
                     status = "ok" if valid else "invalid"
                     detail_rows.append(
@@ -789,11 +842,17 @@ def run(args: argparse.Namespace) -> None:
                             solve_time,
                             invalid_count,
                             valid,
+                            ideal=metrics["ideal"],
+                            penalty=metrics["penalty"],
+                            omega_q=metrics["omega_q"],
+                            omega_r=metrics["omega_r"],
                         )
                     )
                     print(
                         f"  {algorithm:45s} status={status:7s} "
-                        f"makespan={makespan:8.2f} time={solve_time:.4f}s invalid={invalid_count}"
+                        f"makespan={makespan:8.2f} ideal={metrics['ideal']:8.2f} "
+                        f"Lambda={100 * metrics['penalty']:5.1f}% "
+                        f"time={solve_time:.4f}s invalid={invalid_count}"
                     )
                 except Exception as exc:
                     detail_rows.append(

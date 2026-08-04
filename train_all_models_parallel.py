@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """
-Launch Attention, Attention_precise, GNN, GNN_precise, and extend_GNN training in parallel.
+Launch several model trainings in parallel, one process per (model, seed).
 
 Run from the AMR-DFJSP root:
-    python train_all_models_parallel.py
+    python train_all_models_parallel.py --models gnn attention extend_gnn --seeds 42,43,44
+
+Every process gets the SAME hyperparameters. That is the point: the whole
+purpose of this script is an architecture comparison, so anything that differs
+between models has to be the architecture and not the training loop.
+
+Each (model, seed) writes its own checkpoints under --out-dir as
+    {model}_s{seed}_best.pth / {model}_s{seed}_latest.pth
+so parallel seeds cannot overwrite each other. Without this the trainers all
+fall back to their legacy fixed filenames and three seeds clobber one file.
 
 Useful options:
-    python train_all_models_parallel.py --inbox test_case/static/dispatch_inbox_60.jsonl
-    python train_all_models_parallel.py --inboxes test_case/static/dispatch_inbox_20.jsonl,test_case/static/dispatch_inbox_40.jsonl,test_case/static/dispatch_inbox_60.jsonl,test_case/static/dispatch_inbox_80.jsonl,test_case/static/dispatch_inbox_100.jsonl
-    python train_all_models_parallel.py --epochs 2000
-    python train_all_models_parallel.py --rl_method reinforce --baseline_rule earliest_completion_job+earliest_completion
-    python train_all_models_parallel.py --load_balance_coef 0
-    python train_all_models_parallel.py --threads-per-process 2
-    python train_all_models_parallel.py --models attention gnn_precise extend_gnn
-    python train_all_models_parallel.py   --inboxes "test_case/static/dispatch_inbox_60.jsonl"   --validation_inboxes "test_case/static/dispatch_validation_60.jsonl"   --epochs 1000   --batch_size 16   --max-concurrent 4   --threads-per-process 2 --load_balance_coef 0 --baseline_rule "fifo+earliest_available"
+    --models gnn attention extend_gnn        which architectures
+    --seeds 42,43,44                         one process per model per seed
+    --baseline_mode episode                  ~200x cheaper than stepwise
+    --max-concurrent 4                       processes at once
+    --threads-per-process 2                  BLAS threads inside each process
+    --dry-run                                print the commands and stop
 """
 
 from __future__ import annotations
@@ -24,7 +31,7 @@ import shutil
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -177,8 +184,55 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--baseline_rule",
         "--baseline-rule",
-        default="earliest_completion_job+earliest_completion",
-        help="Dispatching-rule baseline used by REINFORCE training.",
+        default="milk_run+earliest_completion",
+        help="Dispatching-rule baseline used by REINFORCE training. milk_run is the "
+             "only rule that can CONTINUE a batch, so a single-trip baseline would "
+             "complete every consolidating action with an immediate delivery and the "
+             "policy could never learn to batch.",
+    )
+    parser.add_argument(
+        "--seeds",
+        default="42",
+        help="Comma-separated seeds. One training process is launched per "
+             "(model, seed) pair.",
+    )
+    parser.add_argument(
+        "--out-dir",
+        "--out_dir",
+        type=Path,
+        default=ROOT / "checkpoints_v3",
+        help="Directory for per-run checkpoints, named {model}_s{seed}_best.pth.",
+    )
+    parser.add_argument(
+        "--lr_actor",
+        "--lr-actor",
+        type=float,
+        default=3e-4,
+        help="Actor learning rate. Accepted by all three trainers (Attention takes "
+             "it as an alias of --lr).",
+    )
+    parser.add_argument(
+        "--lr_min",
+        "--lr-min",
+        type=float,
+        default=3e-5,
+        help="Floor of the cosine actor LR decay. Set equal to --lr_actor for a "
+             "constant rate.",
+    )
+    parser.add_argument(
+        "--train_invalid_penalty",
+        "--train-invalid-penalty",
+        type=float,
+        default=0.0,
+        help="Seconds charged per unroutable parcel INSIDE the training advantage. "
+             "Keep identical across models or the comparison is confounded.",
+    )
+    parser.add_argument(
+        "--grad_clip",
+        "--grad-clip",
+        type=float,
+        default=1.0,
+        help="Gradient-norm clip passed to every trainer.",
     )
     parser.add_argument(
         "--baseline_curriculum",
@@ -301,6 +355,7 @@ def command_for(
     init_checkpoint: str = "",
     latest_checkpoint_path: str = "",
     best_model_path: str = "",
+    seed: int | None = None,
 ) -> list[str]:
     cmd = [
         args.python,
@@ -317,7 +372,19 @@ def command_for(
         str(args.entropy_coef),
         "--load_balance_coef",
         str(args.load_balance_coef),
+        # Identical optimisation settings for every architecture. --lr_actor is
+        # an alias of --lr in the Attention trainer, so one name reaches all three.
+        "--lr_actor",
+        str(args.lr_actor),
+        "--lr_min",
+        str(args.lr_min),
+        "--train_invalid_penalty",
+        str(args.train_invalid_penalty),
+        "--grad_clip",
+        str(args.grad_clip),
     ]
+    if seed is not None:
+        cmd.extend(["--seed", str(seed)])
     if init_checkpoint:
         cmd.extend(["--init_checkpoint", init_checkpoint])
     if latest_checkpoint_path:
@@ -482,6 +549,23 @@ def main() -> int:
         raise SystemExit("--validation_interval must be at least 1")
     if args.validation_invalid_penalty < 0:
         raise SystemExit("--validation_invalid_penalty must be non-negative")
+    if args.train_invalid_penalty < 0:
+        raise SystemExit("--train_invalid_penalty must be non-negative")
+    if args.lr_actor <= 0:
+        raise SystemExit("--lr_actor must be positive")
+    if args.lr_min <= 0 or args.lr_min > args.lr_actor:
+        raise SystemExit("--lr_min must be positive and at most --lr_actor")
+
+    try:
+        seeds = [int(s.strip()) for s in args.seeds.split(",") if s.strip()]
+    except ValueError:
+        raise SystemExit(f"--seeds must be comma-separated integers, got {args.seeds!r}")
+    if not seeds:
+        raise SystemExit("--seeds must list at least one seed")
+    if len(set(seeds)) != len(seeds):
+        raise SystemExit(f"--seeds contains duplicates: {seeds}")
+    if not args.out_dir.is_absolute():
+        args.out_dir = ROOT / args.out_dir
 
     missing = [target.script for target in targets if not target.script.exists()]
     if missing:
@@ -595,19 +679,41 @@ def main() -> int:
         print(f"Validation inbox: {args.validation_inbox}")
     if args.validation_inboxes:
         print(f"Validation inboxes: {args.validation_inboxes}")
+    print(f"Actor LR: {args.lr_actor} -> {args.lr_min} (cosine)")
+    print(f"Train invalid penalty: {args.train_invalid_penalty}")
+    print(f"Seeds: {seeds}")
+    print(f"Checkpoint directory: {args.out_dir}")
     print(f"Logs directory: {args.logs_dir}")
+    print(f"Jobs to run: {len(targets) * len(seeds)}")
     print()
 
-    commands = [(target, command_for(target, args)) for target in targets]
-    for target, cmd in commands:
-        print(f"{target.key:<17} {' '.join(cmd)}")
+    # One process per (model, seed). Each gets its own checkpoint paths --
+    # without this the trainers fall back to fixed legacy filenames and
+    # concurrent seeds silently overwrite one another's best model.
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    jobs: list[TrainTarget] = []
+    command_map: dict[str, list[str]] = {}
+    for target in targets:
+        for seed in seeds:
+            run_key = f"{target.key}_s{seed}"
+            job = replace(target, key=run_key)
+            jobs.append(job)
+            command_map[run_key] = command_for(
+                target,
+                args,
+                seed=seed,
+                best_model_path=str(args.out_dir / f"{run_key}_best.pth"),
+                latest_checkpoint_path=str(args.out_dir / f"{run_key}_latest.pth"),
+            )
+
+    for job in jobs:
+        print(f"{job.key:<22} {' '.join(command_map[job.key])}")
     print()
 
     if args.dry_run:
         return 0
 
-    command_map = {target.key: command_for(target, args) for target in targets}
-    code, failures = run_training_wave(targets, args, env, command_map, {})
+    code, failures = run_training_wave(jobs, args, env, command_map, {})
 
     if failures:
         print("\nOne or more training jobs failed:")

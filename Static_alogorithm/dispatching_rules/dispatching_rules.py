@@ -57,8 +57,11 @@ JOB_RULES = (
     "earliest_completion_job",
     "material_match",
     "milk_run",
-    "edd",              # scenario v2: earliest shipment deadline
-    "atc",              # scenario v2: apparent tardiness cost
+    # "edd" / "atc" removed with deadlines: the objective is pure makespan, so a
+    # due-date index has nothing to order by. "atc" was also broken -- the
+    # urgency term exp(-slack/(kappa*p_bar)) underflowed, every action scored 0,
+    # and the tiebreak collapsed to "never batch" (930.7 makespan, worst of all
+    # 70 combinations).
     "random",
 )
 
@@ -69,18 +72,17 @@ JOB_RULES = (
 # MILK_RUN_MAX_LOAD = 6 total-count check let this rule play by different rules
 # than the policy it was benchmarked against.
 MILK_RUN_RADIUS = 3.0
-# Tuned at the v2 rack (1 slot per class). Report this as a RATIO to inter-door
-# spacing, not as a bare number: doors sit 4-5 cells apart and the calibrated
-# metric inflates a 4-cell gap to 4.97, so every radius in [0, 4] means the same
-# thing -- "consolidate only at the door you are already at". Measured (8 inst.):
-#   radius 1-4  exec 358.2  tard 150.1  F 508.3   <- same-door batching
-#   radius 5    exec 361.6  tard 153.3  F 514.9   <- reaches adjacent doors
-#   radius 9    exec 385.4  tard 185.7  F 571.1   <- reaches two doors away
-#   radius 20   exec 2378   tard 12421           <- never drains, mega-tours
-# Diverting to another door never pays: the detour costs more than the trip saved.
-
-# ATC look-ahead parameter, in units of mean service time.
-ATC_KAPPA = 2.0
+# Report this as a RATIO to inter-door spacing, not as a bare number: doors sit
+# 4-5 cells apart and the calibrated metric inflates a 4-cell gap to 4.97, so
+# every radius in [0, 4] means the same thing -- "consolidate only at the door
+# you are already at". Measured executed makespan (8 instances, v2 rack):
+#   radius 1-4  358.2   <- same-door batching
+#   radius 5    361.6   <- reaches adjacent doors
+#   radius 9    385.4   <- reaches two doors away
+#   radius 20   2378    <- never drains, mega-tours
+# Diverting to another door never pays: the detour costs more than the trip
+# saved. The tardiness column of that sweep is dropped along with deadlines;
+# re-tune against executed makespan alone.
 
 AMR_RULES = (
     "earliest_available",
@@ -239,23 +241,6 @@ def _job_rule_score(action: OperationAction, estimate: OperationEstimate, jobs: 
             return (2, estimate.projected_completion, job.duration, job.idx)
         # Deliveries outrank fresh trips so full AMRs drain their batch.
         return (1, estimate.projected_completion, job.duration, job.idx)
-    if job_rule == "edd":
-        # Earliest shipment departure first; deliveries preferred over new pickups
-        # so a nearly complete shipment is finished rather than deferred.
-        priority = 0 if action.kind == UNLOAD else 1
-        return (float(job.deadline), priority, estimate.projected_completion, job.idx)
-    if job_rule == "atc":
-        # Apparent tardiness cost, adapted for transport: urgency decays with slack,
-        # and is amortised over the true cost to serve (handling PLUS travel). The
-        # travel term matters here in a way it does not in classical shop ATC --
-        # without it the index chases short parcels across the floor and thrashes.
-        slack = float(job.deadline) - estimate.projected_completion
-        mean_p = max(1e-6, sum(TYPE_DURATION.values()) / max(1, len(TYPE_DURATION)))
-        urgency = math.exp(-max(0.0, slack) / (ATC_KAPPA * mean_p))
-        cost_to_serve = max(1e-6, job.duration + estimate.travel_time)
-        score = urgency / cost_to_serve
-        priority = 0 if action.kind == UNLOAD else 1
-        return (-score, priority, estimate.projected_completion, job.idx)
     if job_rule == "random":
         return (rng.random(), job.idx)
     raise ValueError(f"Unknown job rule: {job_rule}")

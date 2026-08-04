@@ -35,6 +35,40 @@ DOCK_DELAY_SCALE = 100.0
 DOCK_QUEUE_SCALE = float(max(len(AMR_KEYS), 1))
 LOWER_BOUND_SCALE = 500.0
 
+# --- feature normalisers -----------------------------------------------------
+# Shared by every encoder (GNN, GNN_precise, Attention, Attention_precise,
+# extend_GNN) so the five of them cannot drift apart again.
+#
+# All of these used to be the literals 10.0 and 3.0, inherited from the v1
+# 10x10 / 3-slot setting. On the v3 20x19 floor a hard-coded 10.0 let position
+# features run to 1.9 while every other channel sat in [0, 1], making position
+# the loudest input to the encoder for no principled reason; and dividing a
+# rack count by 3.0 when the class cap is 1 meant a FULL slot read as 0.33.
+#
+# Resolved at call time against the live GA globals, because apply_layout
+# rebinds them for the contention sweep.
+
+
+def position_scale() -> Tuple[float, float]:
+    """(x, y) divisors that map any floor cell into [0, 1]."""
+    import GA.GA as _GA
+
+    return (float(max(_GA.GRID_MAX_X, 1)), float(max(_GA.GRID_MAX_Y, 1)))
+
+
+def rack_scale(size_class: str) -> float:
+    """Divisor for an onboard count of `size_class`: its binding suffix cap."""
+    import GA.GA as _GA
+
+    return float(max(_GA.SUFFIX_CAP.get(size_class, 1), 1))
+
+
+def fleet_scale() -> float:
+    """Divisor for per-AMR job counts: the current fleet size."""
+    import GA.GA as _GA
+
+    return float(max(len(_GA.AMR_KEYS), 1))
+
 DOCK_KEYS = list(INBOUND_DOCK_LOCATIONS.keys()) + list(STATIONS.keys())
 DockEvent = Tuple[float, float, int, str]
 DockServiceEvents = Dict[str, List[DockEvent]]

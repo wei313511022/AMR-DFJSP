@@ -17,61 +17,165 @@ except ImportError:
     Rectangle = None
 from functools import lru_cache 
 
-# Constants Setup
-AMR_STARTS = {
-    "AMR1": (2, 8),
-    "AMR2": (2, 5),
-    "AMR3": (2, 2),
-}
+# =============================================================================
+# Scenario v3 facility -- the DEFAULT layout.
+# Source of truth: paper/problem_formulation.tex and SCENARIO_SPEC_v3.md.
+#
+# These used to be the v1 10x10 / 3-AMR constants, with the real facility only
+# installed when a caller happened to invoke scenario_v2.apply_layout(). Only
+# three scripts ever did, so the benchmark and training paths silently ran the
+# wrong scenario. The paper's facility is now the module default; apply_layout
+# remains for fleet sweeps (it rebuilds these same objects in place).
+# =============================================================================
+
+GRID_W = 19          # x in [0, GRID_W]  -> 20 columns
+GRID_H = 19          # y in [1, GRID_H]  -> 19 rows
+# Door rows are inset one cell from each wall so EVERY service point keeps a
+# full waiting set on both adjacent rows. A door on row 1 or 19 loses one of
+# those rows to the boundary and gets half the queue capacity of the others,
+# which makes the five servers non-exchangeable for reasons that have nothing
+# to do with scheduling.
+DOOR_ROWS = (2, 6, 10, 14, 18)
+NUM_AMRS = 16        # eta = m / |D_in| = 16 / 5 = 3.2, the headline setting
+DEPOT_X = 4          # 2x2 charging pods occupy columns DEPOT_X, DEPOT_X+1
+DEPOT_COL_STRIDE = 3 # spacing between column banks: 2 pod columns + 1 free lane
+
+
+def _pod_rows(door_rows=DOOR_ROWS, grid_h=GRID_H):
+    """Row pairs for 2x2 pods, ordered OUTSIDE-IN, centre pod last.
+
+    Each pod sits beside a door row and extends AWAY from the mid-row, so the
+    central lane stays clear until the fleet is large enough to need it.
+    """
+    mid = (1 + grid_h) / 2.0
+    outer, centre = [], []
+    for d in sorted(door_rows, key=lambda r: abs(r - mid), reverse=True):
+        second = d + 1 if d < mid else d - 1
+        if not (1 <= second <= grid_h):
+            continue
+        (centre if d == mid else outer).append((d, second))
+    return outer, centre
+
+
+def depot_bays(door_rows=DOOR_ROWS, depot_x=DEPOT_X, grid_h=GRID_H,
+               col_stride=DEPOT_COL_STRIDE, banks=2):
+    """Every bay the depot can offer, in fill order.
+
+    Fill order matters as much as the cells themselves. Bays are handed out
+    ROUND-ROBIN across pods within a tier, not pod-by-pod, so a small fleet is
+    spread over the floor instead of piled beside one door. That keeps the
+    spatial distribution of the depot roughly constant across a contention
+    sweep, leaving eta as the thing that actually varies. (At m=16 the two
+    orders occupy the SAME 16 cells -- filling four pods either way -- so this
+    does not disturb the headline setting.)
+
+    Tiers, in order:
+      1. outer pods, column bank 0        16 bays  -- centre lane clear
+      2. centre pod, column bank 0         4 bays  -- lane now used
+      3. outer pods, column bank 1        16 bays
+      4. centre pod, column bank 1         4 bays
+
+    Column bank k occupies x = depot_x + k*col_stride and the next column, so
+    stride 3 leaves a free travel lane between banks. Two hard constraints,
+    both learned the expensive way:
+
+    1. Never lay a contiguous run across a full row or column. Idle AMRs hold
+       their cells in the reservation table permanently, so a packed line is an
+       impassable wall, not a temporary obstacle. A single column at x=2 left
+       3 free rows at m=16 and 0 at m=20.
+    2. Clear the service-point queues by at least one cell. dock_waiting_slots
+       fills the two rows ADJACENT to a door, spanning x=0..3, so bays must
+       start at x>=4.
+
+    `validate_depot` enforces both; it is not left to inspection.
+    """
+    outer, centre = _pod_rows(door_rows, grid_h)
+    bays = []
+    for bank in range(banks):
+        x0 = depot_x + bank * col_stride
+        for tier in (outer, centre):
+            for slot in range(4):
+                for pod in tier:
+                    bays.append((x0 + (slot % 2), pod[slot // 2]))
+    return bays
+
+
+def validate_depot(starts, door_rows=DOOR_ROWS, grid_w=GRID_W, grid_h=GRID_H):
+    """Raise unless the bay set is routable. Cheap, and catches the classics."""
+    bays = list(starts.values())
+    if len(set(bays)) != len(bays):
+        raise ValueError("two AMRs share a bay; that bay is blocked from t=0")
+
+    queue_cells = set()
+    for d in list(INBOUND_DOCK_LOCATIONS.values()) + list(STATIONS.values()):
+        queue_cells |= set(dock_waiting_slots(d))
+    trapped = set(bays) & queue_cells
+    if trapped:
+        raise ValueError(
+            f"bays inside dock waiting areas: {sorted(trapped)}. A robot assigned "
+            f"a waiting slot that is another robot's parked bay can never arrive."
+        )
+
+    occupied = set(bays)
+    for x in range(0, grid_w + 1):
+        if all((x, y) in occupied for y in range(1, grid_h + 1)):
+            raise ValueError(f"column x={x} is a solid wall of parked AMRs")
+    for y in range(1, grid_h + 1):
+        if all((x, y) in occupied for x in range(0, grid_w + 1)):
+            raise ValueError(f"row y={y} is a solid wall of parked AMRs")
+    return starts
+
+
+def build_pod_depot(num_amrs=NUM_AMRS, door_rows=DOOR_ROWS, depot_x=DEPOT_X,
+                    grid_h=GRID_H, col_stride=DEPOT_COL_STRIDE):
+    """Assign `num_amrs` dedicated bays from `depot_bays`, then validate."""
+    bays = depot_bays(door_rows, depot_x, grid_h, col_stride)
+    if num_amrs > len(bays):
+        raise ValueError(
+            f"{num_amrs} AMRs requested but the depot offers {len(bays)} bays. "
+            f"Add a column bank (raise `banks`) or pods at non-door rows; "
+            f"cycling would assign two AMRs the same bay."
+        )
+    starts = {f"AMR{i + 1}": bays[i] for i in range(num_amrs)}
+    return starts
+
+
+AMR_STARTS = build_pod_depot()
 AMR_KEYS = list(AMR_STARTS.keys())
-STATIONS = {
-    "station1": (9, 9),
-    "station2": (9, 7),
-    "station3": (9, 5),
-    "station4": (9, 3),
-    "station5": (9, 1),
-}
+INBOUND_DOCK_LOCATIONS = {f"dock{i + 1}": (0, r) for i, r in enumerate(DOOR_ROWS)}
+STATIONS = {f"station{i + 1}": (GRID_W, r) for i, r in enumerate(DOOR_ROWS)}
+# Open floor: no storage racks, so there is nothing to route around. All time
+# structure comes from contention for the doors.
 OBSTACLES = set()
 BASES = list(AMR_STARTS.values()) # Parking spots are at the bases
 TYPE_DURATION = {"A": 5, "B": 10, "C": 15}
 PROCESSING_TIMES = [float(v) for v in TYPE_DURATION.values()]
 PROCESSING_TIME_TO_TYPE = {float(v): k for k, v in TYPE_DURATION.items()}
 JOB_TYPE_KEYS = list(TYPE_DURATION.keys())
-INBOUND_DOCK_LOCATIONS = {
-    "dock1": (0, 9),
-    "dock2": (0, 7),
-    "dock3": (0, 5),
-    "dock4": (0, 3),
-    "dock5": (0, 1),
-}
 INBOUND_DOCK_KEYS = list(INBOUND_DOCK_LOCATIONS.keys())
 DOCK_ALIASES = {
-    **{str(i): f"dock{i}" for i in range(1, 6)},
-    **{f"dock{i}": f"dock{i}" for i in range(1, 6)},
-    **{f"DOCK{i}": f"dock{i}" for i in range(1, 6)},
-    "A": "dock1",
-    "B": "dock2",
-    "C": "dock3",
+    **{str(i): f"dock{i}" for i in range(1, len(DOOR_ROWS) + 1)},
+    **{f"dock{i}": f"dock{i}" for i in range(1, len(DOOR_ROWS) + 1)},
+    **{f"DOCK{i}": f"dock{i}" for i in range(1, len(DOOR_ROWS) + 1)},
 }
-SUPPLY_LOCATIONS = {
-    **INBOUND_DOCK_LOCATIONS,
-    "A": INBOUND_DOCK_LOCATIONS["dock1"],
-    "B": INBOUND_DOCK_LOCATIONS["dock2"],
-    "C": INBOUND_DOCK_LOCATIONS["dock3"],
-}
+# A parcel's origin is an inbound DOOR, not a material supply point. The old
+# "A"/"B"/"C" aliases came from the v1 material-type model, where the letter
+# named a commodity; in v3 the letter is a parcel SIZE CLASS and carries no
+# location information at all, so aliasing it to a door was actively wrong.
+SUPPLY_LOCATIONS = dict(INBOUND_DOCK_LOCATIONS)
 AMR_LOAD_CAPACITY = 3
-# --- scenario v2: nested slot rack -------------------------------------------
+# --- nested slot rack --------------------------------------------------------
 # Each AMR carries SLOT_CAPACITY[s] slots of size class s. A parcel of class s
 # occupies one slot of class s OR LARGER (downward substitution), so the binding
-# constraints are the suffix sums:  n_C <= 3,  n_B+n_C <= 6,  n_A+n_B+n_C <= 9.
+# constraints are the suffix sums -- eq. (1) of the paper.
 # Defined here (not in scenario_v2) to avoid a circular import: scenario_v2
 # imports GA, so GA must own the primitive.
 SIZE_ORDER = ("A", "B", "C")                      # smallest -> largest
 # One slot per size class -> suffix caps C<=1, B+C<=2, A+B+C<=3.
-# A 3x3 rack (9 slots) was measured to be well past the useful batch size: at 9
-# slots milk_run reaches makespan 445.7 / tardiness 273.3, at 3 slots 365.3 / 141.2.
-# Over-consolidation delays the first-picked parcel through every later pickup and
-# holds an inbound door across consecutive services, which is the binding resource.
+# A 3x3 rack (9 slots) was measured well past the useful batch size: milk_run
+# scored makespan 445.7 at 9 slots versus 365.3 at 3. Over-consolidation delays
+# the first-picked parcel through every later pickup and holds an inbound door
+# across consecutive services, and the door is the binding resource.
 SLOT_CAPACITY = {"A": 1, "B": 1, "C": 1}
 SUFFIX_CAP = {s: sum(SLOT_CAPACITY[t] for t in SIZE_ORDER[i:])
               for i, s in enumerate(SIZE_ORDER)}
@@ -103,15 +207,15 @@ def rack_can_load(entry, size_class: str) -> bool:
 PICKUP = "pickup"
 UNLOAD = "unload"
 WAIT_LINE_DEPTH = 3
-_GRID_POINTS = list(AMR_STARTS.values()) + list(STATIONS.values()) + list(INBOUND_DOCK_LOCATIONS.values())
-GRID_MIN_X = min(p[0] for p in _GRID_POINTS)
-GRID_MAX_X = max(p[0] for p in _GRID_POINTS)
-GRID_MIN_Y = min(p[1] for p in _GRID_POINTS)
-GRID_MAX_Y = max(p[1] for p in _GRID_POINTS)
+# Explicit bounds, NOT derived from the occupied points: the floor is the whole
+# 20x19 rectangle, and deriving the extent from bays/doors/stations would shrink
+# it to the bounding box of those cells and wall off legal travel lanes.
+GRID_MIN_X, GRID_MAX_X = 0, GRID_W
+GRID_MIN_Y, GRID_MAX_Y = 1, GRID_H
 DOCK_SERVICE_CELLS = set(INBOUND_DOCK_LOCATIONS.values()) | set(STATIONS.values())
 
 SCHEDULE_OUTBOX = Path("schedule_outbox.jsonl")
-DISPATCH_INBOX = Path("../../test_case/static/dispatch_inbox_60.jsonl")
+DISPATCH_INBOX = Path("../../test_case/v3/instances_60.jsonl")
 DISPATCH_EVENT_INDEX_ENV = "DISPATCH_EVENT_INDEX"
 
 JOB_COUNT = 60        
@@ -133,10 +237,10 @@ class Job:
     duration: float
     station: str
     inbound_dock: str = "dock1"
+    # All parcels are available at t = 0 (paper, Assumptions). The field is kept
+    # so the dynamic-arrivals experiments outside the controlled study can reuse
+    # the same dataclass, but every v3 instance sets it to 0.
     arrival_time: float = 0.0
-    # --- scenario v2: outbound shipment membership and trailer departure time ---
-    shipment_id: int = -1      # -1 = no shipment (v1 instances)
-    deadline: float = 0.0      # D_g; only meaningful when shipment_id >= 0
 
 @dataclass(frozen=True)
 class Operation:
@@ -1475,16 +1579,28 @@ def decode_schedule_tick_by_tick(individual: Individual, jobs: List[Job], need_l
     return decode_schedule(individual, jobs, need_log=need_log, check_collision=check_collision, init_state=init_state, completion_out=completion_out)
 
 
-# --- scenario v2 objective ---------------------------------------------------
-# F = C_max + w_T * sum_g T_g + kappa * nu   (eq. 15 in problem_formulation.tex)
-# Used only as a training signal; experiments report the three terms separately.
-TARDINESS_WEIGHT = 1.0
+# --- objective ---------------------------------------------------------------
+# Pure makespan under the executor, eq. (8):
+#
+#     (a*, pi*) = argmin C_max^Phi   over  F_Phi = {(a,pi) : nu_Phi(a,pi) = 0}
+#
+# The executor is a PARTIAL function -- prioritised planning is incomplete -- so
+# feasibility is executor-relative and nu is reported SEPARATELY, never folded
+# into a makespan mean. `routable` below is the flag every aggregation must
+# filter on: on a failed leg the decoder charges availability[amr] += MAX_DEPTH,
+# a penalty constant rather than elapsed time, so a makespan drawn from a failed
+# run is not a duration at all. Pooling those runs is what produced this
+# project's phantom congestion spikes (33.9% collapsed to 16.3% once restricted
+# to cleanly-routed runs).
+#
+# INFEASIBILITY_PENALTY is a TRAINING signal only: it gives a failed rollout a
+# finite, comparable score. It must never appear in a reported number.
 INFEASIBILITY_PENALTY = 100.0
 
 
 def evaluate_solution(individual: Individual, jobs: List[Job], check_collision: bool = True,
                       init_state: dict = None) -> Dict[str, float]:
-    """Full v2 evaluation: makespan, tardiness, late shipments, unroutable count."""
+    """Executor evaluation: makespan, unroutable count, and a routability flag."""
     completion: Dict[int, float] = {}
     availability, _, _, _, invalid_count = decode_schedule(
         individual, jobs, need_log=False, check_collision=check_collision,
@@ -1492,30 +1608,12 @@ def evaluate_solution(individual: Individual, jobs: List[Job], check_collision: 
     )
     makespan = max(availability.values()) - (init_state["time"] if init_state else 0)
 
-    deadline_of, completion_of_shipment = {}, {}
-    for job in jobs:
-        sid = job.shipment_id
-        if sid < 0:
-            continue
-        deadline_of[sid] = float(job.deadline)
-        c = completion.get(job.idx)
-        if c is not None:
-            completion_of_shipment[sid] = max(completion_of_shipment.get(sid, 0.0), c)
-
-    tardiness, late = 0.0, 0
-    for sid, c_g in completion_of_shipment.items():
-        t = max(0.0, c_g - deadline_of.get(sid, 0.0))
-        tardiness += t
-        late += 1 if t > 0 else 0
-
     return {
         "makespan": makespan,
-        "tardiness": tardiness,
-        "late_shipments": float(late),
         "invalid_jobs": float(invalid_count),
-        "objective": makespan
-                     + TARDINESS_WEIGHT * tardiness
-                     + INFEASIBILITY_PENALTY * invalid_count,
+        "routable": 1.0 if invalid_count == 0 else 0.0,
+        # Training-only scalarisation; report makespan and nu separately.
+        "objective": makespan + INFEASIBILITY_PENALTY * invalid_count,
     }
 
 
@@ -1896,11 +1994,10 @@ def load_dispatch_events(path: Path = DISPATCH_INBOX) -> List[Dict[str, object]]
             duration = float(TYPE_DURATION[type_])
             inbound_dock = dock_key_from_value(raw_job.get("inbound_dock", raw_job.get("dock")))
             arrival_time = float(raw_job.get("arrival_time", 0.0))
-            shipment_id = int(raw_job.get("shipment_id", -1))
-            deadline = float(raw_job.get("deadline", 0.0))
+            # Legacy v2 records carry "shipment_id" and "deadline"; both are
+            # ignored. The objective is pure makespan.
             jobs.append(Job(idx=job_idx, type_=type_, duration=duration, station=station_key,
-                            inbound_dock=inbound_dock, arrival_time=arrival_time,
-                            shipment_id=shipment_id, deadline=deadline))
+                            inbound_dock=inbound_dock, arrival_time=arrival_time))
         if jobs:
             events.append({"index": idx, "dispatch_time": float(data.get("dispatch_time", 0.0)), "jobs": jobs})
     return events

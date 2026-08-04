@@ -66,9 +66,9 @@ shared reservation table, enforces the queues $W_d$, and returns
  \big(C_{\max}^{\Phi}(\bm a,\pi),\nu_{\Phi}(\bm a,\pi)\big),
  \label{eq:executor}
 \end{equation}
-where $\nu_{\Phi}$ is its routing-failure count. Because prioritised planning
-is incomplete, feasibility is executor-relative. We therefore report
-$\nu_{\Phi}$ separately and evaluate makespan only on
+where $\nu_{\Phi}$ is its routing-failure count. The fixed prioritised planner
+defines an executor-relative feasible set. We report $\nu_{\Phi}$ separately
+and evaluate makespan only on
 $\mathcal F_{\Phi}=\{(\bm a,\pi):\nu_{\Phi}(\bm a,\pi)=0\}$. The objective is
 \begin{equation}
  (\bm a^*,\pi^*)=

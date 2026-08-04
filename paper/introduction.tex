@@ -32,10 +32,11 @@ informs task assignment with routed delivery cost, including for capacitated
 robots~\cite{chen2021integrated}; reinforcement-learning frameworks place a
 task-assignment policy above a conflict-free path generator or jointly learn
 assignment and path-planning agents~\cite{li2024hierarchical,
-wang2026collaborative}. These studies establish that routing-aware assignment
-is not itself new. Their primary settings are online task allocation or
-per-instance optimisation. The question addressed here is narrower: how much
-does an idealised transport model distort the value and ordering of
+wang2026collaborative}. These studies establish routing-aware assignment as an
+effective basis for robot coordination. Their primary settings are online task
+allocation or per-instance optimisation. This paper addresses a complementary
+question: how much does an idealised transport model distort the value and
+ordering of
 \emph{complete offline schedules} when capacity, non-zero service, finite
 waiting space, and collision-aware execution act together?
 
@@ -62,11 +63,12 @@ executor. A calibrated surrogate is used only to construct state features at
 the intermediate decision epochs; it does not replace the executor in the
 terminal comparison.
 
-We claim no novelty for the graph encoder, composite action, or the general
-idea of routing-aware reward. The contribution lies in measuring the
-decision error of the idealised abstraction and in attributing
-executor-relative terminal performance to individual commitments in this
-offline, service-constrained setting. Specifically, the paper contributes:
+The study uses established graph encoders, composite actions, and
+routing-aware learning components to isolate a distinct contribution:
+measuring the decision error induced by an idealised transport abstraction
+and assigning executor-relative terminal performance to individual
+commitments in an offline, service-constrained setting. Specifically, the
+paper contributes:
 
 \begin{itemize}
 \item A formulation of offline capacitated AMR transfer with class-substitutable

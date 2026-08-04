@@ -18,8 +18,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from GA.GA import (  # noqa: E402
     AMR_KEYS,
-    AMR_LOAD_CAPACITY,
     AMR_STARTS,
+    TOTAL_SLOTS_PER_AMR,
+    rack_can_load,
     DISPATCH_EVENT_INDEX_ENV,
     INBOUND_DOCK_LOCATIONS,
     JOB_COUNT,
@@ -47,6 +48,9 @@ from GA.GA import (  # noqa: E402
 from neural_local_improvement import apply_neural_local_improvement  # noqa: E402
 from operation_policy import (  # noqa: E402
     LOWER_BOUND_SCALE,
+    position_scale,
+    rack_scale,
+    fleet_scale,
     action_mask,
     apply_fast_action,
     carrier_feature,
@@ -195,6 +199,7 @@ def _dock_feature_row(
     committed_workload = sum(event[1] - max(event[0], current_time) for event in unfinished)
     available_delay = max(0.0, station_availabilities.get(dock_key, 0.0) - current_time)
     dock_pos = _dock_position(dock_key)
+    _sx, _sy = position_scale()
 
     return [
         1.0 if dock_key in INBOUND_DOCK_LOCATIONS else 0.0,
@@ -204,8 +209,8 @@ def _dock_feature_row(
         min(queue_count / float(_valid_waiting_slot_count(dock_key)), 1.0),
         service_remaining / TIME_SCALE,
         committed_workload / WORKLOAD_SCALE,
-        dock_pos[0] / 10.0,
-        dock_pos[1] / 10.0,
+        dock_pos[0] / _sx,
+        dock_pos[1] / _sy,
     ]
 
 
@@ -310,13 +315,17 @@ def extract_state_extend_gnn(
     dock_service_events = normalize_dock_service_events(dock_service_events)
     current_time = decision_time(amr_availabilities)
     material_keys = list(TYPE_DURATION.keys())
+    _sx, _sy = position_scale()
 
     amr_feat = []
     for amr in AMR_KEYS:
         pos = amr_positions[amr]
         avail = amr_availabilities[amr]
         inv = amr_inventory[amr]
-        total_remaining = sum(max(0, AMR_LOAD_CAPACITY - inv.get(mat, 0)) for mat in material_keys)
+        # Free slots under the NESTED rack: a class-s parcel may take a slot of
+        # class s or larger, so headroom is the tightest binding suffix, not a
+        # per-class remainder against a flat capacity of 3.
+        total_remaining = sum(1 for mat in material_keys if rack_can_load(inv, mat))
         active_carried = sum(
             1
             for job in jobs
@@ -334,16 +343,16 @@ def extract_state_extend_gnn(
             [
                 1.0 if avail > current_time else 0.0,
                 max(0.0, avail - current_time) / TIME_SCALE,
-                inv.get("A", 0) / AMR_LOAD_CAPACITY,
-                inv.get("B", 0) / AMR_LOAD_CAPACITY,
-                inv.get("C", 0) / AMR_LOAD_CAPACITY,
-                total_remaining / float(max(len(material_keys) * AMR_LOAD_CAPACITY, 1)),
-                active_carried / 10.0,
+                inv.get("A", 0) / rack_scale("A"),
+                inv.get("B", 0) / rack_scale("B"),
+                inv.get("C", 0) / rack_scale("C"),
+                total_remaining / float(max(len(material_keys), 1)),
+                active_carried / float(TOTAL_SLOTS_PER_AMR),
                 1.0 if pos in _near_dock_cells() else 0.0,
                 nearest_dock_distance / DISTANCE_SCALE,
                 local_density,
-                pos[0] / 10.0,
-                pos[1] / 10.0,
+                pos[0] / _sx,
+                pos[1] / _sy,
             ]
         )
 
@@ -382,10 +391,10 @@ def extract_state_extend_gnn(
                 _dock_norm(inbound_dock, INBOUND_DOCK_KEYS),
                 _dock_norm(outbound_dock, OUTBOUND_DOCK_KEYS),
                 lb_val / LOWER_BOUND_SCALE,
-                outbound_pos[0] / 10.0,
-                outbound_pos[1] / 10.0,
-                inbound_pos[0] / 10.0,
-                inbound_pos[1] / 10.0,
+                outbound_pos[0] / _sx,
+                outbound_pos[1] / _sy,
+                inbound_pos[0] / _sx,
+                inbound_pos[1] / _sy,
             ]
         )
         job_mask.append(is_completed)

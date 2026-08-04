@@ -39,6 +39,7 @@ import GA.GA as GA  # noqa: E402
 from GA.GA import decode_schedule_tick_by_tick, load_dispatch_events  # noqa: E402
 from GNN import SchedulerGNN, solve_with_gnn  # noqa: E402
 from eval_fleet_size import set_fleet  # noqa: E402
+import ideal_evaluator as ie  # noqa: E402
 from operation_policy import load_required_operation_checkpoint  # noqa: E402
 from reinforce_baseline import (  # noqa: E402
     DEFAULT_BASELINE_RULE,
@@ -66,6 +67,21 @@ def categorize(kind: str) -> str:
 
 
 def decompose(individual, jobs):
+    """Category shares of fleet-time, plus the paper's Lambda / Omega figures.
+
+    Two different normalisers appear here and they answer different questions.
+    Do not mix them up:
+
+      fleet-time share  = category / (m * C_max). Sums to 100% with idle. This
+                          is an occupancy view -- useful for "what are the
+                          robots doing", meaningless as an error measure,
+                          because m * C_max grows when the schedule gets worse.
+      Omega (eq. 7)     = category / sum_k C~_k, i.e. against the IDEALISED
+                          robot-time the same schedule would need. This is the
+                          quantity the paper reports, and it is what makes
+                          "queueing is the dominant component of the
+                          abstraction's error" a statement about error.
+    """
     availability, timelines, _, _, invalid_count = decode_schedule_tick_by_tick(
         individual, jobs, need_log=True, check_collision=True
     )
@@ -75,25 +91,44 @@ def decompose(individual, jobs):
         budget[categorize(kind)] += max(0.0, end - start)
     fleet_time = makespan * len(GA.AMR_KEYS)
     budget["idle"] = fleet_time - sum(budget.values())
-    return makespan, invalid_count, budget, fleet_time
+    metrics = ie.evaluate(individual, jobs)
+    return makespan, invalid_count, budget, fleet_time, metrics
 
 
 def report(name: str, results) -> None:
-    n = len(results)
-    avg_makespan = sum(r[0] for r in results) / n
-    avg_invalid = sum(r[1] for r in results) / n
-    totals = {c: sum(r[2][c] for r in results) / n for c in CATEGORIES}
-    fleet_time = sum(r[3] for r in results) / n
-    print(f"\n{name}: makespan {avg_makespan:.1f} | invalid/ep {avg_invalid:.2f} | fleet-time {fleet_time:.0f}")
+    """Report over CLEANLY ROUTED episodes only.
+
+    A run with nu > 0 has had MAX_DEPTH (=100) charged to an AMR's availability
+    per failed leg, which inflates both the makespan and the fleet-time
+    denominator with a penalty constant that is not elapsed time.
+    """
+    total_n = len(results)
+    clean = [r for r in results if r[1] == 0]
+    avg_invalid = sum(r[1] for r in results) / total_n if total_n else 0.0
+    if not clean:
+        print(f"\n{name}: no cleanly-routed episodes ({total_n} attempted, "
+              f"invalid/ep {avg_invalid:.2f}) -- nothing to decompose")
+        return
+    n = len(clean)
+    avg_makespan = sum(r[0] for r in clean) / n
+    totals = {c: sum(r[2][c] for r in clean) / n for c in CATEGORIES}
+    fleet_time = sum(r[3] for r in clean) / n
+    agg = ie.aggregate([r[4] for r in clean])
+    print(f"\n{name}: makespan {avg_makespan:.1f} | idealised {agg['ideal']:.1f} "
+          f"| Lambda {100 * agg['penalty']:.1f}% | invalid/ep {avg_invalid:.2f} "
+          f"| clean {n}/{total_n} | fleet-time {fleet_time:.0f}")
     for cat in CATEGORIES:
         print(f"  {cat:<10s} {totals[cat]:8.1f}  ({100 * totals[cat] / fleet_time:5.1f}% of fleet-time)")
+    print(f"  Omega_q {100 * agg['omega_q']:5.1f}%   Omega_r {100 * agg['omega_r']:5.1f}%   "
+          f"queueing share of error {100 * agg['queue_share']:.0f}%   "
+          f"(eq. 7: ratios to sum_k C~_k, NOT to fleet-time)")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_amrs", type=int, default=5)
+    parser.add_argument("--num_amrs", type=int, default=16)
     parser.add_argument("--events", type=int, default=25)
-    parser.add_argument("--inbox", type=str, default=os.path.join(STATIC_DIR, "..", "test_case", "static", "dispatch_validation_60.jsonl"))
+    parser.add_argument("--inbox", type=str, default=os.path.join(STATIC_DIR, "..", "test_case", "v3", "instances_60.jsonl"))
     parser.add_argument("--weights", type=str, default=os.path.join(STATIC_DIR, "..", "gnn_mpn_scheduler_best.pth"))
     parser.add_argument("--baseline_rule", type=str, default=DEFAULT_BASELINE_RULE)
     parser.add_argument("--skip_gnn", action="store_true", help="Decompose only the dispatch-rule schedules")

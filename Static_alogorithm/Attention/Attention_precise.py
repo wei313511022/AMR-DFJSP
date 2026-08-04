@@ -20,8 +20,12 @@ import torch.nn.functional as F
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import GA.GA as _GA          # live module handle: apply_layout REBINDS scalars
+                            # like GRID_MAX_X, so a from-import of those names
+                            # would freeze the v3 defaults and silently ignore
+                            # any fleet/layout sweep.
 from GA.GA import (
-    Job, Individual, Operation, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES, _GRID_POINTS,
+    Job, Individual, Operation, AMR_STARTS, AMR_KEYS, STATIONS, OBSTACLES,
     GRID_MIN_X, GRID_MAX_X, GRID_MIN_Y, GRID_MAX_Y, BASES, TYPE_DURATION,
     SCHEDULE_OUTBOX, DISPATCH_INBOX, DISPATCH_EVENT_INDEX_ENV,
     JOB_COUNT, MAX_DEPTH,
@@ -32,6 +36,9 @@ from GA.GA import (
     plot_gantt, station_key_from_value, dock_key_from_value, load_dispatch_events, make_jobs
 )
 from operation_policy import (
+    position_scale,
+    rack_scale,
+    fleet_scale,
     action_mask,
     carrier_feature,
     completion_time_lower_bound,
@@ -247,21 +254,21 @@ def extract_state(
     AMR Features (8):
      0: status_val (1.0 if avail > min_avail else 0.0)
      1: (avail - min_avail) / 50.0 (remaining time proxy)
-     2: inventory A ratio (inv.A / 3.0)
-     3: inventory B ratio (inv.B / 3.0)
-     4: inventory C ratio (inv.C / 3.0)
-     5: pos_x / 10.0
-     6: pos_y / 10.0
-     7: queue_depth (jobs assigned to this AMR / 10.0)
+     2: inventory A ratio (inv.A / suffix cap)
+     3: inventory B ratio (inv.B / suffix cap)
+     4: inventory C ratio (inv.C / suffix cap)
+     5: pos_x / grid extent
+     6: pos_y / grid extent
+     7: queue_depth (jobs assigned to this AMR / grid extent)
      
     Job Features (16):
      0: exist_flag (1.0)
      1: duration / 25.0
      2: carrier AMR index proxy
-     3: dest_pos_x / 10.0
-     4: dest_pos_y / 10.0
-     5: supply_pos_x / 10.0
-     6: supply_pos_y / 10.0
+     3: dest_pos_x / grid extent
+     4: dest_pos_y / grid extent
+     5: supply_pos_x / grid extent
+     6: supply_pos_y / grid extent
      7: type A flag (1.0 or 0.0)
      8: type B flag (1.0 or 0.0)
      9: type C flag (1.0 or 0.0)
@@ -275,6 +282,8 @@ def extract_state(
     Job Mask: boolean array of size len(jobs), True if job completed
     """
     
+    _sx, _sy = position_scale()
+
     # AMR Features
     amr_feat = []
     min_avail = min(amr_availabilities.values())
@@ -287,16 +296,16 @@ def extract_state(
         status_val = 1.0 if avail > min_avail else 0.0
         rem = avail - min_avail
         
-        queue_depth = sum(1 for a in carrier_map.values() if a == amr) / 10.0
+        queue_depth = sum(1 for a in carrier_map.values() if a == amr) / fleet_scale()
             
         feat = [
             status_val,
             rem / 50.0,
-            inv.get("A", 0) / 3.0,
-            inv.get("B", 0) / 3.0,
-            inv.get("C", 0) / 3.0,
-            pos[0] / 10.0,
-            pos[1] / 10.0,
+            inv.get("A", 0) / rack_scale("A"),
+            inv.get("B", 0) / rack_scale("B"),
+            inv.get("C", 0) / rack_scale("C"),
+            pos[0] / _sx,
+            pos[1] / _sy,
             queue_depth
         ]
         amr_feat.append(feat)
@@ -330,10 +339,10 @@ def extract_state(
             1.0,  # exist_flag
             job.duration / 25.0,
             carrier_feature(job.idx, carrier_map),
-            pos[0] / 10.0,
-            pos[1] / 10.0,
-            supply_pos[0] / 10.0,
-            supply_pos[1] / 10.0,
+            pos[0] / _sx,
+            pos[1] / _sy,
+            supply_pos[0] / _sx,
+            supply_pos[1] / _sy,
             1.0 if job.type_ == "A" else 0.0,
             1.0 if job.type_ == "B" else 0.0,
             1.0 if job.type_ == "C" else 0.0,

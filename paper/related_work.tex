@@ -16,8 +16,8 @@ job-shop extensions use heterogeneous operation--machine graphs and composite
 actions~\cite{song2023fjsp}; recent work adds vehicle nodes, hierarchical
 operation--machine--vehicle decisions, and transformer or multi-agent
 encoders~\cite{moon2024hgs,yuan2026gin,yang2026cosched,matrans2026}. These
-developments make the encoder and composite action mature design choices. We
-adopt them without an architectural novelty claim.
+developments establish the encoder and composite action as mature design
+choices for the evaluator-focused study developed here.
 
 The cited transport-aware schedulers principally represent motion with fixed
 travel times between resources. This supports inexpensive partial-schedule
@@ -42,11 +42,11 @@ rewards are evaluated by a lower-level conflict-free path generator. Wang
 \emph{et al.}~\cite{wang2026collaborative} jointly train task-allocation and
 path-planning agents, while a reinforcement-learning hyper-heuristic combines
 task sequencing with conflict-avoidance rules but re-runs search for each
-instance~\cite{li2024rlhh}. We therefore do not claim the first integration of
-learning, assignment, and routing. In contrast to these online or
-search-oriented settings, we examine complete offline pickup--delivery
-sequences and keep the deployment executor fixed, so that evaluator-induced
-value and ranking errors can be measured on a common schedule set.
+instance~\cite{li2024rlhh}. Building on this established integration of
+learning, assignment, and routing, we examine complete offline
+pickup--delivery sequences under a fixed deployment executor. This controlled
+setting makes evaluator-induced value and ranking errors measurable on a
+common schedule set.
 
 \subsection{MAPF, Commitment, and Service Resources}
 
@@ -79,9 +79,8 @@ policy and rollout completions~\cite{kool2019attention}. Our estimator belongs
 to this family. Its distinguishing construction is paired and
 prefix-conditioned: the policy commitment and its baseline alternative are
 completed by the same rule and both complete schedules are evaluated by the
-unchanged deployment executor. The claim is therefore not that rollout or
-routing-aware reward is new, but that this pairing supplies action-level
-credit while preserving the executor-relative terminal objective.
+unchanged deployment executor. This pairing supplies action-level credit
+while preserving the executor-relative terminal objective.
 
 \subsection{Position of This Work}
 

@@ -1,4 +1,4 @@
-"""Render the scenario figure for the paper, straight from scenario_v2.apply_layout.
+"""Render the scenario figure for the paper, straight from scenario_v3.apply_layout.
 
 Generating the figure from the same code that runs the experiments means it cannot
 drift from the layout actually measured.
@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, FancyArrowPatch
 
 import GA.GA as GA  # noqa: E402
-import scenario_v2 as sc  # noqa: E402
+import scenario_v3 as sc  # noqa: E402
 
 # Greyscale-safe palette: the figure must stay readable if printed in black
 # and white, so category is carried by hatch/edge as well as by fill.

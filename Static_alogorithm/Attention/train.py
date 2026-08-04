@@ -32,6 +32,7 @@ from GA.GA import (
     routing_iters,
 )
 from reinforce_baseline import (
+    cosine_actor_lr,
     DEFAULT_BASELINE_RULE,
     compute_dispatch_baseline_comparison,
     evaluate_makespan,
@@ -336,7 +337,13 @@ def train_reinforce(args):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     chart_path = os.path.join(script_dir, "attention_training_metrics.png")
 
+    def _actor_lr(epoch: int) -> float:
+        return cosine_actor_lr(epoch, args.epochs, args.lr, args.lr_min)
+
     for epoch in range(1, args.epochs + 1):
+        current_lr = _actor_lr(epoch)
+        for group in optimizer.param_groups:
+            group["lr"] = current_lr
         trajectories = []
         batch_sampled = []
         batch_baseline = []
@@ -359,6 +366,7 @@ def train_reinforce(args):
                 baseline_rule=args.baseline_rule,
                 baseline_mode=args.baseline_mode,
                 seed=args.seed + batch_idx,
+                invalid_penalty=args.train_invalid_penalty,
             )
 
             trajectories.append(
@@ -524,7 +532,13 @@ def train_ppo(args):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     chart_path = os.path.join(script_dir, "attention_training_metrics.png")
 
+    def _actor_lr(epoch: int) -> float:
+        return cosine_actor_lr(epoch, args.epochs, args.lr, args.lr_min)
+
     for epoch in range(1, args.epochs + 1):
+        current_lr = _actor_lr(epoch)
+        for group in optimizer.param_groups:
+            group["lr"] = current_lr
         batch_makespans = []
         trajectories = []
 
@@ -654,6 +668,10 @@ def train_ppo(args):
 
 
 def train(args):
+    if args.lr_min <= 0:
+        raise ValueError("--lr_min must be positive")
+    if args.train_invalid_penalty < 0:
+        raise ValueError("--train_invalid_penalty must be non-negative")
     if args.validation_interval < 1:
         raise ValueError("--validation_interval must be at least 1")
     if args.validation_invalid_penalty < 0:
@@ -689,7 +707,13 @@ def build_parser():
     )
     parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="Schedules sampled per update")
-    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--lr", "--lr_actor", dest="lr", type=float, default=3e-4, help="Learning rate")
+    parser.add_argument("--lr_min", type=float, default=3e-5,
+                        help="Floor of the cosine actor LR decay; set equal to the "
+                             "actor LR to disable the schedule (constant rate)")
+    parser.add_argument("--train_invalid_penalty", type=float, default=0.0,
+                        help="Seconds charged per unroutable parcel INSIDE the training "
+                             "advantage (validation uses --validation_invalid_penalty)")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--init_checkpoint", type=str, default="", help="Optional checkpoint or legacy weights to initialize from")
     parser.add_argument("--latest_checkpoint_path", type=str, default="", help="Optional full training checkpoint path updated every epoch")
