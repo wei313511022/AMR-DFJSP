@@ -244,9 +244,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--baseline_mode",
         "--baseline-mode",
-        choices=["stepwise", "episode"],
+        choices=["stepwise", "episode", "multisample"],
         default="stepwise",
-        help="REINFORCE baseline comparison mode.",
+        help="REINFORCE baseline comparison mode. 'multisample' baselines each "
+             "rollout on the mean of --samples_per_instance rollouts of the SAME "
+             "instance instead of on the dispatch rule.",
+    )
+    parser.add_argument(
+        "--samples_per_instance",
+        "--samples-per-instance",
+        type=int,
+        default=1,
+        help="Rollouts per training instance (K); must divide --batch_size. "
+             "Required >=2 by --baseline_mode multisample. Holding --batch_size "
+             "fixed keeps the rollout budget and wall-clock unchanged.",
     )
     parser.add_argument(
         "--entropy_coef",
@@ -368,6 +379,8 @@ def command_for(
         args.baseline_rule if baseline_rule is None else baseline_rule,
         "--baseline_mode",
         args.baseline_mode,
+        "--samples_per_instance",
+        str(args.samples_per_instance),
         "--entropy_coef",
         str(args.entropy_coef),
         "--load_balance_coef",
@@ -551,6 +564,20 @@ def main() -> int:
         raise SystemExit("--validation_invalid_penalty must be non-negative")
     if args.train_invalid_penalty < 0:
         raise SystemExit("--train_invalid_penalty must be non-negative")
+    if args.samples_per_instance < 1:
+        raise SystemExit("--samples_per_instance must be at least 1")
+    if args.baseline_mode == "multisample" and args.samples_per_instance < 2:
+        raise SystemExit(
+            "--baseline_mode multisample needs --samples_per_instance >= 2: a group "
+            "of one sample IS its own mean, so every advantage would be exactly zero"
+        )
+    # Only checkable here when --batch_size is given; otherwise each trainer's
+    # own default applies and its validate_sampling_args() catches a bad split.
+    if args.batch_size is not None and args.batch_size % args.samples_per_instance:
+        raise SystemExit(
+            f"--batch_size ({args.batch_size}) must be a multiple of "
+            f"--samples_per_instance ({args.samples_per_instance})"
+        )
     if args.lr_actor <= 0:
         raise SystemExit("--lr_actor must be positive")
     if args.lr_min <= 0 or args.lr_min > args.lr_actor:
@@ -598,6 +625,7 @@ def main() -> int:
         print(f"RL method: {args.rl_method}")
         print(f"Baseline curriculum: {args.baseline_curriculum}")
         print(f"Baseline mode: {args.baseline_mode}")
+        print(f"Samples per instance: {args.samples_per_instance}")
         print(f"Load balance coef: {args.load_balance_coef}")
         print(f"Validation interval: {args.validation_interval}")
         print(f"Validation invalid penalty: {args.validation_invalid_penalty}")
@@ -672,6 +700,7 @@ def main() -> int:
     print(f"RL method: {args.rl_method}")
     print(f"Baseline rule: {args.baseline_rule}")
     print(f"Baseline mode: {args.baseline_mode}")
+    print(f"Samples per instance: {args.samples_per_instance}")
     print(f"Load balance coef: {args.load_balance_coef}")
     print(f"Validation interval: {args.validation_interval}")
     print(f"Validation invalid penalty: {args.validation_invalid_penalty}")

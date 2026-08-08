@@ -34,16 +34,28 @@ class DockWaitingLineTests(unittest.TestCase):
             amr_assignment=[GA.AMR_KEYS[i % len(GA.AMR_KEYS)] for i in range(len(jobs))],
         )
 
-    def test_waiting_line_depth_generates_inward_slots(self):
+    def test_waiting_line_geometry_matches_configuration(self):
+        """Derived from the live door positions, so it survives layout changes."""
         self.assertEqual(GA.WAIT_LINE_DEPTH, 3)
-        self.assertEqual(
-            GA.dock_waiting_slots(GA.INBOUND_DOCK_LOCATIONS["dock3"]),
-            ((0, 6), (0, 4), (1, 6), (1, 4), (2, 6), (2, 4), (3, 6), (3, 4)),
-        )
-        self.assertEqual(
-            GA.dock_waiting_slots(GA.STATIONS["station3"]),
-            ((9, 6), (9, 4), (8, 6), (8, 4), (7, 6), (7, 4), (6, 6), (6, 4)),
-        )
+        for door in (GA.INBOUND_DOCK_LOCATIONS["dock3"], GA.STATIONS["station3"]):
+            dx, dy = GA._dock_inward_direction(door)
+            slots = GA.dock_waiting_slots(door)
+            lateral = ((0, 1), (0, -1)) if dx else ((1, 0), (-1, 0))
+            if GA.QUEUE_GEOMETRY == "inward":
+                self.assertEqual(
+                    slots,
+                    tuple((door[0] + dx * d, door[1] + dy * d)
+                          for d in range(1, GA.WAIT_LINE_DEPTH + 1)),
+                    "inward queue must be a single file leading away from the door")
+                for lx, ly in lateral:
+                    self.assertNotIn(
+                        (door[0] + lx, door[1] + ly), slots,
+                        "the cells flanking a wall-mounted door are its only "
+                        "escape routes and must stay out of the queue")
+            else:
+                for d in range(1, GA.WAIT_LINE_DEPTH + 1):
+                    self.assertNotIn((door[0] + dx * d, door[1] + dy * d), slots,
+                                     "lateral queue must leave the centreline clear")
 
     def test_boundary_docks_only_use_valid_grid_slots(self):
         for dock_pos in (GA.INBOUND_DOCK_LOCATIONS["dock1"], GA.INBOUND_DOCK_LOCATIONS["dock5"], GA.STATIONS["station1"], GA.STATIONS["station5"]):
@@ -51,11 +63,24 @@ class DockWaitingLineTests(unittest.TestCase):
                 self.assertTrue(GA._is_within_bounds(slot))
                 self.assertNotIn(slot, GA.DOCK_SERVICE_CELLS)
 
-    def test_adjacent_docks_share_candidate_slot_for_global_reservation(self):
-        dock1_slots = GA.dock_waiting_slots(GA.INBOUND_DOCK_LOCATIONS["dock1"])
-        dock2_slots = GA.dock_waiting_slots(GA.INBOUND_DOCK_LOCATIONS["dock2"])
-        self.assertIn((0, 8), dock1_slots)
-        self.assertIn((0, 8), dock2_slots)
+    def test_no_waiting_slot_is_claimed_by_two_doors(self):
+        """A cell in two queues at once is a reservation conflict waiting to happen."""
+        if GA.QUEUE_GEOMETRY != "inward":
+            self.skipTest("lateral lines of nearby doors may legitimately overlap")
+        owner = {}
+        for name, door in {**GA.INBOUND_DOCK_LOCATIONS, **GA.STATIONS}.items():
+            for slot in GA.dock_waiting_slots(door):
+                self.assertNotIn(
+                    slot, owner,
+                    f"{slot} is a waiting slot for both {owner.get(slot)} and {name}")
+                owner[slot] = name
+
+    def test_bays_are_never_inside_a_waiting_area(self):
+        """A robot sent to wait in another robot's parked bay can never arrive."""
+        queue_cells = set()
+        for door in list(GA.INBOUND_DOCK_LOCATIONS.values()) + list(GA.STATIONS.values()):
+            queue_cells |= set(GA.dock_waiting_slots(door))
+        self.assertFalse(set(GA.AMR_STARTS.values()) & queue_cells)
 
     def test_inbound_pickup_uses_job_duration_and_fifo_service(self):
         jobs = self.make_jobs(count=5, inbound_dock="dock1", duration=5.0)

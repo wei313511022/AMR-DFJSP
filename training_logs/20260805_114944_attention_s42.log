@@ -1,0 +1,823 @@
+Training on: cuda
+Loaded 5000 dispatch events from /home/wei/Desktop/AMR-DFJSP/test_case/v3/train_60.jsonl
+Loaded 50 dispatch events from /home/wei/Desktop/AMR-DFJSP/test_case/v3/val_60.jsonl
+Loaded 50 validation event(s).
+Starting Attention REINFORCE training with dispatch baseline 'milk_run+earliest_completion' (episode).
+Epoch [1/2000] | Sampled: 663.12 | Baseline: 336.25 | Improvement: -326.88 | Win Rate: 0.00% | Actor Loss: 2.1703 | Entropy: 4.4644 | Invalid S/B: 0.50/0.00 | Max Load: 5.9 | Load Gap: 4.0
+   -> Validation | Samples: 50 | Makespan: 567.92 | Invalid Jobs: 0.02 | Score: 567.92
+   -> Saved new best model (Val Score: 567.92)
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [2/2000] | Sampled: 609.62 | Baseline: 327.25 | Improvement: -282.38 | Win Rate: 0.00% | Actor Loss: -0.2265 | Entropy: 4.4908 | Invalid S/B: 0.38/0.00 | Max Load: 5.5 | Load Gap: 3.5
+Epoch [3/2000] | Sampled: 627.38 | Baseline: 332.88 | Improvement: -294.50 | Win Rate: 0.00% | Actor Loss: -0.8719 | Entropy: 4.5097 | Invalid S/B: 0.62/0.00 | Max Load: 5.6 | Load Gap: 3.8
+Epoch [4/2000] | Sampled: 627.38 | Baseline: 326.88 | Improvement: -300.50 | Win Rate: 0.00% | Actor Loss: 1.6487 | Entropy: 4.5376 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [5/2000] | Sampled: 612.25 | Baseline: 344.00 | Improvement: -268.25 | Win Rate: 0.00% | Actor Loss: -3.1759 | Entropy: 4.4877 | Invalid S/B: 0.25/0.00 | Max Load: 5.5 | Load Gap: 3.5
+Epoch [6/2000] | Sampled: 599.62 | Baseline: 323.88 | Improvement: -275.75 | Win Rate: 0.00% | Actor Loss: -1.8845 | Entropy: 4.4721 | Invalid S/B: 0.62/0.00 | Max Load: 5.8 | Load Gap: 3.5
+Epoch [7/2000] | Sampled: 602.88 | Baseline: 342.62 | Improvement: -260.25 | Win Rate: 0.00% | Actor Loss: -3.6127 | Entropy: 4.4575 | Invalid S/B: 0.50/0.12 | Max Load: 5.8 | Load Gap: 3.4
+Epoch [8/2000] | Sampled: 558.88 | Baseline: 340.62 | Improvement: -218.25 | Win Rate: 0.00% | Actor Loss: 1.0356 | Entropy: 4.4680 | Invalid S/B: 0.62/0.00 | Max Load: 5.6 | Load Gap: 3.0
+Epoch [9/2000] | Sampled: 540.38 | Baseline: 323.88 | Improvement: -216.50 | Win Rate: 0.00% | Actor Loss: 1.3893 | Entropy: 4.4314 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [10/2000] | Sampled: 547.50 | Baseline: 341.50 | Improvement: -206.00 | Win Rate: 0.00% | Actor Loss: -0.0245 | Entropy: 4.4546 | Invalid S/B: 1.25/0.00 | Max Load: 5.5 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 428.42 | Invalid Jobs: 0.66 | Score: 428.42
+   -> Saved new best model (Val Score: 428.42)
+Epoch [11/2000] | Sampled: 558.38 | Baseline: 344.62 | Improvement: -213.75 | Win Rate: 0.00% | Actor Loss: 1.7773 | Entropy: 4.4397 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [12/2000] | Sampled: 587.88 | Baseline: 345.25 | Improvement: -242.62 | Win Rate: 0.00% | Actor Loss: 1.7197 | Entropy: 4.4326 | Invalid S/B: 0.88/0.00 | Max Load: 5.6 | Load Gap: 3.5
+Epoch [13/2000] | Sampled: 607.25 | Baseline: 341.75 | Improvement: -265.50 | Win Rate: 0.00% | Actor Loss: -2.5639 | Entropy: 4.4172 | Invalid S/B: 0.88/0.00 | Max Load: 5.8 | Load Gap: 3.5
+Epoch [14/2000] | Sampled: 612.12 | Baseline: 345.88 | Improvement: -266.25 | Win Rate: 0.00% | Actor Loss: -2.0510 | Entropy: 4.4097 | Invalid S/B: 1.12/0.00 | Max Load: 5.5 | Load Gap: 2.9
+Epoch [15/2000] | Sampled: 579.50 | Baseline: 338.50 | Improvement: -241.00 | Win Rate: 0.00% | Actor Loss: 2.2597 | Entropy: 4.4359 | Invalid S/B: 0.75/0.00 | Max Load: 5.6 | Load Gap: 3.8
+Epoch [16/2000] | Sampled: 560.00 | Baseline: 326.50 | Improvement: -233.50 | Win Rate: 0.00% | Actor Loss: -0.0630 | Entropy: 4.4505 | Invalid S/B: 1.25/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [17/2000] | Sampled: 598.62 | Baseline: 323.62 | Improvement: -275.00 | Win Rate: 0.00% | Actor Loss: -3.3243 | Entropy: 4.4234 | Invalid S/B: 0.62/0.00 | Max Load: 5.8 | Load Gap: 3.5
+Epoch [18/2000] | Sampled: 575.38 | Baseline: 317.88 | Improvement: -257.50 | Win Rate: 0.00% | Actor Loss: -0.1824 | Entropy: 4.3964 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [19/2000] | Sampled: 584.00 | Baseline: 340.62 | Improvement: -243.38 | Win Rate: 0.00% | Actor Loss: 1.5624 | Entropy: 4.3924 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [20/2000] | Sampled: 573.00 | Baseline: 349.50 | Improvement: -223.50 | Win Rate: 0.00% | Actor Loss: 0.6334 | Entropy: 4.3911 | Invalid S/B: 0.75/0.00 | Max Load: 5.6 | Load Gap: 3.5
+   -> Validation | Samples: 50 | Makespan: 507.34 | Invalid Jobs: 1.58 | Score: 507.34
+Epoch [21/2000] | Sampled: 558.50 | Baseline: 327.12 | Improvement: -231.38 | Win Rate: 0.00% | Actor Loss: 0.8926 | Entropy: 4.3676 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [22/2000] | Sampled: 557.38 | Baseline: 337.62 | Improvement: -219.75 | Win Rate: 0.00% | Actor Loss: 1.1091 | Entropy: 4.3793 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [23/2000] | Sampled: 510.00 | Baseline: 319.25 | Improvement: -190.75 | Win Rate: 0.00% | Actor Loss: -0.1671 | Entropy: 4.3527 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [24/2000] | Sampled: 535.38 | Baseline: 340.62 | Improvement: -194.75 | Win Rate: 0.00% | Actor Loss: 1.0960 | Entropy: 4.3455 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [25/2000] | Sampled: 507.75 | Baseline: 336.75 | Improvement: -171.00 | Win Rate: 0.00% | Actor Loss: 1.7823 | Entropy: 4.3173 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [26/2000] | Sampled: 499.62 | Baseline: 346.75 | Improvement: -152.88 | Win Rate: 0.00% | Actor Loss: -6.2953 | Entropy: 4.2835 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [27/2000] | Sampled: 510.25 | Baseline: 323.62 | Improvement: -186.62 | Win Rate: 0.00% | Actor Loss: -1.6684 | Entropy: 4.2154 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [28/2000] | Sampled: 506.38 | Baseline: 336.12 | Improvement: -170.25 | Win Rate: 0.00% | Actor Loss: -1.6148 | Entropy: 4.2723 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [29/2000] | Sampled: 524.12 | Baseline: 342.50 | Improvement: -181.62 | Win Rate: 0.00% | Actor Loss: 0.2372 | Entropy: 4.2057 | Invalid S/B: 1.75/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [30/2000] | Sampled: 470.25 | Baseline: 319.62 | Improvement: -150.62 | Win Rate: 0.00% | Actor Loss: 1.6778 | Entropy: 4.1888 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+   -> Validation | Samples: 50 | Makespan: 492.24 | Invalid Jobs: 1.24 | Score: 492.24
+Epoch [31/2000] | Sampled: 495.88 | Baseline: 323.50 | Improvement: -172.38 | Win Rate: 0.00% | Actor Loss: 0.8684 | Entropy: 4.1707 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [32/2000] | Sampled: 505.88 | Baseline: 333.50 | Improvement: -172.38 | Win Rate: 0.00% | Actor Loss: 5.2206 | Entropy: 4.1421 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [33/2000] | Sampled: 462.62 | Baseline: 339.12 | Improvement: -123.50 | Win Rate: 0.00% | Actor Loss: 3.6296 | Entropy: 4.0996 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [34/2000] | Sampled: 492.12 | Baseline: 349.12 | Improvement: -143.00 | Win Rate: 0.00% | Actor Loss: 0.0740 | Entropy: 4.1096 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [35/2000] | Sampled: 504.00 | Baseline: 348.50 | Improvement: -155.50 | Win Rate: 0.00% | Actor Loss: 1.6959 | Entropy: 4.1706 | Invalid S/B: 0.75/0.12 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [36/2000] | Sampled: 501.12 | Baseline: 326.12 | Improvement: -175.00 | Win Rate: 0.00% | Actor Loss: 0.4027 | Entropy: 4.2173 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [37/2000] | Sampled: 500.50 | Baseline: 348.38 | Improvement: -152.12 | Win Rate: 0.00% | Actor Loss: 1.8586 | Entropy: 4.2057 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [38/2000] | Sampled: 449.88 | Baseline: 328.12 | Improvement: -121.75 | Win Rate: 0.00% | Actor Loss: 4.1148 | Entropy: 4.2520 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [39/2000] | Sampled: 510.12 | Baseline: 341.88 | Improvement: -168.25 | Win Rate: 0.00% | Actor Loss: 0.9036 | Entropy: 4.2336 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [40/2000] | Sampled: 486.62 | Baseline: 337.38 | Improvement: -149.25 | Win Rate: 0.00% | Actor Loss: 2.7553 | Entropy: 4.1796 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 488.66 | Invalid Jobs: 1.64 | Score: 488.66
+Epoch [41/2000] | Sampled: 495.25 | Baseline: 324.62 | Improvement: -170.62 | Win Rate: 0.00% | Actor Loss: -2.1016 | Entropy: 4.1653 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [42/2000] | Sampled: 486.75 | Baseline: 336.12 | Improvement: -150.62 | Win Rate: 0.00% | Actor Loss: 8.1318 | Entropy: 4.1579 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [43/2000] | Sampled: 471.88 | Baseline: 323.75 | Improvement: -148.12 | Win Rate: 0.00% | Actor Loss: 6.6377 | Entropy: 4.1358 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [44/2000] | Sampled: 482.00 | Baseline: 343.00 | Improvement: -139.00 | Win Rate: 0.00% | Actor Loss: 4.2519 | Entropy: 4.2115 | Invalid S/B: 1.50/0.00 | Max Load: 5.2 | Load Gap: 2.4
+Epoch [45/2000] | Sampled: 481.88 | Baseline: 342.62 | Improvement: -139.25 | Win Rate: 0.00% | Actor Loss: 1.2316 | Entropy: 4.1906 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [46/2000] | Sampled: 500.50 | Baseline: 338.50 | Improvement: -162.00 | Win Rate: 0.00% | Actor Loss: 2.2011 | Entropy: 4.1937 | Invalid S/B: 1.88/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [47/2000] | Sampled: 496.38 | Baseline: 342.88 | Improvement: -153.50 | Win Rate: 0.00% | Actor Loss: -0.9082 | Entropy: 4.2122 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [48/2000] | Sampled: 509.25 | Baseline: 326.25 | Improvement: -183.00 | Win Rate: 0.00% | Actor Loss: 1.1705 | Entropy: 4.2439 | Invalid S/B: 1.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [49/2000] | Sampled: 490.12 | Baseline: 334.75 | Improvement: -155.38 | Win Rate: 0.00% | Actor Loss: 3.8053 | Entropy: 4.2644 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [50/2000] | Sampled: 488.50 | Baseline: 330.25 | Improvement: -158.25 | Win Rate: 0.00% | Actor Loss: 1.8022 | Entropy: 4.2303 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 421.52 | Invalid Jobs: 0.02 | Score: 421.52
+   -> Saved new best model (Val Score: 421.52)
+Epoch [51/2000] | Sampled: 507.25 | Baseline: 339.38 | Improvement: -167.88 | Win Rate: 0.00% | Actor Loss: -0.5349 | Entropy: 4.2553 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [52/2000] | Sampled: 523.25 | Baseline: 341.62 | Improvement: -181.62 | Win Rate: 0.00% | Actor Loss: -1.9649 | Entropy: 4.2934 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [53/2000] | Sampled: 484.88 | Baseline: 326.12 | Improvement: -158.75 | Win Rate: 0.00% | Actor Loss: -0.0495 | Entropy: 4.3278 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [54/2000] | Sampled: 480.50 | Baseline: 341.50 | Improvement: -139.00 | Win Rate: 0.00% | Actor Loss: 1.8189 | Entropy: 4.3110 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [55/2000] | Sampled: 526.62 | Baseline: 345.25 | Improvement: -181.38 | Win Rate: 0.00% | Actor Loss: 2.4716 | Entropy: 4.2988 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [56/2000] | Sampled: 492.62 | Baseline: 331.25 | Improvement: -161.38 | Win Rate: 0.00% | Actor Loss: 5.3250 | Entropy: 4.3065 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [57/2000] | Sampled: 518.75 | Baseline: 334.12 | Improvement: -184.62 | Win Rate: 0.00% | Actor Loss: 3.5932 | Entropy: 4.2862 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [58/2000] | Sampled: 513.12 | Baseline: 333.50 | Improvement: -179.62 | Win Rate: 0.00% | Actor Loss: -0.1149 | Entropy: 4.3363 | Invalid S/B: 1.12/0.00 | Max Load: 5.6 | Load Gap: 3.4
+Epoch [59/2000] | Sampled: 501.25 | Baseline: 345.00 | Improvement: -156.25 | Win Rate: 0.00% | Actor Loss: 1.3548 | Entropy: 4.3507 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [60/2000] | Sampled: 504.62 | Baseline: 330.38 | Improvement: -174.25 | Win Rate: 0.00% | Actor Loss: 2.3905 | Entropy: 4.3639 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 418.00 | Invalid Jobs: 0.06 | Score: 418.00
+   -> Saved new best model (Val Score: 418.00)
+Epoch [61/2000] | Sampled: 530.25 | Baseline: 338.25 | Improvement: -192.00 | Win Rate: 0.00% | Actor Loss: 1.6948 | Entropy: 4.3823 | Invalid S/B: 1.75/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [62/2000] | Sampled: 524.38 | Baseline: 339.50 | Improvement: -184.88 | Win Rate: 0.00% | Actor Loss: -1.3711 | Entropy: 4.3592 | Invalid S/B: 0.25/0.00 | Max Load: 5.4 | Load Gap: 3.4
+Epoch [63/2000] | Sampled: 530.00 | Baseline: 347.25 | Improvement: -182.75 | Win Rate: 0.00% | Actor Loss: -2.0520 | Entropy: 4.3822 | Invalid S/B: 1.12/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [64/2000] | Sampled: 487.38 | Baseline: 333.88 | Improvement: -153.50 | Win Rate: 0.00% | Actor Loss: -0.9316 | Entropy: 4.4132 | Invalid S/B: 0.25/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [65/2000] | Sampled: 495.25 | Baseline: 349.00 | Improvement: -146.25 | Win Rate: 0.00% | Actor Loss: -4.3612 | Entropy: 4.3970 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [66/2000] | Sampled: 516.62 | Baseline: 358.88 | Improvement: -157.75 | Win Rate: 0.00% | Actor Loss: 2.3680 | Entropy: 4.4109 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [67/2000] | Sampled: 508.75 | Baseline: 323.62 | Improvement: -185.12 | Win Rate: 0.00% | Actor Loss: 2.7689 | Entropy: 4.3495 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [68/2000] | Sampled: 540.75 | Baseline: 326.00 | Improvement: -214.75 | Win Rate: 0.00% | Actor Loss: 5.3727 | Entropy: 4.3859 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [69/2000] | Sampled: 505.00 | Baseline: 299.38 | Improvement: -205.62 | Win Rate: 0.00% | Actor Loss: -0.3976 | Entropy: 4.3926 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [70/2000] | Sampled: 495.38 | Baseline: 327.62 | Improvement: -167.75 | Win Rate: 0.00% | Actor Loss: -1.0908 | Entropy: 4.3913 | Invalid S/B: 0.25/0.00 | Max Load: 5.6 | Load Gap: 3.5
+   -> Validation | Samples: 50 | Makespan: 425.24 | Invalid Jobs: 0.02 | Score: 425.24
+Epoch [71/2000] | Sampled: 497.12 | Baseline: 339.38 | Improvement: -157.75 | Win Rate: 0.00% | Actor Loss: -0.1636 | Entropy: 4.3736 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [72/2000] | Sampled: 512.88 | Baseline: 327.38 | Improvement: -185.50 | Win Rate: 0.00% | Actor Loss: -0.5123 | Entropy: 4.3772 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [73/2000] | Sampled: 532.88 | Baseline: 340.25 | Improvement: -192.62 | Win Rate: 0.00% | Actor Loss: -1.5608 | Entropy: 4.3787 | Invalid S/B: 1.75/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [74/2000] | Sampled: 514.62 | Baseline: 328.38 | Improvement: -186.25 | Win Rate: 0.00% | Actor Loss: -5.6275 | Entropy: 4.3618 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [75/2000] | Sampled: 535.00 | Baseline: 336.38 | Improvement: -198.62 | Win Rate: 0.00% | Actor Loss: 1.0488 | Entropy: 4.3793 | Invalid S/B: 1.00/0.00 | Max Load: 5.6 | Load Gap: 3.4
+Epoch [76/2000] | Sampled: 512.38 | Baseline: 332.88 | Improvement: -179.50 | Win Rate: 0.00% | Actor Loss: 1.1343 | Entropy: 4.3603 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [77/2000] | Sampled: 511.62 | Baseline: 336.88 | Improvement: -174.75 | Win Rate: 0.00% | Actor Loss: 0.8750 | Entropy: 4.3385 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [78/2000] | Sampled: 516.12 | Baseline: 330.12 | Improvement: -186.00 | Win Rate: 0.00% | Actor Loss: -5.5496 | Entropy: 4.2801 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [79/2000] | Sampled: 505.50 | Baseline: 342.00 | Improvement: -163.50 | Win Rate: 0.00% | Actor Loss: 2.3524 | Entropy: 4.3131 | Invalid S/B: 1.00/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [80/2000] | Sampled: 499.88 | Baseline: 317.50 | Improvement: -182.38 | Win Rate: 0.00% | Actor Loss: -1.2178 | Entropy: 4.3258 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 418.62 | Invalid Jobs: 0.06 | Score: 418.62
+Epoch [81/2000] | Sampled: 515.62 | Baseline: 325.25 | Improvement: -190.38 | Win Rate: 0.00% | Actor Loss: 6.3476 | Entropy: 4.2770 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [82/2000] | Sampled: 490.50 | Baseline: 345.12 | Improvement: -145.38 | Win Rate: 0.00% | Actor Loss: 1.4986 | Entropy: 4.2619 | Invalid S/B: 1.12/0.12 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [83/2000] | Sampled: 512.50 | Baseline: 340.25 | Improvement: -172.25 | Win Rate: 0.00% | Actor Loss: 3.3441 | Entropy: 4.2825 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [84/2000] | Sampled: 507.25 | Baseline: 334.75 | Improvement: -172.50 | Win Rate: 0.00% | Actor Loss: 0.3035 | Entropy: 4.2319 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [85/2000] | Sampled: 476.88 | Baseline: 354.25 | Improvement: -122.62 | Win Rate: 0.00% | Actor Loss: 2.7376 | Entropy: 4.2425 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [86/2000] | Sampled: 474.50 | Baseline: 346.62 | Improvement: -127.88 | Win Rate: 0.00% | Actor Loss: -0.9222 | Entropy: 4.2530 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [87/2000] | Sampled: 491.25 | Baseline: 314.00 | Improvement: -177.25 | Win Rate: 0.00% | Actor Loss: -1.2415 | Entropy: 4.2513 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [88/2000] | Sampled: 467.25 | Baseline: 339.50 | Improvement: -127.75 | Win Rate: 0.00% | Actor Loss: -0.1089 | Entropy: 4.2431 | Invalid S/B: 1.00/0.00 | Max Load: 4.8 | Load Gap: 1.9
+Epoch [89/2000] | Sampled: 487.25 | Baseline: 355.38 | Improvement: -131.88 | Win Rate: 0.00% | Actor Loss: 1.4997 | Entropy: 4.1917 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [90/2000] | Sampled: 486.62 | Baseline: 345.00 | Improvement: -141.62 | Win Rate: 0.00% | Actor Loss: 1.7600 | Entropy: 4.1503 | Invalid S/B: 0.62/0.12 | Max Load: 5.0 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 426.72 | Invalid Jobs: 0.60 | Score: 426.72
+Epoch [91/2000] | Sampled: 486.62 | Baseline: 346.62 | Improvement: -140.00 | Win Rate: 0.00% | Actor Loss: -3.1919 | Entropy: 4.1285 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [92/2000] | Sampled: 459.88 | Baseline: 325.62 | Improvement: -134.25 | Win Rate: 0.00% | Actor Loss: 1.4161 | Entropy: 4.1174 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [93/2000] | Sampled: 452.62 | Baseline: 326.12 | Improvement: -126.50 | Win Rate: 0.00% | Actor Loss: 3.3991 | Entropy: 4.0564 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [94/2000] | Sampled: 459.88 | Baseline: 340.12 | Improvement: -119.75 | Win Rate: 0.00% | Actor Loss: 3.0647 | Entropy: 4.0447 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [95/2000] | Sampled: 459.88 | Baseline: 346.00 | Improvement: -113.88 | Win Rate: 0.00% | Actor Loss: -1.1959 | Entropy: 3.9510 | Invalid S/B: 1.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [96/2000] | Sampled: 441.38 | Baseline: 331.38 | Improvement: -110.00 | Win Rate: 0.00% | Actor Loss: -0.7374 | Entropy: 3.9885 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [97/2000] | Sampled: 447.38 | Baseline: 337.00 | Improvement: -110.38 | Win Rate: 0.00% | Actor Loss: 0.7627 | Entropy: 3.9632 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [98/2000] | Sampled: 446.38 | Baseline: 330.00 | Improvement: -116.38 | Win Rate: 0.00% | Actor Loss: 1.0807 | Entropy: 3.9573 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [99/2000] | Sampled: 457.88 | Baseline: 335.75 | Improvement: -122.12 | Win Rate: 0.00% | Actor Loss: 1.0969 | Entropy: 4.0078 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [100/2000] | Sampled: 455.75 | Baseline: 339.12 | Improvement: -116.62 | Win Rate: 0.00% | Actor Loss: 4.6698 | Entropy: 4.0163 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+   -> Validation | Samples: 50 | Makespan: 409.30 | Invalid Jobs: 0.26 | Score: 409.30
+   -> Saved new best model (Val Score: 409.30)
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [101/2000] | Sampled: 455.00 | Baseline: 327.12 | Improvement: -127.88 | Win Rate: 0.00% | Actor Loss: -2.3771 | Entropy: 4.0779 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [102/2000] | Sampled: 484.75 | Baseline: 342.00 | Improvement: -142.75 | Win Rate: 0.00% | Actor Loss: 0.1261 | Entropy: 4.1180 | Invalid S/B: 1.88/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [103/2000] | Sampled: 467.75 | Baseline: 339.12 | Improvement: -128.62 | Win Rate: 0.00% | Actor Loss: 5.9584 | Entropy: 4.1462 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [104/2000] | Sampled: 457.88 | Baseline: 342.88 | Improvement: -115.00 | Win Rate: 0.00% | Actor Loss: 2.7385 | Entropy: 4.1659 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [105/2000] | Sampled: 469.38 | Baseline: 324.38 | Improvement: -145.00 | Win Rate: 0.00% | Actor Loss: -3.4141 | Entropy: 4.1291 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [106/2000] | Sampled: 477.75 | Baseline: 338.12 | Improvement: -139.62 | Win Rate: 0.00% | Actor Loss: 2.0222 | Entropy: 4.1597 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [107/2000] | Sampled: 505.38 | Baseline: 358.88 | Improvement: -146.50 | Win Rate: 0.00% | Actor Loss: -0.7029 | Entropy: 4.1766 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [108/2000] | Sampled: 478.12 | Baseline: 348.38 | Improvement: -129.75 | Win Rate: 0.00% | Actor Loss: -5.7647 | Entropy: 4.1780 | Invalid S/B: 0.75/0.12 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [109/2000] | Sampled: 471.88 | Baseline: 345.88 | Improvement: -126.00 | Win Rate: 0.00% | Actor Loss: 0.1084 | Entropy: 4.2466 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [110/2000] | Sampled: 492.88 | Baseline: 340.50 | Improvement: -152.38 | Win Rate: 0.00% | Actor Loss: 1.4239 | Entropy: 4.1594 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 453.32 | Invalid Jobs: 0.72 | Score: 453.32
+Epoch [111/2000] | Sampled: 492.00 | Baseline: 329.25 | Improvement: -162.75 | Win Rate: 0.00% | Actor Loss: 5.9060 | Entropy: 4.1993 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [112/2000] | Sampled: 491.38 | Baseline: 330.88 | Improvement: -160.50 | Win Rate: 0.00% | Actor Loss: 7.8717 | Entropy: 4.2171 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [113/2000] | Sampled: 497.50 | Baseline: 342.88 | Improvement: -154.62 | Win Rate: 0.00% | Actor Loss: -2.4782 | Entropy: 4.2092 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [114/2000] | Sampled: 503.50 | Baseline: 327.62 | Improvement: -175.88 | Win Rate: 0.00% | Actor Loss: 4.3186 | Entropy: 4.2503 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [115/2000] | Sampled: 499.88 | Baseline: 329.00 | Improvement: -170.88 | Win Rate: 0.00% | Actor Loss: -1.4910 | Entropy: 4.2288 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [116/2000] | Sampled: 492.00 | Baseline: 340.38 | Improvement: -151.62 | Win Rate: 0.00% | Actor Loss: -0.9008 | Entropy: 4.2724 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [117/2000] | Sampled: 487.25 | Baseline: 336.25 | Improvement: -151.00 | Win Rate: 0.00% | Actor Loss: 0.5784 | Entropy: 4.2625 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [118/2000] | Sampled: 527.75 | Baseline: 326.88 | Improvement: -200.88 | Win Rate: 0.00% | Actor Loss: 2.9754 | Entropy: 4.2512 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [119/2000] | Sampled: 514.88 | Baseline: 334.38 | Improvement: -180.50 | Win Rate: 0.00% | Actor Loss: -2.1363 | Entropy: 4.2794 | Invalid S/B: 0.50/0.12 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [120/2000] | Sampled: 534.88 | Baseline: 334.25 | Improvement: -200.62 | Win Rate: 0.00% | Actor Loss: 0.1771 | Entropy: 4.2871 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 463.80 | Invalid Jobs: 0.66 | Score: 463.80
+Epoch [121/2000] | Sampled: 503.00 | Baseline: 327.62 | Improvement: -175.38 | Win Rate: 0.00% | Actor Loss: 1.0550 | Entropy: 4.2674 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [122/2000] | Sampled: 503.00 | Baseline: 339.50 | Improvement: -163.50 | Win Rate: 0.00% | Actor Loss: 0.1142 | Entropy: 4.3062 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [123/2000] | Sampled: 521.88 | Baseline: 357.88 | Improvement: -164.00 | Win Rate: 0.00% | Actor Loss: 0.1546 | Entropy: 4.2820 | Invalid S/B: 0.62/0.12 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [124/2000] | Sampled: 523.88 | Baseline: 326.50 | Improvement: -197.38 | Win Rate: 0.00% | Actor Loss: -1.2670 | Entropy: 4.2934 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [125/2000] | Sampled: 498.62 | Baseline: 331.62 | Improvement: -167.00 | Win Rate: 0.00% | Actor Loss: -0.0326 | Entropy: 4.3056 | Invalid S/B: 0.25/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [126/2000] | Sampled: 523.00 | Baseline: 339.12 | Improvement: -183.88 | Win Rate: 0.00% | Actor Loss: 3.3653 | Entropy: 4.3155 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [127/2000] | Sampled: 539.75 | Baseline: 336.00 | Improvement: -203.75 | Win Rate: 0.00% | Actor Loss: -2.3972 | Entropy: 4.3092 | Invalid S/B: 1.12/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [128/2000] | Sampled: 524.62 | Baseline: 341.25 | Improvement: -183.38 | Win Rate: 0.00% | Actor Loss: 1.3822 | Entropy: 4.3509 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [129/2000] | Sampled: 548.75 | Baseline: 366.25 | Improvement: -182.50 | Win Rate: 0.00% | Actor Loss: 4.7192 | Entropy: 4.2476 | Invalid S/B: 1.50/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [130/2000] | Sampled: 508.00 | Baseline: 339.50 | Improvement: -168.50 | Win Rate: 0.00% | Actor Loss: -0.9506 | Entropy: 4.3052 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 502.12 | Invalid Jobs: 0.40 | Score: 502.12
+Epoch [131/2000] | Sampled: 529.25 | Baseline: 342.00 | Improvement: -187.25 | Win Rate: 0.00% | Actor Loss: -2.5870 | Entropy: 4.3245 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [132/2000] | Sampled: 505.50 | Baseline: 326.50 | Improvement: -179.00 | Win Rate: 0.00% | Actor Loss: 2.3981 | Entropy: 4.2946 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [133/2000] | Sampled: 521.50 | Baseline: 340.50 | Improvement: -181.00 | Win Rate: 0.00% | Actor Loss: 3.7376 | Entropy: 4.3031 | Invalid S/B: 1.12/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [134/2000] | Sampled: 530.25 | Baseline: 336.12 | Improvement: -194.12 | Win Rate: 0.00% | Actor Loss: -0.4019 | Entropy: 4.2415 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 3.2
+Epoch [135/2000] | Sampled: 533.38 | Baseline: 324.12 | Improvement: -209.25 | Win Rate: 0.00% | Actor Loss: 1.1051 | Entropy: 4.3490 | Invalid S/B: 0.88/0.00 | Max Load: 5.5 | Load Gap: 3.4
+Epoch [136/2000] | Sampled: 529.38 | Baseline: 324.25 | Improvement: -205.12 | Win Rate: 0.00% | Actor Loss: 1.0288 | Entropy: 4.3178 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [137/2000] | Sampled: 516.62 | Baseline: 344.62 | Improvement: -172.00 | Win Rate: 0.00% | Actor Loss: 2.9677 | Entropy: 4.2828 | Invalid S/B: 0.75/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [138/2000] | Sampled: 489.62 | Baseline: 318.00 | Improvement: -171.62 | Win Rate: 0.00% | Actor Loss: 4.4290 | Entropy: 4.2752 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [139/2000] | Sampled: 531.38 | Baseline: 318.25 | Improvement: -213.12 | Win Rate: 0.00% | Actor Loss: -6.9565 | Entropy: 4.2869 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [140/2000] | Sampled: 529.50 | Baseline: 332.25 | Improvement: -197.25 | Win Rate: 0.00% | Actor Loss: 1.0908 | Entropy: 4.2749 | Invalid S/B: 0.50/0.00 | Max Load: 5.6 | Load Gap: 3.2
+   -> Validation | Samples: 50 | Makespan: 594.18 | Invalid Jobs: 0.06 | Score: 594.18
+Epoch [141/2000] | Sampled: 515.75 | Baseline: 351.00 | Improvement: -164.75 | Win Rate: 0.00% | Actor Loss: -0.0267 | Entropy: 4.3117 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [142/2000] | Sampled: 500.25 | Baseline: 327.25 | Improvement: -173.00 | Win Rate: 0.00% | Actor Loss: 2.8540 | Entropy: 4.2109 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [143/2000] | Sampled: 493.25 | Baseline: 316.62 | Improvement: -176.62 | Win Rate: 0.00% | Actor Loss: -3.0189 | Entropy: 4.1964 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [144/2000] | Sampled: 502.75 | Baseline: 329.25 | Improvement: -173.50 | Win Rate: 0.00% | Actor Loss: 1.4739 | Entropy: 4.2616 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 3.2
+Epoch [145/2000] | Sampled: 495.88 | Baseline: 328.00 | Improvement: -167.88 | Win Rate: 0.00% | Actor Loss: -6.6195 | Entropy: 4.1406 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [146/2000] | Sampled: 457.50 | Baseline: 340.62 | Improvement: -116.88 | Win Rate: 0.00% | Actor Loss: 7.1264 | Entropy: 4.1717 | Invalid S/B: 0.50/0.12 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [147/2000] | Sampled: 472.62 | Baseline: 318.25 | Improvement: -154.38 | Win Rate: 0.00% | Actor Loss: 0.0635 | Entropy: 4.1505 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.4
+Epoch [148/2000] | Sampled: 479.62 | Baseline: 345.75 | Improvement: -133.88 | Win Rate: 0.00% | Actor Loss: -0.4152 | Entropy: 4.0689 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [149/2000] | Sampled: 459.25 | Baseline: 326.75 | Improvement: -132.50 | Win Rate: 0.00% | Actor Loss: -0.5773 | Entropy: 4.0718 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [150/2000] | Sampled: 462.25 | Baseline: 341.25 | Improvement: -121.00 | Win Rate: 0.00% | Actor Loss: 1.8792 | Entropy: 4.0773 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 469.42 | Invalid Jobs: 0.14 | Score: 469.42
+Epoch [151/2000] | Sampled: 470.62 | Baseline: 343.88 | Improvement: -126.75 | Win Rate: 0.00% | Actor Loss: -1.6332 | Entropy: 4.0099 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [152/2000] | Sampled: 441.12 | Baseline: 332.38 | Improvement: -108.75 | Win Rate: 0.00% | Actor Loss: -2.3998 | Entropy: 4.0004 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [153/2000] | Sampled: 456.25 | Baseline: 347.38 | Improvement: -108.88 | Win Rate: 0.00% | Actor Loss: -0.6349 | Entropy: 4.0231 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [154/2000] | Sampled: 494.75 | Baseline: 328.00 | Improvement: -166.75 | Win Rate: 0.00% | Actor Loss: 2.9775 | Entropy: 4.0921 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [155/2000] | Sampled: 491.75 | Baseline: 343.50 | Improvement: -148.25 | Win Rate: 0.00% | Actor Loss: -2.1732 | Entropy: 4.1400 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [156/2000] | Sampled: 495.38 | Baseline: 342.75 | Improvement: -152.62 | Win Rate: 0.00% | Actor Loss: -1.3734 | Entropy: 4.1920 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [157/2000] | Sampled: 496.00 | Baseline: 342.12 | Improvement: -153.88 | Win Rate: 0.00% | Actor Loss: 0.3092 | Entropy: 4.1847 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [158/2000] | Sampled: 462.62 | Baseline: 323.88 | Improvement: -138.75 | Win Rate: 0.00% | Actor Loss: -7.0881 | Entropy: 4.2081 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [159/2000] | Sampled: 469.75 | Baseline: 341.62 | Improvement: -128.12 | Win Rate: 0.00% | Actor Loss: -4.7062 | Entropy: 4.1964 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [160/2000] | Sampled: 488.25 | Baseline: 314.00 | Improvement: -174.25 | Win Rate: 0.00% | Actor Loss: -5.7226 | Entropy: 4.2015 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.2
+   -> Validation | Samples: 50 | Makespan: 411.20 | Invalid Jobs: 0.30 | Score: 411.20
+Epoch [161/2000] | Sampled: 470.62 | Baseline: 337.75 | Improvement: -132.88 | Win Rate: 0.00% | Actor Loss: -1.8146 | Entropy: 4.1938 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 2.5
+Epoch [162/2000] | Sampled: 519.00 | Baseline: 347.88 | Improvement: -171.12 | Win Rate: 0.00% | Actor Loss: 3.7583 | Entropy: 4.0991 | Invalid S/B: 1.62/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [163/2000] | Sampled: 464.62 | Baseline: 321.50 | Improvement: -143.12 | Win Rate: 0.00% | Actor Loss: -0.1299 | Entropy: 4.1615 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [164/2000] | Sampled: 454.38 | Baseline: 330.12 | Improvement: -124.25 | Win Rate: 0.00% | Actor Loss: 3.1906 | Entropy: 4.1899 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [165/2000] | Sampled: 463.50 | Baseline: 352.38 | Improvement: -111.12 | Win Rate: 0.00% | Actor Loss: -0.1181 | Entropy: 4.1652 | Invalid S/B: 0.75/0.12 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [166/2000] | Sampled: 486.62 | Baseline: 341.88 | Improvement: -144.75 | Win Rate: 0.00% | Actor Loss: 1.3795 | Entropy: 4.1599 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [167/2000] | Sampled: 470.25 | Baseline: 325.62 | Improvement: -144.62 | Win Rate: 0.00% | Actor Loss: -0.1900 | Entropy: 4.2472 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [168/2000] | Sampled: 517.88 | Baseline: 330.38 | Improvement: -187.50 | Win Rate: 0.00% | Actor Loss: -2.3201 | Entropy: 4.2184 | Invalid S/B: 1.00/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [169/2000] | Sampled: 514.25 | Baseline: 331.25 | Improvement: -183.00 | Win Rate: 0.00% | Actor Loss: 2.9165 | Entropy: 4.2381 | Invalid S/B: 1.50/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [170/2000] | Sampled: 504.50 | Baseline: 322.25 | Improvement: -182.25 | Win Rate: 0.00% | Actor Loss: -2.8779 | Entropy: 4.2800 | Invalid S/B: 1.38/0.00 | Max Load: 5.5 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 440.22 | Invalid Jobs: 1.36 | Score: 440.22
+Epoch [171/2000] | Sampled: 500.62 | Baseline: 346.50 | Improvement: -154.12 | Win Rate: 0.00% | Actor Loss: -2.5700 | Entropy: 4.2731 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [172/2000] | Sampled: 490.00 | Baseline: 333.50 | Improvement: -156.50 | Win Rate: 0.00% | Actor Loss: 4.0373 | Entropy: 4.2209 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [173/2000] | Sampled: 523.25 | Baseline: 326.75 | Improvement: -196.50 | Win Rate: 0.00% | Actor Loss: -2.6205 | Entropy: 4.2244 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [174/2000] | Sampled: 511.00 | Baseline: 333.75 | Improvement: -177.25 | Win Rate: 0.00% | Actor Loss: 2.5008 | Entropy: 4.2556 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [175/2000] | Sampled: 489.12 | Baseline: 318.25 | Improvement: -170.88 | Win Rate: 0.00% | Actor Loss: 2.4067 | Entropy: 4.2801 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [176/2000] | Sampled: 522.12 | Baseline: 329.88 | Improvement: -192.25 | Win Rate: 0.00% | Actor Loss: -2.6619 | Entropy: 4.2590 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [177/2000] | Sampled: 492.62 | Baseline: 333.50 | Improvement: -159.12 | Win Rate: 0.00% | Actor Loss: -3.4186 | Entropy: 4.2679 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [178/2000] | Sampled: 487.62 | Baseline: 341.50 | Improvement: -146.12 | Win Rate: 0.00% | Actor Loss: -3.6349 | Entropy: 4.2656 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.5
+Epoch [179/2000] | Sampled: 506.25 | Baseline: 322.88 | Improvement: -183.38 | Win Rate: 0.00% | Actor Loss: 3.6204 | Entropy: 4.2390 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [180/2000] | Sampled: 494.25 | Baseline: 325.00 | Improvement: -169.25 | Win Rate: 0.00% | Actor Loss: -0.7467 | Entropy: 4.2302 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 430.78 | Invalid Jobs: 1.08 | Score: 430.78
+Epoch [181/2000] | Sampled: 499.12 | Baseline: 341.12 | Improvement: -158.00 | Win Rate: 0.00% | Actor Loss: -2.9713 | Entropy: 4.2334 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [182/2000] | Sampled: 518.00 | Baseline: 325.50 | Improvement: -192.50 | Win Rate: 0.00% | Actor Loss: -4.8139 | Entropy: 4.1834 | Invalid S/B: 1.12/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [183/2000] | Sampled: 496.88 | Baseline: 325.12 | Improvement: -171.75 | Win Rate: 0.00% | Actor Loss: 5.1117 | Entropy: 4.1820 | Invalid S/B: 1.62/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [184/2000] | Sampled: 506.62 | Baseline: 341.88 | Improvement: -164.75 | Win Rate: 0.00% | Actor Loss: 1.1022 | Entropy: 4.1343 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [185/2000] | Sampled: 484.50 | Baseline: 346.12 | Improvement: -138.38 | Win Rate: 0.00% | Actor Loss: -2.6680 | Entropy: 4.1352 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [186/2000] | Sampled: 507.50 | Baseline: 331.62 | Improvement: -175.88 | Win Rate: 0.00% | Actor Loss: 2.0263 | Entropy: 4.1501 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [187/2000] | Sampled: 480.50 | Baseline: 322.25 | Improvement: -158.25 | Win Rate: 0.00% | Actor Loss: -0.7547 | Entropy: 4.1042 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [188/2000] | Sampled: 453.25 | Baseline: 328.75 | Improvement: -124.50 | Win Rate: 0.00% | Actor Loss: 0.1545 | Entropy: 4.1393 | Invalid S/B: 0.88/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [189/2000] | Sampled: 497.38 | Baseline: 331.00 | Improvement: -166.38 | Win Rate: 0.00% | Actor Loss: -4.1500 | Entropy: 4.1094 | Invalid S/B: 1.75/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [190/2000] | Sampled: 499.75 | Baseline: 336.38 | Improvement: -163.38 | Win Rate: 0.00% | Actor Loss: 4.9568 | Entropy: 4.0732 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 438.52 | Invalid Jobs: 1.44 | Score: 438.52
+Epoch [191/2000] | Sampled: 461.88 | Baseline: 337.00 | Improvement: -124.88 | Win Rate: 0.00% | Actor Loss: 2.0933 | Entropy: 4.0405 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [192/2000] | Sampled: 464.62 | Baseline: 326.12 | Improvement: -138.50 | Win Rate: 0.00% | Actor Loss: -4.5891 | Entropy: 4.0706 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [193/2000] | Sampled: 448.88 | Baseline: 329.38 | Improvement: -119.50 | Win Rate: 0.00% | Actor Loss: -3.1877 | Entropy: 4.0728 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [194/2000] | Sampled: 434.38 | Baseline: 319.38 | Improvement: -115.00 | Win Rate: 0.00% | Actor Loss: -0.0149 | Entropy: 4.0636 | Invalid S/B: 1.00/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [195/2000] | Sampled: 452.00 | Baseline: 327.75 | Improvement: -124.25 | Win Rate: 0.00% | Actor Loss: 3.0346 | Entropy: 4.0337 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [196/2000] | Sampled: 465.12 | Baseline: 320.38 | Improvement: -144.75 | Win Rate: 0.00% | Actor Loss: 2.8280 | Entropy: 4.0000 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [197/2000] | Sampled: 459.00 | Baseline: 324.25 | Improvement: -134.75 | Win Rate: 0.00% | Actor Loss: 2.6957 | Entropy: 4.0239 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [198/2000] | Sampled: 459.12 | Baseline: 336.50 | Improvement: -122.62 | Win Rate: 0.00% | Actor Loss: 1.5582 | Entropy: 3.9856 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [199/2000] | Sampled: 484.25 | Baseline: 342.75 | Improvement: -141.50 | Win Rate: 0.00% | Actor Loss: -4.2111 | Entropy: 3.9903 | Invalid S/B: 1.62/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [200/2000] | Sampled: 451.75 | Baseline: 346.12 | Improvement: -105.62 | Win Rate: 0.00% | Actor Loss: 3.4737 | Entropy: 3.9815 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+   -> Validation | Samples: 50 | Makespan: 433.78 | Invalid Jobs: 1.10 | Score: 433.78
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [201/2000] | Sampled: 465.00 | Baseline: 342.38 | Improvement: -122.62 | Win Rate: 0.00% | Actor Loss: -3.7518 | Entropy: 4.0309 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [202/2000] | Sampled: 494.50 | Baseline: 334.00 | Improvement: -160.50 | Win Rate: 0.00% | Actor Loss: 4.2875 | Entropy: 4.0217 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [203/2000] | Sampled: 486.25 | Baseline: 341.00 | Improvement: -145.25 | Win Rate: 0.00% | Actor Loss: 1.1306 | Entropy: 4.0447 | Invalid S/B: 1.75/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [204/2000] | Sampled: 457.00 | Baseline: 314.00 | Improvement: -143.00 | Win Rate: 0.00% | Actor Loss: 1.7977 | Entropy: 4.1139 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [205/2000] | Sampled: 471.62 | Baseline: 343.75 | Improvement: -127.88 | Win Rate: 0.00% | Actor Loss: 3.0685 | Entropy: 4.0754 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [206/2000] | Sampled: 462.50 | Baseline: 337.12 | Improvement: -125.38 | Win Rate: 0.00% | Actor Loss: -4.5563 | Entropy: 4.1553 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [207/2000] | Sampled: 492.25 | Baseline: 334.75 | Improvement: -157.50 | Win Rate: 0.00% | Actor Loss: -1.2236 | Entropy: 4.1595 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [208/2000] | Sampled: 488.00 | Baseline: 336.75 | Improvement: -151.25 | Win Rate: 0.00% | Actor Loss: 2.3954 | Entropy: 4.1832 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [209/2000] | Sampled: 458.62 | Baseline: 328.00 | Improvement: -130.62 | Win Rate: 0.00% | Actor Loss: 0.9678 | Entropy: 4.1535 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [210/2000] | Sampled: 486.88 | Baseline: 347.62 | Improvement: -139.25 | Win Rate: 0.00% | Actor Loss: 2.6297 | Entropy: 4.1558 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 432.72 | Invalid Jobs: 0.26 | Score: 432.72
+Epoch [211/2000] | Sampled: 490.62 | Baseline: 327.75 | Improvement: -162.88 | Win Rate: 0.00% | Actor Loss: -3.2115 | Entropy: 4.1677 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [212/2000] | Sampled: 487.12 | Baseline: 327.00 | Improvement: -160.12 | Win Rate: 0.00% | Actor Loss: -3.3665 | Entropy: 4.1941 | Invalid S/B: 0.50/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [213/2000] | Sampled: 512.00 | Baseline: 333.38 | Improvement: -178.62 | Win Rate: 0.00% | Actor Loss: 1.0190 | Entropy: 4.0728 | Invalid S/B: 1.00/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [214/2000] | Sampled: 492.50 | Baseline: 327.25 | Improvement: -165.25 | Win Rate: 0.00% | Actor Loss: 0.0803 | Entropy: 4.1536 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [215/2000] | Sampled: 504.25 | Baseline: 332.38 | Improvement: -171.88 | Win Rate: 0.00% | Actor Loss: -1.5001 | Entropy: 4.1154 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [216/2000] | Sampled: 522.75 | Baseline: 341.00 | Improvement: -181.75 | Win Rate: 0.00% | Actor Loss: 1.3917 | Entropy: 4.1491 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [217/2000] | Sampled: 515.75 | Baseline: 331.88 | Improvement: -183.88 | Win Rate: 0.00% | Actor Loss: -1.9704 | Entropy: 4.2163 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [218/2000] | Sampled: 522.12 | Baseline: 344.50 | Improvement: -177.62 | Win Rate: 0.00% | Actor Loss: -5.2062 | Entropy: 4.1823 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [219/2000] | Sampled: 502.00 | Baseline: 322.62 | Improvement: -179.38 | Win Rate: 0.00% | Actor Loss: 3.4035 | Entropy: 4.2358 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [220/2000] | Sampled: 512.25 | Baseline: 342.50 | Improvement: -169.75 | Win Rate: 0.00% | Actor Loss: -1.2734 | Entropy: 4.2268 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 456.14 | Invalid Jobs: 1.16 | Score: 456.14
+Epoch [221/2000] | Sampled: 518.25 | Baseline: 320.50 | Improvement: -197.75 | Win Rate: 0.00% | Actor Loss: -0.8869 | Entropy: 4.1985 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [222/2000] | Sampled: 501.38 | Baseline: 357.88 | Improvement: -143.50 | Win Rate: 0.00% | Actor Loss: 4.7763 | Entropy: 4.2014 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [223/2000] | Sampled: 521.62 | Baseline: 329.75 | Improvement: -191.88 | Win Rate: 0.00% | Actor Loss: 0.7773 | Entropy: 4.2615 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [224/2000] | Sampled: 555.75 | Baseline: 341.38 | Improvement: -214.38 | Win Rate: 0.00% | Actor Loss: 1.2973 | Entropy: 4.1932 | Invalid S/B: 2.00/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [225/2000] | Sampled: 500.12 | Baseline: 333.50 | Improvement: -166.62 | Win Rate: 0.00% | Actor Loss: -2.6162 | Entropy: 4.2285 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [226/2000] | Sampled: 498.62 | Baseline: 326.50 | Improvement: -172.12 | Win Rate: 0.00% | Actor Loss: -0.9883 | Entropy: 4.2084 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [227/2000] | Sampled: 489.25 | Baseline: 338.62 | Improvement: -150.62 | Win Rate: 0.00% | Actor Loss: 0.5415 | Entropy: 4.2419 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [228/2000] | Sampled: 497.00 | Baseline: 344.25 | Improvement: -152.75 | Win Rate: 0.00% | Actor Loss: -0.7267 | Entropy: 4.2003 | Invalid S/B: 1.00/0.12 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [229/2000] | Sampled: 490.12 | Baseline: 337.00 | Improvement: -153.12 | Win Rate: 0.00% | Actor Loss: -1.0233 | Entropy: 4.1812 | Invalid S/B: 1.00/0.12 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [230/2000] | Sampled: 476.12 | Baseline: 367.62 | Improvement: -108.50 | Win Rate: 0.00% | Actor Loss: -0.0642 | Entropy: 4.1725 | Invalid S/B: 1.12/0.00 | Max Load: 4.9 | Load Gap: 2.1
+   -> Validation | Samples: 50 | Makespan: 451.92 | Invalid Jobs: 0.86 | Score: 451.92
+Epoch [231/2000] | Sampled: 452.25 | Baseline: 327.75 | Improvement: -124.50 | Win Rate: 0.00% | Actor Loss: -3.6100 | Entropy: 4.1468 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [232/2000] | Sampled: 474.88 | Baseline: 334.38 | Improvement: -140.50 | Win Rate: 0.00% | Actor Loss: 2.8838 | Entropy: 4.1884 | Invalid S/B: 1.00/0.25 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [233/2000] | Sampled: 467.12 | Baseline: 335.88 | Improvement: -131.25 | Win Rate: 0.00% | Actor Loss: -2.0711 | Entropy: 4.1300 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [234/2000] | Sampled: 444.00 | Baseline: 331.88 | Improvement: -112.12 | Win Rate: 0.00% | Actor Loss: 1.7224 | Entropy: 4.0750 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.9
+Epoch [235/2000] | Sampled: 459.12 | Baseline: 348.88 | Improvement: -110.25 | Win Rate: 0.00% | Actor Loss: -3.3615 | Entropy: 4.0448 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [236/2000] | Sampled: 445.75 | Baseline: 337.00 | Improvement: -108.75 | Win Rate: 0.00% | Actor Loss: 9.0086 | Entropy: 4.0835 | Invalid S/B: 0.12/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [237/2000] | Sampled: 456.50 | Baseline: 341.12 | Improvement: -115.38 | Win Rate: 0.00% | Actor Loss: 2.7001 | Entropy: 4.0673 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [238/2000] | Sampled: 451.88 | Baseline: 347.88 | Improvement: -104.00 | Win Rate: 0.00% | Actor Loss: 1.6415 | Entropy: 4.0677 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [239/2000] | Sampled: 462.38 | Baseline: 337.62 | Improvement: -124.75 | Win Rate: 0.00% | Actor Loss: 2.5217 | Entropy: 4.1147 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [240/2000] | Sampled: 476.62 | Baseline: 321.12 | Improvement: -155.50 | Win Rate: 0.00% | Actor Loss: 4.6757 | Entropy: 4.1784 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 442.36 | Invalid Jobs: 0.44 | Score: 442.36
+Epoch [241/2000] | Sampled: 480.00 | Baseline: 327.62 | Improvement: -152.38 | Win Rate: 0.00% | Actor Loss: 0.3102 | Entropy: 4.1835 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [242/2000] | Sampled: 471.62 | Baseline: 326.75 | Improvement: -144.88 | Win Rate: 0.00% | Actor Loss: -0.2909 | Entropy: 4.2005 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [243/2000] | Sampled: 453.25 | Baseline: 335.38 | Improvement: -117.88 | Win Rate: 0.00% | Actor Loss: 0.2062 | Entropy: 4.2667 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [244/2000] | Sampled: 468.25 | Baseline: 324.75 | Improvement: -143.50 | Win Rate: 0.00% | Actor Loss: 3.8953 | Entropy: 4.1876 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [245/2000] | Sampled: 474.62 | Baseline: 324.00 | Improvement: -150.62 | Win Rate: 0.00% | Actor Loss: -1.0808 | Entropy: 4.3218 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [246/2000] | Sampled: 475.12 | Baseline: 353.25 | Improvement: -121.88 | Win Rate: 0.00% | Actor Loss: 2.3139 | Entropy: 4.2513 | Invalid S/B: 0.62/0.12 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [247/2000] | Sampled: 443.00 | Baseline: 328.62 | Improvement: -114.38 | Win Rate: 0.00% | Actor Loss: 2.9340 | Entropy: 4.2764 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [248/2000] | Sampled: 438.75 | Baseline: 324.25 | Improvement: -114.50 | Win Rate: 0.00% | Actor Loss: -4.6715 | Entropy: 4.2489 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [249/2000] | Sampled: 461.25 | Baseline: 342.38 | Improvement: -118.88 | Win Rate: 0.00% | Actor Loss: -2.1991 | Entropy: 4.2734 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [250/2000] | Sampled: 440.12 | Baseline: 337.50 | Improvement: -102.62 | Win Rate: 0.00% | Actor Loss: -0.5642 | Entropy: 4.2857 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 436.54 | Invalid Jobs: 0.26 | Score: 436.54
+Epoch [251/2000] | Sampled: 487.12 | Baseline: 320.50 | Improvement: -166.62 | Win Rate: 0.00% | Actor Loss: 2.3483 | Entropy: 4.2624 | Invalid S/B: 0.88/0.00 | Max Load: 5.6 | Load Gap: 3.1
+Epoch [252/2000] | Sampled: 457.25 | Baseline: 331.12 | Improvement: -126.12 | Win Rate: 0.00% | Actor Loss: -2.4518 | Entropy: 4.2635 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [253/2000] | Sampled: 472.25 | Baseline: 342.62 | Improvement: -129.62 | Win Rate: 0.00% | Actor Loss: 0.2903 | Entropy: 4.2369 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [254/2000] | Sampled: 468.50 | Baseline: 328.25 | Improvement: -140.25 | Win Rate: 0.00% | Actor Loss: -1.2465 | Entropy: 4.2996 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [255/2000] | Sampled: 466.12 | Baseline: 333.38 | Improvement: -132.75 | Win Rate: 0.00% | Actor Loss: 4.9409 | Entropy: 4.2084 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [256/2000] | Sampled: 456.62 | Baseline: 340.38 | Improvement: -116.25 | Win Rate: 0.00% | Actor Loss: 1.1183 | Entropy: 4.2069 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [257/2000] | Sampled: 492.00 | Baseline: 347.00 | Improvement: -145.00 | Win Rate: 0.00% | Actor Loss: 2.0794 | Entropy: 4.2147 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [258/2000] | Sampled: 469.38 | Baseline: 331.88 | Improvement: -137.50 | Win Rate: 0.00% | Actor Loss: -8.1350 | Entropy: 4.2073 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [259/2000] | Sampled: 448.88 | Baseline: 335.62 | Improvement: -113.25 | Win Rate: 0.00% | Actor Loss: 4.3396 | Entropy: 4.2040 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [260/2000] | Sampled: 457.62 | Baseline: 353.25 | Improvement: -104.38 | Win Rate: 0.00% | Actor Loss: 4.4033 | Entropy: 4.1824 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 554.40 | Invalid Jobs: 1.80 | Score: 554.40
+Epoch [261/2000] | Sampled: 487.00 | Baseline: 342.62 | Improvement: -144.38 | Win Rate: 0.00% | Actor Loss: -6.5322 | Entropy: 4.1549 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [262/2000] | Sampled: 484.38 | Baseline: 330.25 | Improvement: -154.12 | Win Rate: 0.00% | Actor Loss: 6.5263 | Entropy: 4.0925 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [263/2000] | Sampled: 459.50 | Baseline: 331.75 | Improvement: -127.75 | Win Rate: 0.00% | Actor Loss: -11.2416 | Entropy: 4.2069 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [264/2000] | Sampled: 447.38 | Baseline: 345.50 | Improvement: -101.88 | Win Rate: 0.00% | Actor Loss: 1.9111 | Entropy: 4.1436 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [265/2000] | Sampled: 464.00 | Baseline: 336.50 | Improvement: -127.50 | Win Rate: 0.00% | Actor Loss: 0.2451 | Entropy: 4.0471 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [266/2000] | Sampled: 474.00 | Baseline: 335.12 | Improvement: -138.88 | Win Rate: 0.00% | Actor Loss: -4.0631 | Entropy: 4.0803 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [267/2000] | Sampled: 458.50 | Baseline: 347.88 | Improvement: -110.62 | Win Rate: 0.00% | Actor Loss: -1.6612 | Entropy: 3.9598 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [268/2000] | Sampled: 465.75 | Baseline: 349.50 | Improvement: -116.25 | Win Rate: 0.00% | Actor Loss: -4.0351 | Entropy: 3.9739 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [269/2000] | Sampled: 448.25 | Baseline: 341.00 | Improvement: -107.25 | Win Rate: 0.00% | Actor Loss: 4.7990 | Entropy: 3.9773 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.6
+Epoch [270/2000] | Sampled: 474.38 | Baseline: 339.75 | Improvement: -134.62 | Win Rate: 0.00% | Actor Loss: 5.6869 | Entropy: 3.9562 | Invalid S/B: 1.38/0.00 | Max Load: 5.1 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 487.00 | Invalid Jobs: 1.70 | Score: 487.00
+Epoch [271/2000] | Sampled: 437.00 | Baseline: 327.12 | Improvement: -109.88 | Win Rate: 0.00% | Actor Loss: 4.0440 | Entropy: 3.9776 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [272/2000] | Sampled: 458.12 | Baseline: 322.25 | Improvement: -135.88 | Win Rate: 0.00% | Actor Loss: -2.8535 | Entropy: 4.0033 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [273/2000] | Sampled: 490.62 | Baseline: 338.50 | Improvement: -152.12 | Win Rate: 0.00% | Actor Loss: -2.1135 | Entropy: 3.9194 | Invalid S/B: 1.75/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [274/2000] | Sampled: 446.38 | Baseline: 335.00 | Improvement: -111.38 | Win Rate: 0.00% | Actor Loss: -0.8850 | Entropy: 3.9633 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [275/2000] | Sampled: 446.38 | Baseline: 354.50 | Improvement: -91.88 | Win Rate: 0.00% | Actor Loss: -4.8103 | Entropy: 3.9928 | Invalid S/B: 0.88/0.12 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [276/2000] | Sampled: 451.88 | Baseline: 328.50 | Improvement: -123.38 | Win Rate: 0.00% | Actor Loss: -2.1073 | Entropy: 3.9427 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [277/2000] | Sampled: 478.50 | Baseline: 345.25 | Improvement: -133.25 | Win Rate: 0.00% | Actor Loss: 4.7503 | Entropy: 3.8954 | Invalid S/B: 1.50/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [278/2000] | Sampled: 447.00 | Baseline: 305.88 | Improvement: -141.12 | Win Rate: 0.00% | Actor Loss: 0.5699 | Entropy: 3.9193 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [279/2000] | Sampled: 450.25 | Baseline: 334.00 | Improvement: -116.25 | Win Rate: 0.00% | Actor Loss: -6.4209 | Entropy: 3.8441 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [280/2000] | Sampled: 435.50 | Baseline: 323.75 | Improvement: -111.75 | Win Rate: 0.00% | Actor Loss: -10.9672 | Entropy: 3.9402 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.0
+   -> Validation | Samples: 50 | Makespan: 421.76 | Invalid Jobs: 1.14 | Score: 421.76
+Epoch [281/2000] | Sampled: 429.25 | Baseline: 337.00 | Improvement: -92.25 | Win Rate: 0.00% | Actor Loss: -2.6990 | Entropy: 3.8764 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [282/2000] | Sampled: 424.62 | Baseline: 312.62 | Improvement: -112.00 | Win Rate: 0.00% | Actor Loss: -3.1650 | Entropy: 3.8135 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [283/2000] | Sampled: 420.00 | Baseline: 325.25 | Improvement: -94.75 | Win Rate: 0.00% | Actor Loss: -1.0337 | Entropy: 3.6992 | Invalid S/B: 0.50/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [284/2000] | Sampled: 448.50 | Baseline: 335.88 | Improvement: -112.62 | Win Rate: 0.00% | Actor Loss: -4.5379 | Entropy: 3.7529 | Invalid S/B: 1.75/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [285/2000] | Sampled: 441.75 | Baseline: 329.88 | Improvement: -111.88 | Win Rate: 0.00% | Actor Loss: -1.4406 | Entropy: 3.6032 | Invalid S/B: 0.88/0.00 | Max Load: 4.4 | Load Gap: 1.6
+Epoch [286/2000] | Sampled: 433.12 | Baseline: 338.25 | Improvement: -94.88 | Win Rate: 0.00% | Actor Loss: -5.2016 | Entropy: 3.5566 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [287/2000] | Sampled: 464.25 | Baseline: 339.00 | Improvement: -125.25 | Win Rate: 0.00% | Actor Loss: -1.2773 | Entropy: 3.5047 | Invalid S/B: 1.12/0.00 | Max Load: 4.8 | Load Gap: 1.9
+Epoch [288/2000] | Sampled: 446.00 | Baseline: 335.38 | Improvement: -110.62 | Win Rate: 0.00% | Actor Loss: 0.3622 | Entropy: 3.5338 | Invalid S/B: 1.50/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [289/2000] | Sampled: 475.38 | Baseline: 327.25 | Improvement: -148.12 | Win Rate: 0.00% | Actor Loss: -4.9387 | Entropy: 3.5704 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [290/2000] | Sampled: 473.62 | Baseline: 350.12 | Improvement: -123.50 | Win Rate: 0.00% | Actor Loss: -12.1505 | Entropy: 3.5178 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 440.98 | Invalid Jobs: 1.54 | Score: 440.98
+Epoch [291/2000] | Sampled: 486.00 | Baseline: 342.88 | Improvement: -143.12 | Win Rate: 0.00% | Actor Loss: 5.5492 | Entropy: 3.5142 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [292/2000] | Sampled: 476.88 | Baseline: 312.12 | Improvement: -164.75 | Win Rate: 0.00% | Actor Loss: 0.3588 | Entropy: 3.4985 | Invalid S/B: 2.25/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [293/2000] | Sampled: 501.00 | Baseline: 319.00 | Improvement: -182.00 | Win Rate: 0.00% | Actor Loss: -6.4768 | Entropy: 3.4039 | Invalid S/B: 2.62/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [294/2000] | Sampled: 451.00 | Baseline: 331.25 | Improvement: -119.75 | Win Rate: 0.00% | Actor Loss: 7.6785 | Entropy: 3.4252 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [295/2000] | Sampled: 471.12 | Baseline: 352.88 | Improvement: -118.25 | Win Rate: 0.00% | Actor Loss: -2.6437 | Entropy: 3.3211 | Invalid S/B: 1.88/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [296/2000] | Sampled: 427.62 | Baseline: 327.38 | Improvement: -100.25 | Win Rate: 0.00% | Actor Loss: 1.8203 | Entropy: 3.3016 | Invalid S/B: 0.88/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [297/2000] | Sampled: 457.00 | Baseline: 357.25 | Improvement: -99.75 | Win Rate: 0.00% | Actor Loss: 1.4845 | Entropy: 3.3427 | Invalid S/B: 1.62/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [298/2000] | Sampled: 455.50 | Baseline: 349.12 | Improvement: -106.38 | Win Rate: 12.50% | Actor Loss: -1.8069 | Entropy: 3.4136 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [299/2000] | Sampled: 434.62 | Baseline: 351.50 | Improvement: -83.12 | Win Rate: 0.00% | Actor Loss: 2.6848 | Entropy: 3.4582 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [300/2000] | Sampled: 424.88 | Baseline: 324.12 | Improvement: -100.75 | Win Rate: 0.00% | Actor Loss: 4.2167 | Entropy: 3.5500 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.1
+   -> Validation | Samples: 50 | Makespan: 407.62 | Invalid Jobs: 0.66 | Score: 407.62
+   -> Saved new best model (Val Score: 407.62)
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [301/2000] | Sampled: 431.25 | Baseline: 339.12 | Improvement: -92.12 | Win Rate: 0.00% | Actor Loss: -2.1772 | Entropy: 3.5988 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [302/2000] | Sampled: 441.25 | Baseline: 339.75 | Improvement: -101.50 | Win Rate: 0.00% | Actor Loss: 5.5796 | Entropy: 3.6248 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [303/2000] | Sampled: 429.50 | Baseline: 345.50 | Improvement: -84.00 | Win Rate: 0.00% | Actor Loss: -0.4338 | Entropy: 3.6742 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [304/2000] | Sampled: 448.12 | Baseline: 326.75 | Improvement: -121.38 | Win Rate: 0.00% | Actor Loss: -5.2180 | Entropy: 3.7345 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [305/2000] | Sampled: 421.25 | Baseline: 316.50 | Improvement: -104.75 | Win Rate: 0.00% | Actor Loss: -2.5833 | Entropy: 3.7320 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [306/2000] | Sampled: 452.62 | Baseline: 332.50 | Improvement: -120.12 | Win Rate: 0.00% | Actor Loss: -6.1109 | Entropy: 3.7093 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [307/2000] | Sampled: 462.25 | Baseline: 359.88 | Improvement: -102.38 | Win Rate: 0.00% | Actor Loss: -7.8548 | Entropy: 3.6808 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [308/2000] | Sampled: 481.00 | Baseline: 362.00 | Improvement: -119.00 | Win Rate: 0.00% | Actor Loss: 8.9741 | Entropy: 3.6671 | Invalid S/B: 1.75/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [309/2000] | Sampled: 425.38 | Baseline: 326.25 | Improvement: -99.12 | Win Rate: 0.00% | Actor Loss: 0.7813 | Entropy: 3.6826 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [310/2000] | Sampled: 442.88 | Baseline: 337.62 | Improvement: -105.25 | Win Rate: 0.00% | Actor Loss: 2.7480 | Entropy: 3.7013 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 424.84 | Invalid Jobs: 0.06 | Score: 424.84
+Epoch [311/2000] | Sampled: 418.50 | Baseline: 338.25 | Improvement: -80.25 | Win Rate: 0.00% | Actor Loss: -0.5619 | Entropy: 3.7251 | Invalid S/B: 0.25/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [312/2000] | Sampled: 463.50 | Baseline: 330.50 | Improvement: -133.00 | Win Rate: 0.00% | Actor Loss: -4.7526 | Entropy: 3.7433 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [313/2000] | Sampled: 454.75 | Baseline: 332.25 | Improvement: -122.50 | Win Rate: 0.00% | Actor Loss: -2.0366 | Entropy: 3.7572 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [314/2000] | Sampled: 445.25 | Baseline: 340.12 | Improvement: -105.12 | Win Rate: 0.00% | Actor Loss: -9.1862 | Entropy: 3.6680 | Invalid S/B: 1.38/0.12 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [315/2000] | Sampled: 429.75 | Baseline: 327.12 | Improvement: -102.62 | Win Rate: 0.00% | Actor Loss: 2.6537 | Entropy: 3.7300 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [316/2000] | Sampled: 445.88 | Baseline: 344.25 | Improvement: -101.62 | Win Rate: 0.00% | Actor Loss: -0.1292 | Entropy: 3.7404 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [317/2000] | Sampled: 440.38 | Baseline: 323.88 | Improvement: -116.50 | Win Rate: 0.00% | Actor Loss: -1.0943 | Entropy: 3.6980 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [318/2000] | Sampled: 425.75 | Baseline: 337.50 | Improvement: -88.25 | Win Rate: 0.00% | Actor Loss: -1.6845 | Entropy: 3.6683 | Invalid S/B: 0.62/0.00 | Max Load: 4.6 | Load Gap: 2.1
+Epoch [319/2000] | Sampled: 448.12 | Baseline: 325.50 | Improvement: -122.62 | Win Rate: 0.00% | Actor Loss: 1.4828 | Entropy: 3.6777 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [320/2000] | Sampled: 436.50 | Baseline: 335.12 | Improvement: -101.38 | Win Rate: 0.00% | Actor Loss: -0.1474 | Entropy: 3.6592 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.2
+   -> Validation | Samples: 50 | Makespan: 400.00 | Invalid Jobs: 0.24 | Score: 400.00
+   -> Saved new best model (Val Score: 400.00)
+Epoch [321/2000] | Sampled: 436.50 | Baseline: 346.88 | Improvement: -89.62 | Win Rate: 0.00% | Actor Loss: -4.4638 | Entropy: 3.6165 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [322/2000] | Sampled: 447.38 | Baseline: 324.62 | Improvement: -122.75 | Win Rate: 0.00% | Actor Loss: -3.0732 | Entropy: 3.6664 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [323/2000] | Sampled: 451.62 | Baseline: 343.75 | Improvement: -107.88 | Win Rate: 0.00% | Actor Loss: -3.8604 | Entropy: 3.6631 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [324/2000] | Sampled: 439.00 | Baseline: 331.75 | Improvement: -107.25 | Win Rate: 0.00% | Actor Loss: 3.7496 | Entropy: 3.5638 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [325/2000] | Sampled: 448.38 | Baseline: 336.50 | Improvement: -111.88 | Win Rate: 0.00% | Actor Loss: 2.5497 | Entropy: 3.5889 | Invalid S/B: 1.00/0.00 | Max Load: 4.8 | Load Gap: 2.1
+Epoch [326/2000] | Sampled: 449.00 | Baseline: 328.62 | Improvement: -120.38 | Win Rate: 0.00% | Actor Loss: -6.1313 | Entropy: 3.6104 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [327/2000] | Sampled: 417.25 | Baseline: 328.75 | Improvement: -88.50 | Win Rate: 0.00% | Actor Loss: 5.2187 | Entropy: 3.5648 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [328/2000] | Sampled: 416.50 | Baseline: 333.62 | Improvement: -82.88 | Win Rate: 0.00% | Actor Loss: 5.6732 | Entropy: 3.5165 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [329/2000] | Sampled: 461.00 | Baseline: 339.00 | Improvement: -122.00 | Win Rate: 0.00% | Actor Loss: -5.4371 | Entropy: 3.4571 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [330/2000] | Sampled: 448.62 | Baseline: 326.50 | Improvement: -122.12 | Win Rate: 0.00% | Actor Loss: -3.3869 | Entropy: 3.4825 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.1
+   -> Validation | Samples: 50 | Makespan: 390.32 | Invalid Jobs: 0.14 | Score: 390.32
+   -> Saved new best model (Val Score: 390.32)
+Epoch [331/2000] | Sampled: 465.62 | Baseline: 343.62 | Improvement: -122.00 | Win Rate: 0.00% | Actor Loss: -4.2664 | Entropy: 3.5153 | Invalid S/B: 1.25/0.00 | Max Load: 4.8 | Load Gap: 1.8
+Epoch [332/2000] | Sampled: 456.25 | Baseline: 327.25 | Improvement: -129.00 | Win Rate: 0.00% | Actor Loss: -1.1468 | Entropy: 3.4543 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [333/2000] | Sampled: 420.88 | Baseline: 335.12 | Improvement: -85.75 | Win Rate: 0.00% | Actor Loss: -3.8354 | Entropy: 3.5768 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [334/2000] | Sampled: 433.25 | Baseline: 320.25 | Improvement: -113.00 | Win Rate: 0.00% | Actor Loss: 0.0823 | Entropy: 3.5930 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [335/2000] | Sampled: 428.50 | Baseline: 339.25 | Improvement: -89.25 | Win Rate: 12.50% | Actor Loss: 2.9669 | Entropy: 3.6238 | Invalid S/B: 0.75/0.00 | Max Load: 4.8 | Load Gap: 1.9
+Epoch [336/2000] | Sampled: 460.00 | Baseline: 360.00 | Improvement: -100.00 | Win Rate: 0.00% | Actor Loss: 1.6995 | Entropy: 3.7099 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [337/2000] | Sampled: 423.62 | Baseline: 319.00 | Improvement: -104.62 | Win Rate: 0.00% | Actor Loss: -0.4999 | Entropy: 3.6211 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.1
+Epoch [338/2000] | Sampled: 457.38 | Baseline: 346.12 | Improvement: -111.25 | Win Rate: 0.00% | Actor Loss: -6.2118 | Entropy: 3.6607 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [339/2000] | Sampled: 451.88 | Baseline: 346.00 | Improvement: -105.88 | Win Rate: 0.00% | Actor Loss: 3.7694 | Entropy: 3.6016 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [340/2000] | Sampled: 480.12 | Baseline: 341.25 | Improvement: -138.88 | Win Rate: 0.00% | Actor Loss: -5.1773 | Entropy: 3.5621 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 403.76 | Invalid Jobs: 0.06 | Score: 403.76
+Epoch [341/2000] | Sampled: 447.50 | Baseline: 324.88 | Improvement: -122.62 | Win Rate: 0.00% | Actor Loss: 3.2112 | Entropy: 3.5662 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [342/2000] | Sampled: 458.75 | Baseline: 328.75 | Improvement: -130.00 | Win Rate: 0.00% | Actor Loss: 3.2660 | Entropy: 3.6507 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [343/2000] | Sampled: 415.38 | Baseline: 331.50 | Improvement: -83.88 | Win Rate: 0.00% | Actor Loss: 8.8414 | Entropy: 3.6379 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [344/2000] | Sampled: 435.38 | Baseline: 340.25 | Improvement: -95.12 | Win Rate: 0.00% | Actor Loss: 3.5524 | Entropy: 3.5595 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [345/2000] | Sampled: 457.50 | Baseline: 327.12 | Improvement: -130.38 | Win Rate: 0.00% | Actor Loss: -4.6550 | Entropy: 3.6067 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [346/2000] | Sampled: 448.25 | Baseline: 358.12 | Improvement: -90.12 | Win Rate: 0.00% | Actor Loss: 6.3669 | Entropy: 3.4860 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [347/2000] | Sampled: 428.25 | Baseline: 323.50 | Improvement: -104.75 | Win Rate: 0.00% | Actor Loss: -0.0367 | Entropy: 3.6514 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [348/2000] | Sampled: 426.12 | Baseline: 336.38 | Improvement: -89.75 | Win Rate: 0.00% | Actor Loss: -2.2913 | Entropy: 3.6791 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [349/2000] | Sampled: 440.38 | Baseline: 309.38 | Improvement: -131.00 | Win Rate: 0.00% | Actor Loss: 2.5906 | Entropy: 3.6525 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [350/2000] | Sampled: 449.88 | Baseline: 350.50 | Improvement: -99.38 | Win Rate: 0.00% | Actor Loss: 3.8534 | Entropy: 3.6783 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 442.30 | Invalid Jobs: 0.10 | Score: 442.30
+Epoch [351/2000] | Sampled: 411.75 | Baseline: 323.88 | Improvement: -87.88 | Win Rate: 0.00% | Actor Loss: 2.9540 | Entropy: 3.7319 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [352/2000] | Sampled: 450.38 | Baseline: 320.00 | Improvement: -130.38 | Win Rate: 0.00% | Actor Loss: 1.8566 | Entropy: 3.7066 | Invalid S/B: 1.38/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [353/2000] | Sampled: 433.12 | Baseline: 322.88 | Improvement: -110.25 | Win Rate: 0.00% | Actor Loss: 1.2692 | Entropy: 3.7252 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [354/2000] | Sampled: 457.62 | Baseline: 333.88 | Improvement: -123.75 | Win Rate: 0.00% | Actor Loss: 4.0037 | Entropy: 3.6928 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [355/2000] | Sampled: 447.75 | Baseline: 332.50 | Improvement: -115.25 | Win Rate: 0.00% | Actor Loss: 2.9764 | Entropy: 3.7738 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [356/2000] | Sampled: 459.25 | Baseline: 352.38 | Improvement: -106.88 | Win Rate: 0.00% | Actor Loss: 2.6089 | Entropy: 3.7401 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [357/2000] | Sampled: 458.88 | Baseline: 335.50 | Improvement: -123.38 | Win Rate: 0.00% | Actor Loss: 1.0703 | Entropy: 3.8272 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [358/2000] | Sampled: 431.88 | Baseline: 335.62 | Improvement: -96.25 | Win Rate: 0.00% | Actor Loss: -2.4971 | Entropy: 3.8895 | Invalid S/B: 0.50/0.12 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [359/2000] | Sampled: 450.00 | Baseline: 333.88 | Improvement: -116.12 | Win Rate: 0.00% | Actor Loss: 2.9541 | Entropy: 3.9018 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [360/2000] | Sampled: 461.38 | Baseline: 332.88 | Improvement: -128.50 | Win Rate: 0.00% | Actor Loss: -2.6886 | Entropy: 3.9100 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 566.38 | Invalid Jobs: 2.06 | Score: 566.38
+Epoch [361/2000] | Sampled: 436.50 | Baseline: 336.62 | Improvement: -99.88 | Win Rate: 0.00% | Actor Loss: 2.5394 | Entropy: 3.8992 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [362/2000] | Sampled: 438.62 | Baseline: 332.00 | Improvement: -106.62 | Win Rate: 0.00% | Actor Loss: -7.1932 | Entropy: 3.9402 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [363/2000] | Sampled: 465.62 | Baseline: 334.88 | Improvement: -130.75 | Win Rate: 0.00% | Actor Loss: -2.2274 | Entropy: 3.9405 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [364/2000] | Sampled: 473.75 | Baseline: 333.25 | Improvement: -140.50 | Win Rate: 0.00% | Actor Loss: 7.5575 | Entropy: 3.9282 | Invalid S/B: 0.88/0.00 | Max Load: 5.6 | Load Gap: 3.1
+Epoch [365/2000] | Sampled: 459.88 | Baseline: 336.00 | Improvement: -123.88 | Win Rate: 0.00% | Actor Loss: -3.8876 | Entropy: 3.9806 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [366/2000] | Sampled: 471.62 | Baseline: 335.50 | Improvement: -136.12 | Win Rate: 0.00% | Actor Loss: -5.0719 | Entropy: 3.9533 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.9
+Epoch [367/2000] | Sampled: 467.88 | Baseline: 327.88 | Improvement: -140.00 | Win Rate: 0.00% | Actor Loss: 3.9482 | Entropy: 4.0340 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [368/2000] | Sampled: 476.50 | Baseline: 322.50 | Improvement: -154.00 | Win Rate: 0.00% | Actor Loss: 4.7053 | Entropy: 4.0390 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [369/2000] | Sampled: 500.75 | Baseline: 343.75 | Improvement: -157.00 | Win Rate: 0.00% | Actor Loss: -4.7400 | Entropy: 4.0023 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [370/2000] | Sampled: 470.62 | Baseline: 321.12 | Improvement: -149.50 | Win Rate: 0.00% | Actor Loss: 3.5614 | Entropy: 3.9627 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 532.74 | Invalid Jobs: 1.32 | Score: 532.74
+Epoch [371/2000] | Sampled: 460.12 | Baseline: 340.88 | Improvement: -119.25 | Win Rate: 0.00% | Actor Loss: 3.9071 | Entropy: 3.9128 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [372/2000] | Sampled: 474.75 | Baseline: 333.25 | Improvement: -141.50 | Win Rate: 0.00% | Actor Loss: 3.5547 | Entropy: 3.9898 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [373/2000] | Sampled: 445.38 | Baseline: 337.38 | Improvement: -108.00 | Win Rate: 0.00% | Actor Loss: 1.5560 | Entropy: 4.0323 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [374/2000] | Sampled: 465.12 | Baseline: 349.12 | Improvement: -116.00 | Win Rate: 0.00% | Actor Loss: -2.7653 | Entropy: 3.9577 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [375/2000] | Sampled: 449.25 | Baseline: 331.88 | Improvement: -117.38 | Win Rate: 0.00% | Actor Loss: 0.3370 | Entropy: 4.0227 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [376/2000] | Sampled: 448.88 | Baseline: 341.12 | Improvement: -107.75 | Win Rate: 0.00% | Actor Loss: 5.5800 | Entropy: 4.0267 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [377/2000] | Sampled: 479.38 | Baseline: 346.00 | Improvement: -133.38 | Win Rate: 0.00% | Actor Loss: -2.3907 | Entropy: 4.0144 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [378/2000] | Sampled: 468.75 | Baseline: 352.38 | Improvement: -116.38 | Win Rate: 0.00% | Actor Loss: 0.0201 | Entropy: 3.9991 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [379/2000] | Sampled: 458.12 | Baseline: 343.88 | Improvement: -114.25 | Win Rate: 0.00% | Actor Loss: 3.1653 | Entropy: 3.9916 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [380/2000] | Sampled: 459.62 | Baseline: 326.00 | Improvement: -133.62 | Win Rate: 0.00% | Actor Loss: -0.5827 | Entropy: 3.9839 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 443.38 | Invalid Jobs: 0.48 | Score: 443.38
+Epoch [381/2000] | Sampled: 456.50 | Baseline: 329.88 | Improvement: -126.62 | Win Rate: 0.00% | Actor Loss: 12.9036 | Entropy: 3.9100 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [382/2000] | Sampled: 462.75 | Baseline: 320.50 | Improvement: -142.25 | Win Rate: 0.00% | Actor Loss: -8.1152 | Entropy: 3.9749 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [383/2000] | Sampled: 460.50 | Baseline: 331.50 | Improvement: -129.00 | Win Rate: 0.00% | Actor Loss: 3.2702 | Entropy: 3.8946 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [384/2000] | Sampled: 459.62 | Baseline: 326.25 | Improvement: -133.38 | Win Rate: 0.00% | Actor Loss: -6.9014 | Entropy: 3.9437 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [385/2000] | Sampled: 439.50 | Baseline: 313.25 | Improvement: -126.25 | Win Rate: 0.00% | Actor Loss: -4.0214 | Entropy: 3.8666 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [386/2000] | Sampled: 439.88 | Baseline: 328.88 | Improvement: -111.00 | Win Rate: 0.00% | Actor Loss: -3.3721 | Entropy: 3.7768 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [387/2000] | Sampled: 450.12 | Baseline: 327.00 | Improvement: -123.12 | Win Rate: 0.00% | Actor Loss: 1.5614 | Entropy: 3.7438 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [388/2000] | Sampled: 441.50 | Baseline: 333.75 | Improvement: -107.75 | Win Rate: 0.00% | Actor Loss: 6.7055 | Entropy: 3.7286 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [389/2000] | Sampled: 456.12 | Baseline: 344.25 | Improvement: -111.88 | Win Rate: 0.00% | Actor Loss: -0.8486 | Entropy: 3.7862 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [390/2000] | Sampled: 446.38 | Baseline: 341.12 | Improvement: -105.25 | Win Rate: 0.00% | Actor Loss: 0.1075 | Entropy: 3.7997 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+   -> Validation | Samples: 50 | Makespan: 437.54 | Invalid Jobs: 0.62 | Score: 437.54
+Epoch [391/2000] | Sampled: 453.00 | Baseline: 328.00 | Improvement: -125.00 | Win Rate: 0.00% | Actor Loss: 6.4199 | Entropy: 3.8140 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [392/2000] | Sampled: 448.75 | Baseline: 339.62 | Improvement: -109.12 | Win Rate: 0.00% | Actor Loss: -7.9375 | Entropy: 3.7335 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [393/2000] | Sampled: 432.25 | Baseline: 334.00 | Improvement: -98.25 | Win Rate: 0.00% | Actor Loss: 2.7658 | Entropy: 3.8042 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [394/2000] | Sampled: 430.75 | Baseline: 319.88 | Improvement: -110.88 | Win Rate: 0.00% | Actor Loss: -4.8929 | Entropy: 3.7959 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [395/2000] | Sampled: 450.00 | Baseline: 344.38 | Improvement: -105.62 | Win Rate: 0.00% | Actor Loss: -2.1436 | Entropy: 3.7358 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [396/2000] | Sampled: 447.00 | Baseline: 370.88 | Improvement: -76.12 | Win Rate: 0.00% | Actor Loss: 4.7767 | Entropy: 3.7532 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [397/2000] | Sampled: 438.25 | Baseline: 313.75 | Improvement: -124.50 | Win Rate: 0.00% | Actor Loss: 3.2472 | Entropy: 3.8148 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [398/2000] | Sampled: 456.38 | Baseline: 365.88 | Improvement: -90.50 | Win Rate: 0.00% | Actor Loss: 5.6940 | Entropy: 3.7736 | Invalid S/B: 0.50/0.12 | Max Load: 5.2 | Load Gap: 2.2
+Epoch [399/2000] | Sampled: 447.62 | Baseline: 335.00 | Improvement: -112.62 | Win Rate: 0.00% | Actor Loss: 2.1524 | Entropy: 3.7616 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [400/2000] | Sampled: 453.38 | Baseline: 321.38 | Improvement: -132.00 | Win Rate: 0.00% | Actor Loss: 0.8156 | Entropy: 3.7566 | Invalid S/B: 1.12/0.12 | Max Load: 5.0 | Load Gap: 2.5
+   -> Validation | Samples: 50 | Makespan: 426.86 | Invalid Jobs: 1.10 | Score: 426.86
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [401/2000] | Sampled: 464.62 | Baseline: 341.50 | Improvement: -123.12 | Win Rate: 0.00% | Actor Loss: 0.5841 | Entropy: 3.7456 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [402/2000] | Sampled: 457.25 | Baseline: 334.38 | Improvement: -122.88 | Win Rate: 0.00% | Actor Loss: 1.9080 | Entropy: 3.7360 | Invalid S/B: 1.38/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [403/2000] | Sampled: 483.25 | Baseline: 342.38 | Improvement: -140.88 | Win Rate: 0.00% | Actor Loss: 2.5562 | Entropy: 3.6813 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [404/2000] | Sampled: 450.88 | Baseline: 339.88 | Improvement: -111.00 | Win Rate: 0.00% | Actor Loss: 3.5235 | Entropy: 3.6643 | Invalid S/B: 0.88/0.12 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [405/2000] | Sampled: 424.12 | Baseline: 341.75 | Improvement: -82.38 | Win Rate: 0.00% | Actor Loss: 2.6903 | Entropy: 3.6914 | Invalid S/B: 0.25/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [406/2000] | Sampled: 435.38 | Baseline: 321.00 | Improvement: -114.38 | Win Rate: 0.00% | Actor Loss: -6.1283 | Entropy: 3.6499 | Invalid S/B: 0.62/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [407/2000] | Sampled: 439.62 | Baseline: 349.62 | Improvement: -90.00 | Win Rate: 0.00% | Actor Loss: -1.2579 | Entropy: 3.6010 | Invalid S/B: 0.50/0.12 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [408/2000] | Sampled: 429.62 | Baseline: 341.88 | Improvement: -87.75 | Win Rate: 0.00% | Actor Loss: 5.9360 | Entropy: 3.6438 | Invalid S/B: 0.62/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [409/2000] | Sampled: 428.50 | Baseline: 347.75 | Improvement: -80.75 | Win Rate: 12.50% | Actor Loss: -4.4333 | Entropy: 3.6358 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [410/2000] | Sampled: 432.00 | Baseline: 323.00 | Improvement: -109.00 | Win Rate: 0.00% | Actor Loss: 4.5309 | Entropy: 3.6094 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.1
+   -> Validation | Samples: 50 | Makespan: 421.30 | Invalid Jobs: 0.88 | Score: 421.30
+Epoch [411/2000] | Sampled: 439.50 | Baseline: 318.75 | Improvement: -120.75 | Win Rate: 0.00% | Actor Loss: 2.3921 | Entropy: 3.5683 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [412/2000] | Sampled: 439.12 | Baseline: 327.00 | Improvement: -112.12 | Win Rate: 0.00% | Actor Loss: 3.9119 | Entropy: 3.4955 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [413/2000] | Sampled: 429.88 | Baseline: 331.75 | Improvement: -98.12 | Win Rate: 0.00% | Actor Loss: -8.0123 | Entropy: 3.4091 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [414/2000] | Sampled: 436.12 | Baseline: 338.12 | Improvement: -98.00 | Win Rate: 0.00% | Actor Loss: -1.2286 | Entropy: 3.4482 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [415/2000] | Sampled: 479.00 | Baseline: 329.88 | Improvement: -149.12 | Win Rate: 0.00% | Actor Loss: -0.0656 | Entropy: 3.3942 | Invalid S/B: 1.75/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [416/2000] | Sampled: 456.50 | Baseline: 346.50 | Improvement: -110.00 | Win Rate: 0.00% | Actor Loss: -3.1161 | Entropy: 3.3204 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [417/2000] | Sampled: 456.75 | Baseline: 330.12 | Improvement: -126.62 | Win Rate: 0.00% | Actor Loss: 4.5446 | Entropy: 3.4377 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [418/2000] | Sampled: 479.62 | Baseline: 347.62 | Improvement: -132.00 | Win Rate: 0.00% | Actor Loss: -1.9539 | Entropy: 3.4844 | Invalid S/B: 1.38/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [419/2000] | Sampled: 471.38 | Baseline: 326.25 | Improvement: -145.12 | Win Rate: 0.00% | Actor Loss: 8.7571 | Entropy: 3.5566 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [420/2000] | Sampled: 503.88 | Baseline: 349.25 | Improvement: -154.62 | Win Rate: 0.00% | Actor Loss: 3.1787 | Entropy: 3.6848 | Invalid S/B: 1.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 424.64 | Invalid Jobs: 0.96 | Score: 424.64
+Epoch [421/2000] | Sampled: 523.50 | Baseline: 355.50 | Improvement: -168.00 | Win Rate: 0.00% | Actor Loss: 5.1849 | Entropy: 3.8710 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [422/2000] | Sampled: 502.12 | Baseline: 324.38 | Improvement: -177.75 | Win Rate: 0.00% | Actor Loss: -1.2256 | Entropy: 4.0017 | Invalid S/B: 1.00/0.00 | Max Load: 5.4 | Load Gap: 2.6
+Epoch [423/2000] | Sampled: 537.88 | Baseline: 342.00 | Improvement: -195.88 | Win Rate: 0.00% | Actor Loss: 3.6869 | Entropy: 4.1167 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [424/2000] | Sampled: 525.88 | Baseline: 331.75 | Improvement: -194.12 | Win Rate: 0.00% | Actor Loss: -2.5668 | Entropy: 4.1350 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [425/2000] | Sampled: 517.38 | Baseline: 339.12 | Improvement: -178.25 | Win Rate: 0.00% | Actor Loss: -0.9711 | Entropy: 4.1817 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [426/2000] | Sampled: 541.50 | Baseline: 340.00 | Improvement: -201.50 | Win Rate: 0.00% | Actor Loss: 0.0227 | Entropy: 4.2051 | Invalid S/B: 1.62/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [427/2000] | Sampled: 524.25 | Baseline: 331.62 | Improvement: -192.62 | Win Rate: 0.00% | Actor Loss: -1.2331 | Entropy: 4.2404 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [428/2000] | Sampled: 561.38 | Baseline: 329.75 | Improvement: -231.62 | Win Rate: 0.00% | Actor Loss: 1.2874 | Entropy: 4.2491 | Invalid S/B: 2.00/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [429/2000] | Sampled: 575.62 | Baseline: 330.50 | Improvement: -245.12 | Win Rate: 0.00% | Actor Loss: -1.1675 | Entropy: 4.2535 | Invalid S/B: 1.25/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [430/2000] | Sampled: 539.12 | Baseline: 327.88 | Improvement: -211.25 | Win Rate: 0.00% | Actor Loss: 1.1965 | Entropy: 4.2512 | Invalid S/B: 0.38/0.00 | Max Load: 5.6 | Load Gap: 3.2
+   -> Validation | Samples: 50 | Makespan: 459.98 | Invalid Jobs: 1.44 | Score: 459.98
+Epoch [431/2000] | Sampled: 544.88 | Baseline: 318.75 | Improvement: -226.12 | Win Rate: 0.00% | Actor Loss: -0.4824 | Entropy: 4.3193 | Invalid S/B: 1.38/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [432/2000] | Sampled: 544.50 | Baseline: 347.12 | Improvement: -197.38 | Win Rate: 0.00% | Actor Loss: 5.3741 | Entropy: 4.2869 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [433/2000] | Sampled: 499.38 | Baseline: 321.50 | Improvement: -177.88 | Win Rate: 0.00% | Actor Loss: 7.1388 | Entropy: 4.3064 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [434/2000] | Sampled: 527.62 | Baseline: 347.25 | Improvement: -180.38 | Win Rate: 0.00% | Actor Loss: 5.4039 | Entropy: 4.3045 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [435/2000] | Sampled: 515.25 | Baseline: 325.62 | Improvement: -189.62 | Win Rate: 0.00% | Actor Loss: 1.1762 | Entropy: 4.3406 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [436/2000] | Sampled: 535.50 | Baseline: 344.75 | Improvement: -190.75 | Win Rate: 0.00% | Actor Loss: -1.0421 | Entropy: 4.3301 | Invalid S/B: 2.00/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [437/2000] | Sampled: 550.25 | Baseline: 336.38 | Improvement: -213.88 | Win Rate: 0.00% | Actor Loss: 0.1731 | Entropy: 4.3245 | Invalid S/B: 2.00/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [438/2000] | Sampled: 523.50 | Baseline: 330.38 | Improvement: -193.12 | Win Rate: 0.00% | Actor Loss: -2.2471 | Entropy: 4.3223 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [439/2000] | Sampled: 490.75 | Baseline: 347.75 | Improvement: -143.00 | Win Rate: 0.00% | Actor Loss: 8.5136 | Entropy: 4.3284 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [440/2000] | Sampled: 504.25 | Baseline: 332.38 | Improvement: -171.88 | Win Rate: 0.00% | Actor Loss: 5.2663 | Entropy: 4.3589 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 394.50 | Invalid Jobs: 0.00 | Score: 394.50
+Epoch [441/2000] | Sampled: 514.25 | Baseline: 337.62 | Improvement: -176.62 | Win Rate: 0.00% | Actor Loss: 0.9564 | Entropy: 4.2960 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.4
+Epoch [442/2000] | Sampled: 513.12 | Baseline: 326.75 | Improvement: -186.38 | Win Rate: 0.00% | Actor Loss: -6.7627 | Entropy: 4.3907 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [443/2000] | Sampled: 481.50 | Baseline: 323.50 | Improvement: -158.00 | Win Rate: 0.00% | Actor Loss: 3.9385 | Entropy: 4.3960 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [444/2000] | Sampled: 490.50 | Baseline: 337.75 | Improvement: -152.75 | Win Rate: 0.00% | Actor Loss: 3.2769 | Entropy: 4.4208 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [445/2000] | Sampled: 513.50 | Baseline: 345.38 | Improvement: -168.12 | Win Rate: 0.00% | Actor Loss: -0.0855 | Entropy: 4.4107 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [446/2000] | Sampled: 501.25 | Baseline: 336.88 | Improvement: -164.38 | Win Rate: 0.00% | Actor Loss: 4.8799 | Entropy: 4.4338 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [447/2000] | Sampled: 535.25 | Baseline: 336.75 | Improvement: -198.50 | Win Rate: 0.00% | Actor Loss: -0.6046 | Entropy: 4.3942 | Invalid S/B: 0.75/0.00 | Max Load: 5.5 | Load Gap: 3.5
+Epoch [448/2000] | Sampled: 493.62 | Baseline: 335.50 | Improvement: -158.12 | Win Rate: 0.00% | Actor Loss: -1.8594 | Entropy: 4.4115 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [449/2000] | Sampled: 491.75 | Baseline: 334.38 | Improvement: -157.38 | Win Rate: 0.00% | Actor Loss: -0.4688 | Entropy: 4.4921 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.4
+Epoch [450/2000] | Sampled: 501.50 | Baseline: 334.38 | Improvement: -167.12 | Win Rate: 0.00% | Actor Loss: 4.2062 | Entropy: 4.4313 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 391.94 | Invalid Jobs: 0.02 | Score: 391.94
+Epoch [451/2000] | Sampled: 486.50 | Baseline: 333.25 | Improvement: -153.25 | Win Rate: 0.00% | Actor Loss: 5.0454 | Entropy: 4.4066 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.6
+Epoch [452/2000] | Sampled: 498.00 | Baseline: 335.62 | Improvement: -162.38 | Win Rate: 0.00% | Actor Loss: 0.0027 | Entropy: 4.4305 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [453/2000] | Sampled: 478.75 | Baseline: 319.38 | Improvement: -159.38 | Win Rate: 0.00% | Actor Loss: -3.5181 | Entropy: 4.4370 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [454/2000] | Sampled: 506.25 | Baseline: 344.25 | Improvement: -162.00 | Win Rate: 0.00% | Actor Loss: -0.8065 | Entropy: 4.4035 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [455/2000] | Sampled: 474.75 | Baseline: 329.88 | Improvement: -144.88 | Win Rate: 0.00% | Actor Loss: 2.5291 | Entropy: 4.3905 | Invalid S/B: 0.25/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [456/2000] | Sampled: 471.25 | Baseline: 316.88 | Improvement: -154.38 | Win Rate: 0.00% | Actor Loss: 0.4663 | Entropy: 4.3364 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [457/2000] | Sampled: 451.75 | Baseline: 324.88 | Improvement: -126.88 | Win Rate: 0.00% | Actor Loss: 0.5031 | Entropy: 4.3702 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [458/2000] | Sampled: 498.12 | Baseline: 356.00 | Improvement: -142.12 | Win Rate: 0.00% | Actor Loss: -2.3326 | Entropy: 4.3786 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [459/2000] | Sampled: 462.62 | Baseline: 336.50 | Improvement: -126.12 | Win Rate: 0.00% | Actor Loss: 1.5795 | Entropy: 4.3706 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [460/2000] | Sampled: 467.50 | Baseline: 337.25 | Improvement: -130.25 | Win Rate: 0.00% | Actor Loss: -0.2069 | Entropy: 4.3532 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 403.62 | Invalid Jobs: 0.06 | Score: 403.62
+Epoch [461/2000] | Sampled: 480.00 | Baseline: 336.25 | Improvement: -143.75 | Win Rate: 0.00% | Actor Loss: -0.2409 | Entropy: 4.3291 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [462/2000] | Sampled: 469.88 | Baseline: 332.62 | Improvement: -137.25 | Win Rate: 0.00% | Actor Loss: -0.8310 | Entropy: 4.3457 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [463/2000] | Sampled: 464.00 | Baseline: 340.12 | Improvement: -123.88 | Win Rate: 0.00% | Actor Loss: 0.5617 | Entropy: 4.3110 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [464/2000] | Sampled: 459.88 | Baseline: 344.38 | Improvement: -115.50 | Win Rate: 0.00% | Actor Loss: 3.4851 | Entropy: 4.3452 | Invalid S/B: 0.25/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [465/2000] | Sampled: 468.00 | Baseline: 342.25 | Improvement: -125.75 | Win Rate: 0.00% | Actor Loss: 0.5519 | Entropy: 4.3128 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [466/2000] | Sampled: 466.75 | Baseline: 336.38 | Improvement: -130.38 | Win Rate: 0.00% | Actor Loss: 6.8071 | Entropy: 4.2995 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [467/2000] | Sampled: 461.88 | Baseline: 351.88 | Improvement: -110.00 | Win Rate: 0.00% | Actor Loss: 2.4981 | Entropy: 4.2814 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [468/2000] | Sampled: 496.62 | Baseline: 333.88 | Improvement: -162.75 | Win Rate: 0.00% | Actor Loss: 2.2380 | Entropy: 4.3372 | Invalid S/B: 1.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [469/2000] | Sampled: 462.38 | Baseline: 334.88 | Improvement: -127.50 | Win Rate: 0.00% | Actor Loss: 0.4071 | Entropy: 4.2964 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [470/2000] | Sampled: 459.50 | Baseline: 323.62 | Improvement: -135.88 | Win Rate: 0.00% | Actor Loss: -0.6222 | Entropy: 4.3345 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 378.68 | Invalid Jobs: 0.08 | Score: 378.68
+   -> Saved new best model (Val Score: 378.68)
+Epoch [471/2000] | Sampled: 454.75 | Baseline: 337.62 | Improvement: -117.12 | Win Rate: 0.00% | Actor Loss: -4.2476 | Entropy: 4.3078 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [472/2000] | Sampled: 467.12 | Baseline: 346.00 | Improvement: -121.12 | Win Rate: 0.00% | Actor Loss: 3.7610 | Entropy: 4.3113 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [473/2000] | Sampled: 482.12 | Baseline: 325.00 | Improvement: -157.12 | Win Rate: 0.00% | Actor Loss: 0.9428 | Entropy: 4.3461 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [474/2000] | Sampled: 444.12 | Baseline: 312.00 | Improvement: -132.12 | Win Rate: 0.00% | Actor Loss: -0.5223 | Entropy: 4.2918 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [475/2000] | Sampled: 458.25 | Baseline: 314.00 | Improvement: -144.25 | Win Rate: 0.00% | Actor Loss: 1.7245 | Entropy: 4.3168 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [476/2000] | Sampled: 446.88 | Baseline: 332.38 | Improvement: -114.50 | Win Rate: 0.00% | Actor Loss: -4.5766 | Entropy: 4.3086 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [477/2000] | Sampled: 446.00 | Baseline: 336.00 | Improvement: -110.00 | Win Rate: 0.00% | Actor Loss: 0.7679 | Entropy: 4.3010 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [478/2000] | Sampled: 439.00 | Baseline: 328.12 | Improvement: -110.88 | Win Rate: 0.00% | Actor Loss: 0.9859 | Entropy: 4.2458 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [479/2000] | Sampled: 435.75 | Baseline: 338.25 | Improvement: -97.50 | Win Rate: 0.00% | Actor Loss: -1.2496 | Entropy: 4.2867 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [480/2000] | Sampled: 446.50 | Baseline: 328.25 | Improvement: -118.25 | Win Rate: 0.00% | Actor Loss: 7.0303 | Entropy: 4.2092 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 370.44 | Invalid Jobs: 0.02 | Score: 370.44
+   -> Saved new best model (Val Score: 370.44)
+Epoch [481/2000] | Sampled: 472.88 | Baseline: 335.25 | Improvement: -137.62 | Win Rate: 0.00% | Actor Loss: -1.0321 | Entropy: 4.1887 | Invalid S/B: 0.62/0.00 | Max Load: 5.6 | Load Gap: 3.6
+Epoch [482/2000] | Sampled: 436.75 | Baseline: 334.75 | Improvement: -102.00 | Win Rate: 0.00% | Actor Loss: 1.2902 | Entropy: 4.1155 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [483/2000] | Sampled: 427.38 | Baseline: 342.25 | Improvement: -85.12 | Win Rate: 0.00% | Actor Loss: 1.7833 | Entropy: 4.2212 | Invalid S/B: 0.25/0.12 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [484/2000] | Sampled: 418.50 | Baseline: 326.62 | Improvement: -91.88 | Win Rate: 0.00% | Actor Loss: -5.2113 | Entropy: 4.2832 | Invalid S/B: 0.12/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [485/2000] | Sampled: 446.12 | Baseline: 340.62 | Improvement: -105.50 | Win Rate: 0.00% | Actor Loss: 2.6869 | Entropy: 4.1540 | Invalid S/B: 0.50/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [486/2000] | Sampled: 468.62 | Baseline: 332.62 | Improvement: -136.00 | Win Rate: 0.00% | Actor Loss: 2.0549 | Entropy: 4.1927 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [487/2000] | Sampled: 452.25 | Baseline: 315.88 | Improvement: -136.38 | Win Rate: 0.00% | Actor Loss: 3.1795 | Entropy: 4.2161 | Invalid S/B: 0.38/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [488/2000] | Sampled: 454.00 | Baseline: 336.75 | Improvement: -117.25 | Win Rate: 0.00% | Actor Loss: 0.7988 | Entropy: 4.2531 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [489/2000] | Sampled: 471.62 | Baseline: 340.38 | Improvement: -131.25 | Win Rate: 0.00% | Actor Loss: -1.8630 | Entropy: 4.3511 | Invalid S/B: 0.75/0.12 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [490/2000] | Sampled: 479.88 | Baseline: 326.88 | Improvement: -153.00 | Win Rate: 0.00% | Actor Loss: 1.6769 | Entropy: 4.3234 | Invalid S/B: 0.38/0.00 | Max Load: 5.5 | Load Gap: 3.2
+   -> Validation | Samples: 50 | Makespan: 389.54 | Invalid Jobs: 0.02 | Score: 389.54
+Epoch [491/2000] | Sampled: 469.75 | Baseline: 318.50 | Improvement: -151.25 | Win Rate: 0.00% | Actor Loss: 0.0273 | Entropy: 4.3765 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [492/2000] | Sampled: 502.25 | Baseline: 343.88 | Improvement: -158.38 | Win Rate: 0.00% | Actor Loss: 0.6451 | Entropy: 4.4170 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [493/2000] | Sampled: 480.88 | Baseline: 337.88 | Improvement: -143.00 | Win Rate: 0.00% | Actor Loss: -6.1447 | Entropy: 4.3452 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [494/2000] | Sampled: 502.75 | Baseline: 330.75 | Improvement: -172.00 | Win Rate: 0.00% | Actor Loss: 2.9322 | Entropy: 4.3182 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [495/2000] | Sampled: 495.88 | Baseline: 355.88 | Improvement: -140.00 | Win Rate: 0.00% | Actor Loss: -1.9318 | Entropy: 4.3638 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [496/2000] | Sampled: 448.12 | Baseline: 313.62 | Improvement: -134.50 | Win Rate: 0.00% | Actor Loss: 1.6237 | Entropy: 4.3813 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [497/2000] | Sampled: 485.25 | Baseline: 325.50 | Improvement: -159.75 | Win Rate: 0.00% | Actor Loss: 5.4078 | Entropy: 4.3970 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [498/2000] | Sampled: 478.12 | Baseline: 339.38 | Improvement: -138.75 | Win Rate: 0.00% | Actor Loss: -2.0069 | Entropy: 4.3380 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [499/2000] | Sampled: 489.75 | Baseline: 326.62 | Improvement: -163.12 | Win Rate: 0.00% | Actor Loss: -1.2543 | Entropy: 4.3245 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [500/2000] | Sampled: 527.00 | Baseline: 334.88 | Improvement: -192.12 | Win Rate: 0.00% | Actor Loss: -2.1791 | Entropy: 4.3375 | Invalid S/B: 1.75/0.00 | Max Load: 5.2 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 405.88 | Invalid Jobs: 0.04 | Score: 405.88
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [501/2000] | Sampled: 498.00 | Baseline: 333.88 | Improvement: -164.12 | Win Rate: 0.00% | Actor Loss: -7.8618 | Entropy: 4.2664 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [502/2000] | Sampled: 485.00 | Baseline: 330.38 | Improvement: -154.62 | Win Rate: 0.00% | Actor Loss: 4.4305 | Entropy: 4.2521 | Invalid S/B: 1.50/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [503/2000] | Sampled: 493.88 | Baseline: 333.62 | Improvement: -160.25 | Win Rate: 0.00% | Actor Loss: 1.2610 | Entropy: 4.2049 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [504/2000] | Sampled: 463.25 | Baseline: 322.12 | Improvement: -141.12 | Win Rate: 0.00% | Actor Loss: 4.5374 | Entropy: 4.1937 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [505/2000] | Sampled: 495.88 | Baseline: 337.00 | Improvement: -158.88 | Win Rate: 0.00% | Actor Loss: -7.2231 | Entropy: 4.0998 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [506/2000] | Sampled: 455.88 | Baseline: 331.12 | Improvement: -124.75 | Win Rate: 0.00% | Actor Loss: -3.3121 | Entropy: 4.1388 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [507/2000] | Sampled: 467.12 | Baseline: 338.38 | Improvement: -128.75 | Win Rate: 0.00% | Actor Loss: 0.2685 | Entropy: 4.0641 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [508/2000] | Sampled: 429.50 | Baseline: 332.12 | Improvement: -97.38 | Win Rate: 0.00% | Actor Loss: -2.7407 | Entropy: 3.9899 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [509/2000] | Sampled: 456.50 | Baseline: 324.12 | Improvement: -132.38 | Win Rate: 0.00% | Actor Loss: 5.9600 | Entropy: 3.8724 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [510/2000] | Sampled: 449.50 | Baseline: 329.75 | Improvement: -119.75 | Win Rate: 0.00% | Actor Loss: 2.2831 | Entropy: 3.9808 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.0
+   -> Validation | Samples: 50 | Makespan: 416.48 | Invalid Jobs: 0.12 | Score: 416.48
+Epoch [511/2000] | Sampled: 457.12 | Baseline: 328.75 | Improvement: -128.38 | Win Rate: 0.00% | Actor Loss: 2.7793 | Entropy: 4.0278 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [512/2000] | Sampled: 491.12 | Baseline: 317.25 | Improvement: -173.88 | Win Rate: 0.00% | Actor Loss: -4.0544 | Entropy: 4.0332 | Invalid S/B: 1.38/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [513/2000] | Sampled: 479.88 | Baseline: 345.62 | Improvement: -134.25 | Win Rate: 0.00% | Actor Loss: 3.9685 | Entropy: 3.9936 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.4
+Epoch [514/2000] | Sampled: 491.38 | Baseline: 320.12 | Improvement: -171.25 | Win Rate: 0.00% | Actor Loss: 8.6029 | Entropy: 3.9827 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [515/2000] | Sampled: 441.00 | Baseline: 319.25 | Improvement: -121.75 | Win Rate: 0.00% | Actor Loss: 5.6979 | Entropy: 3.9982 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [516/2000] | Sampled: 448.00 | Baseline: 322.75 | Improvement: -125.25 | Win Rate: 0.00% | Actor Loss: 3.2859 | Entropy: 4.0734 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [517/2000] | Sampled: 444.88 | Baseline: 361.12 | Improvement: -83.75 | Win Rate: 0.00% | Actor Loss: -2.4210 | Entropy: 4.1393 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [518/2000] | Sampled: 468.50 | Baseline: 324.25 | Improvement: -144.25 | Win Rate: 0.00% | Actor Loss: -2.0596 | Entropy: 4.1540 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [519/2000] | Sampled: 467.50 | Baseline: 312.50 | Improvement: -155.00 | Win Rate: 0.00% | Actor Loss: 0.1939 | Entropy: 4.1740 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [520/2000] | Sampled: 485.00 | Baseline: 330.25 | Improvement: -154.75 | Win Rate: 0.00% | Actor Loss: -4.0893 | Entropy: 4.1464 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 419.00 | Invalid Jobs: 0.20 | Score: 419.00
+Epoch [521/2000] | Sampled: 489.62 | Baseline: 335.75 | Improvement: -153.88 | Win Rate: 0.00% | Actor Loss: 4.5389 | Entropy: 4.1591 | Invalid S/B: 1.62/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [522/2000] | Sampled: 465.88 | Baseline: 321.62 | Improvement: -144.25 | Win Rate: 0.00% | Actor Loss: -1.5352 | Entropy: 4.2277 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [523/2000] | Sampled: 490.25 | Baseline: 337.00 | Improvement: -153.25 | Win Rate: 0.00% | Actor Loss: -2.3836 | Entropy: 4.2422 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [524/2000] | Sampled: 489.25 | Baseline: 315.38 | Improvement: -173.88 | Win Rate: 0.00% | Actor Loss: 0.3846 | Entropy: 4.2820 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [525/2000] | Sampled: 460.38 | Baseline: 335.12 | Improvement: -125.25 | Win Rate: 0.00% | Actor Loss: 1.4124 | Entropy: 4.3163 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [526/2000] | Sampled: 487.75 | Baseline: 333.62 | Improvement: -154.12 | Win Rate: 0.00% | Actor Loss: 2.3002 | Entropy: 4.3076 | Invalid S/B: 1.25/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [527/2000] | Sampled: 489.75 | Baseline: 322.50 | Improvement: -167.25 | Win Rate: 0.00% | Actor Loss: -1.9537 | Entropy: 4.3290 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [528/2000] | Sampled: 480.62 | Baseline: 339.38 | Improvement: -141.25 | Win Rate: 0.00% | Actor Loss: -3.7042 | Entropy: 4.3447 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [529/2000] | Sampled: 499.50 | Baseline: 325.62 | Improvement: -173.88 | Win Rate: 0.00% | Actor Loss: -1.2231 | Entropy: 4.3855 | Invalid S/B: 1.12/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [530/2000] | Sampled: 491.88 | Baseline: 331.88 | Improvement: -160.00 | Win Rate: 0.00% | Actor Loss: -1.9353 | Entropy: 4.3172 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 412.14 | Invalid Jobs: 0.28 | Score: 412.14
+Epoch [531/2000] | Sampled: 541.62 | Baseline: 340.88 | Improvement: -200.75 | Win Rate: 0.00% | Actor Loss: 2.6607 | Entropy: 4.2855 | Invalid S/B: 1.62/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [532/2000] | Sampled: 514.62 | Baseline: 343.62 | Improvement: -171.00 | Win Rate: 0.00% | Actor Loss: -0.7817 | Entropy: 4.2497 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [533/2000] | Sampled: 492.38 | Baseline: 335.12 | Improvement: -157.25 | Win Rate: 0.00% | Actor Loss: -1.3174 | Entropy: 4.2666 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [534/2000] | Sampled: 495.50 | Baseline: 338.12 | Improvement: -157.38 | Win Rate: 0.00% | Actor Loss: 0.8356 | Entropy: 4.3028 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [535/2000] | Sampled: 488.88 | Baseline: 328.75 | Improvement: -160.12 | Win Rate: 0.00% | Actor Loss: -4.4181 | Entropy: 4.2488 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [536/2000] | Sampled: 503.75 | Baseline: 325.25 | Improvement: -178.50 | Win Rate: 0.00% | Actor Loss: -0.2219 | Entropy: 4.2253 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [537/2000] | Sampled: 485.38 | Baseline: 320.12 | Improvement: -165.25 | Win Rate: 0.00% | Actor Loss: 1.0193 | Entropy: 4.2534 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [538/2000] | Sampled: 514.38 | Baseline: 330.62 | Improvement: -183.75 | Win Rate: 0.00% | Actor Loss: 3.7649 | Entropy: 4.2132 | Invalid S/B: 1.25/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [539/2000] | Sampled: 499.50 | Baseline: 349.88 | Improvement: -149.62 | Win Rate: 0.00% | Actor Loss: 2.6093 | Entropy: 4.2053 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [540/2000] | Sampled: 487.50 | Baseline: 330.00 | Improvement: -157.50 | Win Rate: 0.00% | Actor Loss: -2.5807 | Entropy: 4.2382 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 427.34 | Invalid Jobs: 1.20 | Score: 427.34
+Epoch [541/2000] | Sampled: 513.75 | Baseline: 334.75 | Improvement: -179.00 | Win Rate: 0.00% | Actor Loss: -0.8161 | Entropy: 4.2219 | Invalid S/B: 2.12/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [542/2000] | Sampled: 486.25 | Baseline: 335.12 | Improvement: -151.12 | Win Rate: 0.00% | Actor Loss: 5.3228 | Entropy: 4.2025 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [543/2000] | Sampled: 486.50 | Baseline: 330.62 | Improvement: -155.88 | Win Rate: 0.00% | Actor Loss: 1.0025 | Entropy: 4.2087 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [544/2000] | Sampled: 517.12 | Baseline: 335.25 | Improvement: -181.88 | Win Rate: 0.00% | Actor Loss: -4.2818 | Entropy: 4.2167 | Invalid S/B: 1.88/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [545/2000] | Sampled: 491.62 | Baseline: 328.50 | Improvement: -163.12 | Win Rate: 0.00% | Actor Loss: -5.6264 | Entropy: 4.2760 | Invalid S/B: 1.25/0.00 | Max Load: 5.4 | Load Gap: 2.5
+Epoch [546/2000] | Sampled: 487.25 | Baseline: 329.50 | Improvement: -157.75 | Win Rate: 0.00% | Actor Loss: 2.1566 | Entropy: 4.2654 | Invalid S/B: 1.12/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [547/2000] | Sampled: 457.88 | Baseline: 342.38 | Improvement: -115.50 | Win Rate: 0.00% | Actor Loss: 0.2654 | Entropy: 4.2530 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [548/2000] | Sampled: 487.62 | Baseline: 333.88 | Improvement: -153.75 | Win Rate: 0.00% | Actor Loss: 0.0369 | Entropy: 4.2120 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [549/2000] | Sampled: 501.50 | Baseline: 339.88 | Improvement: -161.62 | Win Rate: 0.00% | Actor Loss: 2.5458 | Entropy: 4.2669 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [550/2000] | Sampled: 467.50 | Baseline: 327.88 | Improvement: -139.62 | Win Rate: 0.00% | Actor Loss: -5.4149 | Entropy: 4.2452 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.6
+   -> Validation | Samples: 50 | Makespan: 401.58 | Invalid Jobs: 0.08 | Score: 401.58
+Epoch [551/2000] | Sampled: 475.50 | Baseline: 331.12 | Improvement: -144.38 | Win Rate: 0.00% | Actor Loss: -0.2290 | Entropy: 4.2147 | Invalid S/B: 1.38/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [552/2000] | Sampled: 478.75 | Baseline: 344.12 | Improvement: -134.62 | Win Rate: 0.00% | Actor Loss: -1.6154 | Entropy: 4.1327 | Invalid S/B: 0.50/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [553/2000] | Sampled: 462.00 | Baseline: 340.12 | Improvement: -121.88 | Win Rate: 0.00% | Actor Loss: -2.6885 | Entropy: 4.1272 | Invalid S/B: 0.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [554/2000] | Sampled: 445.25 | Baseline: 330.38 | Improvement: -114.88 | Win Rate: 0.00% | Actor Loss: 1.1133 | Entropy: 4.1232 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 2.4
+Epoch [555/2000] | Sampled: 470.50 | Baseline: 332.88 | Improvement: -137.62 | Win Rate: 0.00% | Actor Loss: -1.4004 | Entropy: 4.0688 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [556/2000] | Sampled: 468.50 | Baseline: 339.50 | Improvement: -129.00 | Win Rate: 0.00% | Actor Loss: -3.1302 | Entropy: 4.0766 | Invalid S/B: 1.50/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [557/2000] | Sampled: 472.38 | Baseline: 329.38 | Improvement: -143.00 | Win Rate: 0.00% | Actor Loss: -4.2404 | Entropy: 3.9607 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [558/2000] | Sampled: 462.12 | Baseline: 338.25 | Improvement: -123.88 | Win Rate: 0.00% | Actor Loss: 0.7725 | Entropy: 3.8721 | Invalid S/B: 1.50/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [559/2000] | Sampled: 483.38 | Baseline: 359.62 | Improvement: -123.75 | Win Rate: 12.50% | Actor Loss: 1.0456 | Entropy: 3.8823 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [560/2000] | Sampled: 465.75 | Baseline: 329.62 | Improvement: -136.12 | Win Rate: 0.00% | Actor Loss: 4.9322 | Entropy: 3.9454 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 408.12 | Invalid Jobs: 1.00 | Score: 408.12
+Epoch [561/2000] | Sampled: 471.25 | Baseline: 346.00 | Improvement: -125.25 | Win Rate: 0.00% | Actor Loss: 2.1617 | Entropy: 3.8175 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [562/2000] | Sampled: 459.50 | Baseline: 350.00 | Improvement: -109.50 | Win Rate: 0.00% | Actor Loss: 2.5021 | Entropy: 3.8331 | Invalid S/B: 1.00/0.12 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [563/2000] | Sampled: 471.88 | Baseline: 331.00 | Improvement: -140.88 | Win Rate: 0.00% | Actor Loss: 0.7536 | Entropy: 3.8673 | Invalid S/B: 1.62/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [564/2000] | Sampled: 451.12 | Baseline: 347.50 | Improvement: -103.62 | Win Rate: 0.00% | Actor Loss: 2.8622 | Entropy: 3.8725 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [565/2000] | Sampled: 448.62 | Baseline: 342.12 | Improvement: -106.50 | Win Rate: 0.00% | Actor Loss: -8.3076 | Entropy: 3.8740 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.1
+Epoch [566/2000] | Sampled: 450.00 | Baseline: 326.50 | Improvement: -123.50 | Win Rate: 0.00% | Actor Loss: -0.2745 | Entropy: 3.9716 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [567/2000] | Sampled: 438.38 | Baseline: 333.50 | Improvement: -104.88 | Win Rate: 0.00% | Actor Loss: -4.8553 | Entropy: 3.9527 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [568/2000] | Sampled: 439.38 | Baseline: 338.12 | Improvement: -101.25 | Win Rate: 0.00% | Actor Loss: 2.5650 | Entropy: 3.9908 | Invalid S/B: 0.62/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [569/2000] | Sampled: 431.12 | Baseline: 338.75 | Improvement: -92.38 | Win Rate: 0.00% | Actor Loss: -0.0618 | Entropy: 4.1225 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [570/2000] | Sampled: 465.38 | Baseline: 334.00 | Improvement: -131.38 | Win Rate: 0.00% | Actor Loss: -6.2990 | Entropy: 4.0966 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.2
+   -> Validation | Samples: 50 | Makespan: 409.06 | Invalid Jobs: 0.12 | Score: 409.06
+Epoch [571/2000] | Sampled: 471.50 | Baseline: 346.00 | Improvement: -125.50 | Win Rate: 0.00% | Actor Loss: 1.8703 | Entropy: 4.0663 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [572/2000] | Sampled: 451.00 | Baseline: 333.38 | Improvement: -117.62 | Win Rate: 0.00% | Actor Loss: 1.9936 | Entropy: 4.1012 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [573/2000] | Sampled: 440.25 | Baseline: 356.12 | Improvement: -84.12 | Win Rate: 0.00% | Actor Loss: 1.7076 | Entropy: 4.1382 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [574/2000] | Sampled: 453.75 | Baseline: 329.00 | Improvement: -124.75 | Win Rate: 0.00% | Actor Loss: 5.4686 | Entropy: 4.2440 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [575/2000] | Sampled: 448.88 | Baseline: 312.25 | Improvement: -136.62 | Win Rate: 0.00% | Actor Loss: 2.1327 | Entropy: 4.2305 | Invalid S/B: 0.38/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [576/2000] | Sampled: 476.00 | Baseline: 335.50 | Improvement: -140.50 | Win Rate: 0.00% | Actor Loss: -0.2646 | Entropy: 4.2144 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 3.0
+Epoch [577/2000] | Sampled: 480.75 | Baseline: 334.50 | Improvement: -146.25 | Win Rate: 0.00% | Actor Loss: -2.3934 | Entropy: 4.3041 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [578/2000] | Sampled: 477.38 | Baseline: 366.00 | Improvement: -111.38 | Win Rate: 0.00% | Actor Loss: 4.3280 | Entropy: 4.2497 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [579/2000] | Sampled: 489.75 | Baseline: 335.25 | Improvement: -154.50 | Win Rate: 0.00% | Actor Loss: -5.3405 | Entropy: 4.2590 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [580/2000] | Sampled: 476.38 | Baseline: 324.62 | Improvement: -151.75 | Win Rate: 0.00% | Actor Loss: 1.2525 | Entropy: 4.2519 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 396.72 | Invalid Jobs: 0.00 | Score: 396.72
+Epoch [581/2000] | Sampled: 493.62 | Baseline: 317.50 | Improvement: -176.12 | Win Rate: 0.00% | Actor Loss: 3.8828 | Entropy: 4.2448 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [582/2000] | Sampled: 510.38 | Baseline: 330.88 | Improvement: -179.50 | Win Rate: 0.00% | Actor Loss: 2.8622 | Entropy: 4.2503 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [583/2000] | Sampled: 490.62 | Baseline: 321.88 | Improvement: -168.75 | Win Rate: 0.00% | Actor Loss: 1.3762 | Entropy: 4.2612 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [584/2000] | Sampled: 465.25 | Baseline: 321.12 | Improvement: -144.12 | Win Rate: 0.00% | Actor Loss: 1.9007 | Entropy: 4.2511 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.6
+Epoch [585/2000] | Sampled: 468.75 | Baseline: 323.25 | Improvement: -145.50 | Win Rate: 0.00% | Actor Loss: 2.1524 | Entropy: 4.2644 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [586/2000] | Sampled: 479.62 | Baseline: 330.12 | Improvement: -149.50 | Win Rate: 0.00% | Actor Loss: 1.3842 | Entropy: 4.3398 | Invalid S/B: 1.75/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [587/2000] | Sampled: 464.00 | Baseline: 349.62 | Improvement: -114.38 | Win Rate: 0.00% | Actor Loss: 4.3617 | Entropy: 4.2926 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [588/2000] | Sampled: 467.62 | Baseline: 322.50 | Improvement: -145.12 | Win Rate: 0.00% | Actor Loss: 5.2528 | Entropy: 4.3263 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [589/2000] | Sampled: 479.25 | Baseline: 343.88 | Improvement: -135.38 | Win Rate: 0.00% | Actor Loss: 3.7418 | Entropy: 4.2932 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [590/2000] | Sampled: 499.62 | Baseline: 352.88 | Improvement: -146.75 | Win Rate: 0.00% | Actor Loss: -0.1063 | Entropy: 4.3015 | Invalid S/B: 1.12/0.00 | Max Load: 5.5 | Load Gap: 3.4
+   -> Validation | Samples: 50 | Makespan: 389.56 | Invalid Jobs: 0.00 | Score: 389.56
+Epoch [591/2000] | Sampled: 484.62 | Baseline: 332.25 | Improvement: -152.38 | Win Rate: 0.00% | Actor Loss: 0.3570 | Entropy: 4.3436 | Invalid S/B: 0.00/0.00 | Max Load: 5.4 | Load Gap: 2.8
+Epoch [592/2000] | Sampled: 487.88 | Baseline: 347.38 | Improvement: -140.50 | Win Rate: 0.00% | Actor Loss: -0.1657 | Entropy: 4.3476 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [593/2000] | Sampled: 519.88 | Baseline: 333.12 | Improvement: -186.75 | Win Rate: 0.00% | Actor Loss: -3.0129 | Entropy: 4.3801 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [594/2000] | Sampled: 518.50 | Baseline: 330.62 | Improvement: -187.88 | Win Rate: 0.00% | Actor Loss: 0.4198 | Entropy: 4.4051 | Invalid S/B: 0.75/0.00 | Max Load: 5.6 | Load Gap: 3.4
+Epoch [595/2000] | Sampled: 524.25 | Baseline: 327.50 | Improvement: -196.75 | Win Rate: 0.00% | Actor Loss: 1.6024 | Entropy: 4.4529 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [596/2000] | Sampled: 520.50 | Baseline: 327.00 | Improvement: -193.50 | Win Rate: 0.00% | Actor Loss: 1.8781 | Entropy: 4.4325 | Invalid S/B: 1.00/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [597/2000] | Sampled: 502.00 | Baseline: 316.88 | Improvement: -185.12 | Win Rate: 0.00% | Actor Loss: 1.4707 | Entropy: 4.4667 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [598/2000] | Sampled: 516.75 | Baseline: 341.62 | Improvement: -175.12 | Win Rate: 0.00% | Actor Loss: 1.7403 | Entropy: 4.4228 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [599/2000] | Sampled: 513.75 | Baseline: 346.12 | Improvement: -167.62 | Win Rate: 0.00% | Actor Loss: 0.1917 | Entropy: 4.4465 | Invalid S/B: 0.88/0.00 | Max Load: 5.6 | Load Gap: 3.8
+Epoch [600/2000] | Sampled: 503.75 | Baseline: 339.12 | Improvement: -164.62 | Win Rate: 0.00% | Actor Loss: 1.5904 | Entropy: 4.4119 | Invalid S/B: 0.25/0.00 | Max Load: 5.5 | Load Gap: 3.2
+   -> Validation | Samples: 50 | Makespan: 382.46 | Invalid Jobs: 0.02 | Score: 382.46
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [601/2000] | Sampled: 523.50 | Baseline: 341.00 | Improvement: -182.50 | Win Rate: 0.00% | Actor Loss: -3.0077 | Entropy: 4.4203 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [602/2000] | Sampled: 525.88 | Baseline: 332.00 | Improvement: -193.88 | Win Rate: 0.00% | Actor Loss: -3.9778 | Entropy: 4.4371 | Invalid S/B: 1.00/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [603/2000] | Sampled: 507.88 | Baseline: 333.62 | Improvement: -174.25 | Win Rate: 0.00% | Actor Loss: 0.8643 | Entropy: 4.3825 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [604/2000] | Sampled: 494.88 | Baseline: 323.00 | Improvement: -171.88 | Win Rate: 0.00% | Actor Loss: 0.8843 | Entropy: 4.4400 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 3.2
+Epoch [605/2000] | Sampled: 508.50 | Baseline: 327.62 | Improvement: -180.88 | Win Rate: 0.00% | Actor Loss: -1.0095 | Entropy: 4.4470 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 3.1
+Epoch [606/2000] | Sampled: 514.62 | Baseline: 341.38 | Improvement: -173.25 | Win Rate: 0.00% | Actor Loss: -0.3665 | Entropy: 4.4321 | Invalid S/B: 0.75/0.00 | Max Load: 5.5 | Load Gap: 3.5
+Epoch [607/2000] | Sampled: 516.50 | Baseline: 330.00 | Improvement: -186.50 | Win Rate: 0.00% | Actor Loss: 1.9220 | Entropy: 4.4301 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [608/2000] | Sampled: 498.75 | Baseline: 320.88 | Improvement: -177.88 | Win Rate: 0.00% | Actor Loss: -3.0547 | Entropy: 4.4447 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [609/2000] | Sampled: 488.88 | Baseline: 334.00 | Improvement: -154.88 | Win Rate: 0.00% | Actor Loss: -0.8775 | Entropy: 4.4607 | Invalid S/B: 0.88/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [610/2000] | Sampled: 512.25 | Baseline: 328.75 | Improvement: -183.50 | Win Rate: 0.00% | Actor Loss: 0.9007 | Entropy: 4.4479 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 380.24 | Invalid Jobs: 0.00 | Score: 380.24
+Epoch [611/2000] | Sampled: 505.12 | Baseline: 329.75 | Improvement: -175.38 | Win Rate: 0.00% | Actor Loss: -0.0512 | Entropy: 4.3281 | Invalid S/B: 0.50/0.00 | Max Load: 5.5 | Load Gap: 3.4
+Epoch [612/2000] | Sampled: 493.38 | Baseline: 325.75 | Improvement: -167.62 | Win Rate: 0.00% | Actor Loss: -0.8619 | Entropy: 4.4130 | Invalid S/B: 0.25/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [613/2000] | Sampled: 483.12 | Baseline: 331.88 | Improvement: -151.25 | Win Rate: 0.00% | Actor Loss: -0.8061 | Entropy: 4.4429 | Invalid S/B: 0.38/0.00 | Max Load: 5.5 | Load Gap: 2.9
+Epoch [614/2000] | Sampled: 491.25 | Baseline: 321.25 | Improvement: -170.00 | Win Rate: 0.00% | Actor Loss: -1.9771 | Entropy: 4.4088 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.8
+Epoch [615/2000] | Sampled: 513.25 | Baseline: 345.50 | Improvement: -167.75 | Win Rate: 0.00% | Actor Loss: 1.8306 | Entropy: 4.3407 | Invalid S/B: 2.12/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [616/2000] | Sampled: 514.75 | Baseline: 344.88 | Improvement: -169.88 | Win Rate: 0.00% | Actor Loss: 2.8094 | Entropy: 4.3654 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 3.1
+Epoch [617/2000] | Sampled: 527.00 | Baseline: 330.12 | Improvement: -196.88 | Win Rate: 0.00% | Actor Loss: 1.6193 | Entropy: 4.3011 | Invalid S/B: 1.00/0.00 | Max Load: 5.4 | Load Gap: 3.1
+Epoch [618/2000] | Sampled: 496.12 | Baseline: 329.38 | Improvement: -166.75 | Win Rate: 0.00% | Actor Loss: -1.1421 | Entropy: 4.3654 | Invalid S/B: 1.12/0.00 | Max Load: 5.5 | Load Gap: 3.4
+Epoch [619/2000] | Sampled: 515.75 | Baseline: 338.88 | Improvement: -176.88 | Win Rate: 0.00% | Actor Loss: 0.4850 | Entropy: 4.3518 | Invalid S/B: 1.25/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [620/2000] | Sampled: 508.25 | Baseline: 335.25 | Improvement: -173.00 | Win Rate: 0.00% | Actor Loss: -3.7014 | Entropy: 4.3205 | Invalid S/B: 0.75/0.00 | Max Load: 5.5 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 402.00 | Invalid Jobs: 0.06 | Score: 402.00
+Epoch [621/2000] | Sampled: 499.62 | Baseline: 346.25 | Improvement: -153.38 | Win Rate: 0.00% | Actor Loss: 3.0246 | Entropy: 4.2999 | Invalid S/B: 1.50/0.00 | Max Load: 5.2 | Load Gap: 3.2
+Epoch [622/2000] | Sampled: 503.12 | Baseline: 333.25 | Improvement: -169.88 | Win Rate: 0.00% | Actor Loss: 2.2160 | Entropy: 4.3565 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [623/2000] | Sampled: 494.75 | Baseline: 327.75 | Improvement: -167.00 | Win Rate: 0.00% | Actor Loss: -3.2389 | Entropy: 4.3174 | Invalid S/B: 0.38/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [624/2000] | Sampled: 500.12 | Baseline: 337.25 | Improvement: -162.88 | Win Rate: 0.00% | Actor Loss: 2.0504 | Entropy: 4.3033 | Invalid S/B: 0.62/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [625/2000] | Sampled: 497.12 | Baseline: 328.88 | Improvement: -168.25 | Win Rate: 0.00% | Actor Loss: 2.6777 | Entropy: 4.3002 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [626/2000] | Sampled: 512.00 | Baseline: 357.12 | Improvement: -154.88 | Win Rate: 0.00% | Actor Loss: 6.5164 | Entropy: 4.3067 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [627/2000] | Sampled: 509.00 | Baseline: 336.12 | Improvement: -172.88 | Win Rate: 0.00% | Actor Loss: -1.4621 | Entropy: 4.2472 | Invalid S/B: 0.50/0.00 | Max Load: 5.6 | Load Gap: 3.4
+Epoch [628/2000] | Sampled: 500.88 | Baseline: 329.00 | Improvement: -171.88 | Win Rate: 0.00% | Actor Loss: -0.6857 | Entropy: 4.2704 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [629/2000] | Sampled: 543.38 | Baseline: 324.12 | Improvement: -219.25 | Win Rate: 0.00% | Actor Loss: -1.8082 | Entropy: 4.3033 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [630/2000] | Sampled: 519.88 | Baseline: 331.62 | Improvement: -188.25 | Win Rate: 0.00% | Actor Loss: 1.5854 | Entropy: 4.2961 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 460.14 | Invalid Jobs: 0.10 | Score: 460.14
+Epoch [631/2000] | Sampled: 502.12 | Baseline: 337.38 | Improvement: -164.75 | Win Rate: 0.00% | Actor Loss: 1.6113 | Entropy: 4.3293 | Invalid S/B: 0.00/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [632/2000] | Sampled: 511.62 | Baseline: 328.25 | Improvement: -183.38 | Win Rate: 0.00% | Actor Loss: -1.9100 | Entropy: 4.3652 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 2.9
+Epoch [633/2000] | Sampled: 516.00 | Baseline: 332.88 | Improvement: -183.12 | Win Rate: 0.00% | Actor Loss: 3.8878 | Entropy: 4.3359 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 3.1
+Epoch [634/2000] | Sampled: 531.75 | Baseline: 338.88 | Improvement: -192.88 | Win Rate: 0.00% | Actor Loss: 8.1984 | Entropy: 4.2880 | Invalid S/B: 0.62/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [635/2000] | Sampled: 553.12 | Baseline: 323.25 | Improvement: -229.88 | Win Rate: 0.00% | Actor Loss: -3.7668 | Entropy: 4.3009 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [636/2000] | Sampled: 532.12 | Baseline: 321.50 | Improvement: -210.62 | Win Rate: 0.00% | Actor Loss: -1.0623 | Entropy: 4.2994 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [637/2000] | Sampled: 514.75 | Baseline: 339.25 | Improvement: -175.50 | Win Rate: 0.00% | Actor Loss: -3.2659 | Entropy: 4.3258 | Invalid S/B: 0.50/0.12 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [638/2000] | Sampled: 523.12 | Baseline: 346.12 | Improvement: -177.00 | Win Rate: 0.00% | Actor Loss: 2.5569 | Entropy: 4.3295 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [639/2000] | Sampled: 526.88 | Baseline: 362.00 | Improvement: -164.88 | Win Rate: 0.00% | Actor Loss: 4.1935 | Entropy: 4.3577 | Invalid S/B: 0.62/0.12 | Max Load: 5.8 | Load Gap: 3.6
+Epoch [640/2000] | Sampled: 537.75 | Baseline: 343.50 | Improvement: -194.25 | Win Rate: 0.00% | Actor Loss: 1.6762 | Entropy: 4.3612 | Invalid S/B: 0.25/0.00 | Max Load: 5.5 | Load Gap: 3.5
+   -> Validation | Samples: 50 | Makespan: 446.08 | Invalid Jobs: 0.14 | Score: 446.08
+Epoch [641/2000] | Sampled: 523.88 | Baseline: 346.00 | Improvement: -177.88 | Win Rate: 0.00% | Actor Loss: 1.8644 | Entropy: 4.3291 | Invalid S/B: 0.88/0.00 | Max Load: 5.6 | Load Gap: 3.8
+Epoch [642/2000] | Sampled: 539.50 | Baseline: 353.00 | Improvement: -186.50 | Win Rate: 0.00% | Actor Loss: 3.4712 | Entropy: 4.3623 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.4
+Epoch [643/2000] | Sampled: 507.50 | Baseline: 332.25 | Improvement: -175.25 | Win Rate: 0.00% | Actor Loss: -3.0217 | Entropy: 4.3559 | Invalid S/B: 0.75/0.00 | Max Load: 5.8 | Load Gap: 3.4
+Epoch [644/2000] | Sampled: 526.50 | Baseline: 339.62 | Improvement: -186.88 | Win Rate: 0.00% | Actor Loss: -4.5327 | Entropy: 4.3324 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [645/2000] | Sampled: 531.25 | Baseline: 311.62 | Improvement: -219.62 | Win Rate: 0.00% | Actor Loss: -1.9417 | Entropy: 4.3579 | Invalid S/B: 1.12/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [646/2000] | Sampled: 516.62 | Baseline: 316.12 | Improvement: -200.50 | Win Rate: 0.00% | Actor Loss: 3.8506 | Entropy: 4.3726 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.5
+Epoch [647/2000] | Sampled: 503.25 | Baseline: 339.75 | Improvement: -163.50 | Win Rate: 0.00% | Actor Loss: 5.3707 | Entropy: 4.3305 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [648/2000] | Sampled: 541.12 | Baseline: 329.25 | Improvement: -211.88 | Win Rate: 0.00% | Actor Loss: -8.5075 | Entropy: 4.2604 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [649/2000] | Sampled: 501.12 | Baseline: 331.62 | Improvement: -169.50 | Win Rate: 0.00% | Actor Loss: 3.9308 | Entropy: 4.3183 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [650/2000] | Sampled: 530.12 | Baseline: 336.25 | Improvement: -193.88 | Win Rate: 0.00% | Actor Loss: -0.2752 | Entropy: 4.3180 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 3.0
+   -> Validation | Samples: 50 | Makespan: 426.66 | Invalid Jobs: 0.04 | Score: 426.66
+Epoch [651/2000] | Sampled: 484.12 | Baseline: 322.88 | Improvement: -161.25 | Win Rate: 0.00% | Actor Loss: -3.5850 | Entropy: 4.2928 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [652/2000] | Sampled: 499.25 | Baseline: 322.00 | Improvement: -177.25 | Win Rate: 0.00% | Actor Loss: 5.0745 | Entropy: 4.2941 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [653/2000] | Sampled: 507.88 | Baseline: 344.00 | Improvement: -163.88 | Win Rate: 0.00% | Actor Loss: 0.4341 | Entropy: 4.3102 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.6
+Epoch [654/2000] | Sampled: 504.88 | Baseline: 329.75 | Improvement: -175.12 | Win Rate: 0.00% | Actor Loss: 0.0680 | Entropy: 4.2607 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [655/2000] | Sampled: 506.50 | Baseline: 353.88 | Improvement: -152.62 | Win Rate: 0.00% | Actor Loss: -0.0990 | Entropy: 4.2790 | Invalid S/B: 1.00/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [656/2000] | Sampled: 520.00 | Baseline: 325.38 | Improvement: -194.62 | Win Rate: 0.00% | Actor Loss: 0.7839 | Entropy: 4.2583 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [657/2000] | Sampled: 518.88 | Baseline: 324.12 | Improvement: -194.75 | Win Rate: 0.00% | Actor Loss: 0.4415 | Entropy: 4.2199 | Invalid S/B: 0.62/0.00 | Max Load: 5.5 | Load Gap: 3.1
+Epoch [658/2000] | Sampled: 511.38 | Baseline: 326.50 | Improvement: -184.88 | Win Rate: 0.00% | Actor Loss: -3.9813 | Entropy: 4.2499 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [659/2000] | Sampled: 519.25 | Baseline: 331.75 | Improvement: -187.50 | Win Rate: 0.00% | Actor Loss: -1.9207 | Entropy: 4.2644 | Invalid S/B: 1.00/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [660/2000] | Sampled: 528.12 | Baseline: 342.12 | Improvement: -186.00 | Win Rate: 0.00% | Actor Loss: 3.7866 | Entropy: 4.2396 | Invalid S/B: 0.75/0.00 | Max Load: 5.4 | Load Gap: 3.1
+   -> Validation | Samples: 50 | Makespan: 431.70 | Invalid Jobs: 0.16 | Score: 431.70
+Epoch [661/2000] | Sampled: 501.88 | Baseline: 327.25 | Improvement: -174.62 | Win Rate: 0.00% | Actor Loss: -2.7366 | Entropy: 4.2636 | Invalid S/B: 0.88/0.00 | Max Load: 5.5 | Load Gap: 3.0
+Epoch [662/2000] | Sampled: 531.12 | Baseline: 323.38 | Improvement: -207.75 | Win Rate: 0.00% | Actor Loss: -1.1593 | Entropy: 4.2063 | Invalid S/B: 0.75/0.00 | Max Load: 5.5 | Load Gap: 3.2
+Epoch [663/2000] | Sampled: 530.25 | Baseline: 322.88 | Improvement: -207.38 | Win Rate: 0.00% | Actor Loss: -3.8215 | Entropy: 4.1987 | Invalid S/B: 0.88/0.00 | Max Load: 5.4 | Load Gap: 3.2
+Epoch [664/2000] | Sampled: 546.50 | Baseline: 332.12 | Improvement: -214.38 | Win Rate: 0.00% | Actor Loss: -2.1027 | Entropy: 4.2004 | Invalid S/B: 1.38/0.00 | Max Load: 5.2 | Load Gap: 3.1
+Epoch [665/2000] | Sampled: 519.75 | Baseline: 342.50 | Improvement: -177.25 | Win Rate: 0.00% | Actor Loss: 2.4528 | Entropy: 4.1898 | Invalid S/B: 0.88/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [666/2000] | Sampled: 514.00 | Baseline: 322.25 | Improvement: -191.75 | Win Rate: 0.00% | Actor Loss: 6.0843 | Entropy: 4.2311 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [667/2000] | Sampled: 551.50 | Baseline: 327.00 | Improvement: -224.50 | Win Rate: 0.00% | Actor Loss: 0.8901 | Entropy: 4.1960 | Invalid S/B: 0.62/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [668/2000] | Sampled: 539.50 | Baseline: 338.12 | Improvement: -201.38 | Win Rate: 0.00% | Actor Loss: 5.1744 | Entropy: 4.1994 | Invalid S/B: 1.38/0.00 | Max Load: 5.4 | Load Gap: 2.9
+Epoch [669/2000] | Sampled: 509.25 | Baseline: 327.12 | Improvement: -182.12 | Win Rate: 0.00% | Actor Loss: -3.2101 | Entropy: 4.2129 | Invalid S/B: 0.25/0.00 | Max Load: 5.4 | Load Gap: 3.0
+Epoch [670/2000] | Sampled: 540.12 | Baseline: 350.25 | Improvement: -189.88 | Win Rate: 0.00% | Actor Loss: 2.3510 | Entropy: 4.2569 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 461.00 | Invalid Jobs: 0.66 | Score: 461.00
+Epoch [671/2000] | Sampled: 548.75 | Baseline: 330.12 | Improvement: -218.62 | Win Rate: 0.00% | Actor Loss: 2.3482 | Entropy: 4.2879 | Invalid S/B: 1.25/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [672/2000] | Sampled: 514.25 | Baseline: 342.88 | Improvement: -171.38 | Win Rate: 0.00% | Actor Loss: 2.9144 | Entropy: 4.2582 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [673/2000] | Sampled: 516.25 | Baseline: 326.50 | Improvement: -189.75 | Win Rate: 0.00% | Actor Loss: 1.9193 | Entropy: 4.2475 | Invalid S/B: 1.00/0.00 | Max Load: 5.1 | Load Gap: 2.9
+Epoch [674/2000] | Sampled: 519.12 | Baseline: 337.00 | Improvement: -182.12 | Win Rate: 0.00% | Actor Loss: -3.7238 | Entropy: 4.2570 | Invalid S/B: 0.88/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [675/2000] | Sampled: 549.38 | Baseline: 356.50 | Improvement: -192.88 | Win Rate: 0.00% | Actor Loss: -0.6239 | Entropy: 4.2750 | Invalid S/B: 1.50/0.00 | Max Load: 5.2 | Load Gap: 2.8
+Epoch [676/2000] | Sampled: 513.12 | Baseline: 325.75 | Improvement: -187.38 | Win Rate: 0.00% | Actor Loss: -3.7539 | Entropy: 4.2311 | Invalid S/B: 0.75/0.00 | Max Load: 5.2 | Load Gap: 3.0
+Epoch [677/2000] | Sampled: 488.00 | Baseline: 331.38 | Improvement: -156.62 | Win Rate: 0.00% | Actor Loss: 1.5522 | Entropy: 4.2432 | Invalid S/B: 0.38/0.00 | Max Load: 5.2 | Load Gap: 2.9
+Epoch [678/2000] | Sampled: 516.00 | Baseline: 321.00 | Improvement: -195.00 | Win Rate: 0.00% | Actor Loss: 2.3947 | Entropy: 4.2415 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [679/2000] | Sampled: 474.00 | Baseline: 314.88 | Improvement: -159.12 | Win Rate: 0.00% | Actor Loss: -1.0556 | Entropy: 4.1983 | Invalid S/B: 0.50/0.00 | Max Load: 5.2 | Load Gap: 2.6
+Epoch [680/2000] | Sampled: 510.75 | Baseline: 339.88 | Improvement: -170.88 | Win Rate: 0.00% | Actor Loss: 0.8069 | Entropy: 4.1090 | Invalid S/B: 0.50/0.00 | Max Load: 5.1 | Load Gap: 2.9
+   -> Validation | Samples: 50 | Makespan: 424.76 | Invalid Jobs: 0.88 | Score: 424.76
+Epoch [681/2000] | Sampled: 473.12 | Baseline: 329.62 | Improvement: -143.50 | Win Rate: 0.00% | Actor Loss: 0.7467 | Entropy: 4.1429 | Invalid S/B: 0.62/0.00 | Max Load: 4.8 | Load Gap: 2.1
+Epoch [682/2000] | Sampled: 465.00 | Baseline: 331.62 | Improvement: -133.38 | Win Rate: 0.00% | Actor Loss: -0.1150 | Entropy: 4.0625 | Invalid S/B: 0.88/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [683/2000] | Sampled: 458.00 | Baseline: 325.50 | Improvement: -132.50 | Win Rate: 0.00% | Actor Loss: 2.0193 | Entropy: 3.9888 | Invalid S/B: 0.75/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [684/2000] | Sampled: 445.50 | Baseline: 327.38 | Improvement: -118.12 | Win Rate: 0.00% | Actor Loss: -4.1803 | Entropy: 3.8869 | Invalid S/B: 0.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [685/2000] | Sampled: 446.25 | Baseline: 325.38 | Improvement: -120.88 | Win Rate: 0.00% | Actor Loss: 1.6358 | Entropy: 3.8691 | Invalid S/B: 1.12/0.00 | Max Load: 4.8 | Load Gap: 2.0
+Epoch [686/2000] | Sampled: 465.00 | Baseline: 328.62 | Improvement: -136.38 | Win Rate: 0.00% | Actor Loss: -2.3453 | Entropy: 3.8474 | Invalid S/B: 1.12/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [687/2000] | Sampled: 460.12 | Baseline: 319.50 | Improvement: -140.62 | Win Rate: 0.00% | Actor Loss: -6.2684 | Entropy: 3.8094 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [688/2000] | Sampled: 493.50 | Baseline: 331.12 | Improvement: -162.38 | Win Rate: 0.00% | Actor Loss: 3.0806 | Entropy: 3.7896 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [689/2000] | Sampled: 453.50 | Baseline: 324.38 | Improvement: -129.12 | Win Rate: 0.00% | Actor Loss: -6.4407 | Entropy: 3.8358 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 3.0
+Epoch [690/2000] | Sampled: 471.38 | Baseline: 349.12 | Improvement: -122.25 | Win Rate: 0.00% | Actor Loss: -3.9478 | Entropy: 3.7623 | Invalid S/B: 1.00/0.12 | Max Load: 5.2 | Load Gap: 2.4
+   -> Validation | Samples: 50 | Makespan: 422.42 | Invalid Jobs: 1.00 | Score: 422.42
+Epoch [691/2000] | Sampled: 433.00 | Baseline: 323.12 | Improvement: -109.88 | Win Rate: 0.00% | Actor Loss: 3.6050 | Entropy: 3.8308 | Invalid S/B: 0.75/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [692/2000] | Sampled: 437.50 | Baseline: 360.62 | Improvement: -76.88 | Win Rate: 0.00% | Actor Loss: 4.5172 | Entropy: 3.7690 | Invalid S/B: 0.62/0.12 | Max Load: 4.9 | Load Gap: 1.9
+Epoch [693/2000] | Sampled: 430.88 | Baseline: 345.75 | Improvement: -85.12 | Win Rate: 0.00% | Actor Loss: -2.6213 | Entropy: 3.8370 | Invalid S/B: 0.50/0.00 | Max Load: 5.0 | Load Gap: 2.5
+Epoch [694/2000] | Sampled: 467.50 | Baseline: 343.25 | Improvement: -124.25 | Win Rate: 0.00% | Actor Loss: -3.2739 | Entropy: 3.7603 | Invalid S/B: 1.38/0.00 | Max Load: 4.6 | Load Gap: 1.8
+Epoch [695/2000] | Sampled: 461.12 | Baseline: 318.88 | Improvement: -142.25 | Win Rate: 0.00% | Actor Loss: -5.2202 | Entropy: 3.7481 | Invalid S/B: 1.38/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [696/2000] | Sampled: 442.38 | Baseline: 325.38 | Improvement: -117.00 | Win Rate: 0.00% | Actor Loss: -2.3786 | Entropy: 3.7766 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.0
+Epoch [697/2000] | Sampled: 447.38 | Baseline: 325.12 | Improvement: -122.25 | Win Rate: 0.00% | Actor Loss: 5.2478 | Entropy: 3.7312 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [698/2000] | Sampled: 478.75 | Baseline: 335.12 | Improvement: -143.62 | Win Rate: 0.00% | Actor Loss: -1.1811 | Entropy: 3.7811 | Invalid S/B: 1.88/0.00 | Max Load: 5.1 | Load Gap: 2.2
+Epoch [699/2000] | Sampled: 444.50 | Baseline: 331.50 | Improvement: -113.00 | Win Rate: 0.00% | Actor Loss: -5.1104 | Entropy: 3.8545 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.2
+Epoch [700/2000] | Sampled: 452.50 | Baseline: 318.00 | Improvement: -134.50 | Win Rate: 0.00% | Actor Loss: -2.9608 | Entropy: 3.8506 | Invalid S/B: 0.75/0.00 | Max Load: 4.8 | Load Gap: 2.2
+   -> Validation | Samples: 50 | Makespan: 427.84 | Invalid Jobs: 0.94 | Score: 427.84
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/Static_alogorithm/Attention/attention_training_metrics.png
+Epoch [701/2000] | Sampled: 461.75 | Baseline: 332.88 | Improvement: -128.88 | Win Rate: 0.00% | Actor Loss: -1.3547 | Entropy: 3.8462 | Invalid S/B: 0.62/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [702/2000] | Sampled: 475.25 | Baseline: 333.12 | Improvement: -142.12 | Win Rate: 0.00% | Actor Loss: -4.4099 | Entropy: 3.8601 | Invalid S/B: 1.38/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [703/2000] | Sampled: 474.25 | Baseline: 332.12 | Improvement: -142.12 | Win Rate: 0.00% | Actor Loss: -2.4265 | Entropy: 3.8918 | Invalid S/B: 1.50/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [704/2000] | Sampled: 474.12 | Baseline: 346.12 | Improvement: -128.00 | Win Rate: 0.00% | Actor Loss: -0.1090 | Entropy: 3.7991 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [705/2000] | Sampled: 471.75 | Baseline: 351.62 | Improvement: -120.12 | Win Rate: 0.00% | Actor Loss: -0.2890 | Entropy: 3.7574 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [706/2000] | Sampled: 462.38 | Baseline: 336.62 | Improvement: -125.75 | Win Rate: 0.00% | Actor Loss: -1.6995 | Entropy: 3.7654 | Invalid S/B: 1.25/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [707/2000] | Sampled: 448.75 | Baseline: 334.88 | Improvement: -113.88 | Win Rate: 0.00% | Actor Loss: -0.9872 | Entropy: 3.7240 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [708/2000] | Sampled: 432.25 | Baseline: 336.00 | Improvement: -96.25 | Win Rate: 0.00% | Actor Loss: -5.3897 | Entropy: 3.6941 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [709/2000] | Sampled: 429.25 | Baseline: 318.12 | Improvement: -111.12 | Win Rate: 0.00% | Actor Loss: 1.9258 | Entropy: 3.6771 | Invalid S/B: 0.62/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [710/2000] | Sampled: 472.38 | Baseline: 332.12 | Improvement: -140.25 | Win Rate: 0.00% | Actor Loss: 4.0567 | Entropy: 3.6314 | Invalid S/B: 1.75/0.00 | Max Load: 4.6 | Load Gap: 1.8
+   -> Validation | Samples: 50 | Makespan: 434.16 | Invalid Jobs: 1.16 | Score: 434.16
+Epoch [711/2000] | Sampled: 461.25 | Baseline: 335.50 | Improvement: -125.75 | Win Rate: 0.00% | Actor Loss: 0.9297 | Entropy: 3.6732 | Invalid S/B: 2.00/0.00 | Max Load: 4.5 | Load Gap: 1.6
+Epoch [712/2000] | Sampled: 447.38 | Baseline: 344.75 | Improvement: -102.62 | Win Rate: 0.00% | Actor Loss: -1.1966 | Entropy: 3.6474 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.1
+Epoch [713/2000] | Sampled: 458.62 | Baseline: 326.62 | Improvement: -132.00 | Win Rate: 0.00% | Actor Loss: -6.9048 | Entropy: 3.7058 | Invalid S/B: 0.62/0.00 | Max Load: 4.9 | Load Gap: 2.0
+Epoch [714/2000] | Sampled: 473.25 | Baseline: 322.25 | Improvement: -151.00 | Win Rate: 0.00% | Actor Loss: 5.0819 | Entropy: 3.7463 | Invalid S/B: 1.12/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [715/2000] | Sampled: 493.50 | Baseline: 355.62 | Improvement: -137.88 | Win Rate: 0.00% | Actor Loss: 1.8219 | Entropy: 3.7072 | Invalid S/B: 1.62/0.00 | Max Load: 4.9 | Load Gap: 2.1
+Epoch [716/2000] | Sampled: 507.12 | Baseline: 358.75 | Improvement: -148.38 | Win Rate: 0.00% | Actor Loss: -4.3595 | Entropy: 3.7676 | Invalid S/B: 2.00/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [717/2000] | Sampled: 518.88 | Baseline: 333.88 | Improvement: -185.00 | Win Rate: 0.00% | Actor Loss: -3.2183 | Entropy: 3.7772 | Invalid S/B: 1.75/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [718/2000] | Sampled: 487.75 | Baseline: 325.00 | Improvement: -162.75 | Win Rate: 0.00% | Actor Loss: 3.3921 | Entropy: 3.8382 | Invalid S/B: 1.00/0.00 | Max Load: 4.9 | Load Gap: 2.4
+Epoch [719/2000] | Sampled: 500.00 | Baseline: 325.88 | Improvement: -174.12 | Win Rate: 0.00% | Actor Loss: -1.8259 | Entropy: 3.9066 | Invalid S/B: 1.12/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [720/2000] | Sampled: 494.00 | Baseline: 349.12 | Improvement: -144.88 | Win Rate: 0.00% | Actor Loss: -2.1928 | Entropy: 3.9603 | Invalid S/B: 0.25/0.00 | Max Load: 5.2 | Load Gap: 2.8
+   -> Validation | Samples: 50 | Makespan: 446.40 | Invalid Jobs: 1.54 | Score: 446.40
+Epoch [721/2000] | Sampled: 518.25 | Baseline: 323.88 | Improvement: -194.38 | Win Rate: 0.00% | Actor Loss: 0.4807 | Entropy: 3.9798 | Invalid S/B: 1.88/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [722/2000] | Sampled: 505.38 | Baseline: 334.12 | Improvement: -171.25 | Win Rate: 0.00% | Actor Loss: 1.1070 | Entropy: 3.9326 | Invalid S/B: 0.88/0.00 | Max Load: 5.0 | Load Gap: 2.4
+Epoch [723/2000] | Sampled: 507.25 | Baseline: 330.00 | Improvement: -177.25 | Win Rate: 0.00% | Actor Loss: -10.7853 | Entropy: 3.9438 | Invalid S/B: 1.00/0.00 | Max Load: 5.0 | Load Gap: 2.2
+Epoch [724/2000] | Sampled: 494.00 | Baseline: 320.25 | Improvement: -173.75 | Win Rate: 0.00% | Actor Loss: -1.2770 | Entropy: 3.9423 | Invalid S/B: 1.25/0.00 | Max Load: 5.1 | Load Gap: 2.5
+Epoch [725/2000] | Sampled: 491.25 | Baseline: 319.38 | Improvement: -171.88 | Win Rate: 0.00% | Actor Loss: 0.9146 | Entropy: 3.9808 | Invalid S/B: 1.38/0.00 | Max Load: 4.9 | Load Gap: 2.5
+Epoch [726/2000] | Sampled: 509.38 | Baseline: 332.38 | Improvement: -177.00 | Win Rate: 0.00% | Actor Loss: -2.2590 | Entropy: 3.9535 | Invalid S/B: 1.12/0.00 | Max Load: 5.1 | Load Gap: 2.8
+Epoch [727/2000] | Sampled: 524.38 | Baseline: 340.00 | Improvement: -184.38 | Win Rate: 0.00% | Actor Loss: -1.4494 | Entropy: 3.9373 | Invalid S/B: 1.62/0.00 | Max Load: 5.0 | Load Gap: 2.2

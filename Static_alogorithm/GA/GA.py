@@ -40,6 +40,28 @@ NUM_AMRS = 16        # eta = m / |D_in| = 16 / 5 = 3.2, the headline setting
 DEPOT_X = 4          # 2x2 charging pods occupy columns DEPOT_X, DEPOT_X+1
 DEPOT_COL_STRIDE = 3 # spacing between column banks: 2 pod columns + 1 free lane
 
+# --- floor geometry -----------------------------------------------------------
+# Both doors and stations sit ON a wall column, so an AMR being served there has
+# THREE neighbours, not four. What occupies those three decides whether it can
+# leave. Measured on val_60 (share of sampled schedules with >=1 un-executable
+# job, seeds 43/44):
+#
+#   queue      depot     clearance    infeasible
+#   lateral    pods      0            26% / 21%    <- v3-v5
+#   lateral    pods      1            20% /  6%
+#   inward     pods      0             6% /  9%
+#   inward     aisle     0             6% /  9%
+#   inward     aisle     1             0% /  1%    <- current default
+#
+# The three changes are complementary: the inward queue frees the two cells
+# beside the door, the aisle depot clears the dock rows, and the clearance tick
+# gives the incumbent time to use them. None of the three is sufficient alone.
+#
+# Set QUEUE_GEOMETRY="lateral", DEPOT_LAYOUT="pods", DOCK_CLEARANCE_TICKS=0 to
+# reproduce the v3-v5 results exactly.
+QUEUE_GEOMETRY = "inward"   # "inward" | "lateral"
+DEPOT_LAYOUT = "aisle"      # "aisle"  | "pods"
+
 
 def _pod_rows(door_rows=DOOR_ROWS, grid_h=GRID_H):
     """Row pairs for 2x2 pods, ordered OUTSIDE-IN, centre pod last.
@@ -126,10 +148,40 @@ def validate_depot(starts, door_rows=DOOR_ROWS, grid_w=GRID_W, grid_h=GRID_H):
     return starts
 
 
+def aisle_rows(door_rows=DOOR_ROWS, grid_h=GRID_H):
+    """Rows midway between consecutive doors -- for DOOR_ROWS=(2,6,10,14,18): 4,8,12,16."""
+    ds = sorted(door_rows)
+    rows = []
+    for a, b in zip(ds, ds[1:]):
+        mid = (a + b) // 2
+        if 1 <= mid <= grid_h and mid not in ds:
+            rows.append(mid)
+    return tuple(rows)
+
+
+def aisle_bays(door_rows=DOOR_ROWS, grid_h=GRID_H, width=4):
+    """Bays on the rows BETWEEN doors, in the strip the inward queue vacates.
+
+    The pod depot parked AMRs on the door rows themselves (x=4,5 beside rows
+    2/3, 6/7, 13/14, 17/18), so four of the five dock lanes dead-ended into two
+    parked robots. Moving them to the in-between rows leaves every door row
+    clear from wall to wall, and the columns the lateral queue used to occupy
+    (x=0..3) are free once QUEUE_GEOMETRY is "inward".
+
+    Filled column-major so a fleet smaller than 4*len(rows) spreads across the
+    floor rather than piling onto one row -- the same principle as depot_bays.
+    """
+    rows = aisle_rows(door_rows, grid_h)
+    return [(x, y) for x in range(width) for y in rows]
+
+
 def build_pod_depot(num_amrs=NUM_AMRS, door_rows=DOOR_ROWS, depot_x=DEPOT_X,
                     grid_h=GRID_H, col_stride=DEPOT_COL_STRIDE):
-    """Assign `num_amrs` dedicated bays from `depot_bays`, then validate."""
-    bays = depot_bays(door_rows, depot_x, grid_h, col_stride)
+    """Assign `num_amrs` dedicated bays, then validate. Layout per DEPOT_LAYOUT."""
+    if DEPOT_LAYOUT == "aisle":
+        bays = aisle_bays(door_rows, grid_h)
+    else:
+        bays = depot_bays(door_rows, depot_x, grid_h, col_stride)
     if num_amrs > len(bays):
         raise ValueError(
             f"{num_amrs} AMRs requested but the depot offers {len(bays)} bays. "
@@ -230,6 +282,34 @@ collision_routing_iters = 100
 # It prevents infinite searches in highly congested scenarios.
 MAX_DEPTH = 100
 
+# Ticks a door stays held by the AMR that just finished there, so it can pull
+# away before the next AMR arrives. Without it the door is free the instant
+# service ends, and the next AMR reserves the cell while the incumbent is still
+# standing on it -- evicting a robot that has nowhere legal to go.
+#
+# The failure this fixes: AMR5 finishes at dock3 (0,10) at t=12; AMR7 books the
+# same cell from t=14; AMR5's three neighbours are all taken at t=14 (one a
+# genuine head-on swap, one a robot that has only just vacated and is still
+# inside the one-cell following gap, one a queued robot). AMR5 must move at t=14
+# and cannot, so the leg fails. Given ONE more tick of standing room it waits
+# and then departs with full headway intact -- no safety rule has to be relaxed.
+#
+# Measured on val_60 under the inward-queue layout (paired: identical schedules
+# scored at each setting, makespan over schedules clean at EVERY setting):
+#
+#   ticks   infeasible s43/s44   makespan cost   heuristic cost
+#       0          6%  /  9%             +0.0            +0.0
+#       1          0%  /  1%             +9.7 / +8.2     +8.7
+#       2          1%  /  0%            +22.4 / +18.9   +17.2
+#       3          0%  /  0%            +37.9 / +32.1   +25.3
+#
+# 1 buys essentially all of the feasibility for the least time. Larger values
+# cost roughly linearly and add nothing. The model and the dispatch heuristic
+# pay almost the same price, so relative comparisons are unaffected.
+#
+# Set to 0 to reproduce the v3-v5 results exactly.
+DOCK_CLEARANCE_TICKS = 1
+
 @dataclass(frozen=True)
 class Job:
     idx: int
@@ -292,7 +372,29 @@ def _dock_inward_direction(dock_pos: Tuple[int, int]) -> Tuple[int, int]:
 
 @lru_cache(maxsize=None)
 def dock_waiting_slots(dock_pos: Tuple[int, int], depth: int = WAIT_LINE_DEPTH) -> Tuple[Tuple[int, int], ...]:
+    """Cells an AMR may wait in while queueing for a door.
+
+    NOTE: lru_cached and it reads QUEUE_GEOMETRY at call time -- call
+    dock_waiting_slots.cache_clear() after changing the geometry.
+    """
     inward_dx, inward_dy = _dock_inward_direction(dock_pos)
+
+    if QUEUE_GEOMETRY == "inward":
+        # Single file leading AWAY from the door, so the two cells flanking it
+        # stay free. Every door sits on a wall, where an AMR has three
+        # neighbours rather than four; the lateral line took two of those three,
+        # leaving the AMR being served one way out. See QUEUE_GEOMETRY.
+        slots: List[Tuple[int, int]] = []
+        for line_depth in range(1, depth + 1):
+            candidate = (dock_pos[0] + inward_dx * line_depth,
+                         dock_pos[1] + inward_dy * line_depth)
+            if not _is_within_bounds(candidate):
+                continue
+            if candidate in OBSTACLES or candidate in DOCK_SERVICE_CELLS:
+                continue
+            slots.append(candidate)
+        return tuple(slots)
+
     if inward_dx != 0:
         lateral_dirs = ((0, 1), (0, -1))
     else:
@@ -441,11 +543,19 @@ def find_dynamic_path(start: Tuple[int, int], end: Tuple[int, int], start_time: 
             if not _is_within_bounds(neighbor): continue
             if neighbor in OBSTACLES: continue
             
-            # Check 1: Reserved by moving AMR
-            if (neighbor, next_t) in reservations: continue
-            
-            # Check 1.5: Prevent edge collisions (swapping)
-            if neighbor != current and (neighbor, t) in reservations: continue
+            # Check 1: Reserved by ANOTHER moving AMR. A robot cannot collide
+            # with itself, so its own reservations are not obstacles -- they
+            # record where it already is. This matters once a door is held
+            # through DOCK_CLEARANCE_TICKS: without the exemption the incumbent
+            # would be blocked from standing in the very cell it just reserved.
+            occupant = reservations.get((neighbor, next_t))
+            if occupant is not None and occupant != active_amr: continue
+
+            # Check 1.5: Prevent edge collisions (swapping). Unchanged one-cell
+            # following gap -- only the self-exemption is new.
+            prev_occupant = reservations.get((neighbor, t))
+            if neighbor != current and prev_occupant is not None and prev_occupant != active_amr:
+                continue
             
             # Check 2: Occupied by idle AMR
             collision_idle = False
@@ -1462,7 +1572,18 @@ def decode_schedule(individual: Individual, jobs: List[Job], need_log: bool = Fa
         service_end = process_start + service_duration
         if need_log:
             timelines.append((amr, process_start, service_end, service_kind, service_label))
-        reserve_wait(dock_pos, amr, process_start, service_end)
+        # Hold the door through a departure grace period (see DOCK_CLEARANCE_TICKS):
+        # the cell is not free the instant service ends, the incumbent still has to
+        # pull away. `availability[amr]` is deliberately NOT advanced -- the robot is
+        # free to leave immediately, it simply keeps the right to stand there.
+        clearance_end = service_end + DOCK_CLEARANCE_TICKS
+        reserve_wait(dock_pos, amr, process_start, clearance_end)
+        # `dock_available` is deliberately NOT extended. Delaying it pushes the
+        # next AMR down the wait-slot / hold_upstream branch, and hold_upstream
+        # drives any AMR standing on a door all the way back to its bay: on one
+        # instance that produced 51 pointless depot round trips and took the
+        # makespan from 309 to 578. The cell reservation alone is enough -- the
+        # arriving AMR just waits a tick on approach, as a real queue would.
         dock_available[dock_id] = service_end
         availability[amr] = service_end
         current_position[amr] = dock_pos

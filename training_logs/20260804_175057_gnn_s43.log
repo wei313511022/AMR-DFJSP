@@ -1,0 +1,6 @@
+Training on: cuda
+Loaded 5000 dispatch events from /home/wei/Desktop/AMR-DFJSP/test_case/v3/train_60.jsonl
+Loaded 50 dispatch events from /home/wei/Desktop/AMR-DFJSP/test_case/v3/val_60.jsonl
+Loaded 50 validation event(s).
+Starting GNN REINFORCE training with dispatch baseline 'milk_run+earliest_completion' (episode).
+Epoch [1/2000] | Sampled: 661.38 | Baseline: 321.62 | Improvement: -339.75 | Win Rate: 0.00% | Actor Loss: 7.0267 | Entropy: 4.3663 | Invalid S/B: 0.38/0.00 | Max Load: 5.5 | Load Gap: 3.1

@@ -36,6 +36,8 @@ from reinforce_baseline import (
     evaluate_makespan,
     load_training_events,
     normalize_advantage_batches,
+    score_instance_group,
+    validate_sampling_args,
 )
 from operation_policy import (
     action_mask,
@@ -380,6 +382,7 @@ def _save_ppo_chart(chart_path, losses_actor, losses_critic, makespans):
 
 
 def train_reinforce(args):
+    validate_sampling_args(args.batch_size, args.samples_per_instance, args.baseline_mode)
     random.seed(args.seed)
     torch.manual_seed(args.seed)
 
@@ -423,36 +426,47 @@ def train_reinforce(args):
         batch_max_load = []
         batch_load_gap = []
 
-        for batch_idx in range(args.batch_size):
+        batch_group_cvs = []
+
+        for group_idx in range(args.batch_size // args.samples_per_instance):
             jobs = _select_jobs(dispatch_events)
-            individual, _, _ = solve_with_gnn(jobs, gnn_model, deterministic=False)
-            action_seq = action_sequences_from_individual(individual, jobs)
-            comparison = compute_dispatch_baseline_comparison(
+            group_individuals = []
+            group_action_seqs = []
+            for _ in range(args.samples_per_instance):
+                individual, _, _ = solve_with_gnn(jobs, gnn_model, deterministic=False)
+                group_individuals.append(individual)
+                group_action_seqs.append(action_sequences_from_individual(individual, jobs))
+
+            group_samples, group_cv = score_instance_group(
                 jobs,
-                individual,
+                group_individuals,
                 baseline_rule=args.baseline_rule,
                 baseline_mode=args.baseline_mode,
-                seed=args.seed + batch_idx,
+                seed=args.seed + group_idx,
             )
+            batch_group_cvs.append(group_cv)
 
-            trajectories.append(
-                (
-                    jobs,
-                    action_seq,
-                    comparison.step_advantages,
-                    load_balance_step_advantages(action_seq, jobs),
+            for individual, action_seq, sample in zip(
+                group_individuals, group_action_seqs, group_samples
+            ):
+                trajectories.append(
+                    (
+                        jobs,
+                        action_seq,
+                        sample.step_advantages,
+                        load_balance_step_advantages(action_seq, jobs),
+                    )
                 )
-            )
-            batch_advantages.append(comparison.step_advantages)
-            batch_sampled.append(comparison.sampled_makespan)
-            batch_baseline.append(comparison.baseline_makespan)
-            batch_improvement.append(comparison.improvement)
-            batch_wins.append(1.0 if comparison.win else 0.0)
-            batch_sampled_invalid.append(comparison.sampled_invalid_jobs)
-            batch_baseline_invalid.append(comparison.baseline_invalid_jobs)
-            max_load, _, load_gap = assignment_load_stats(individual)
-            batch_max_load.append(max_load)
-            batch_load_gap.append(load_gap)
+                batch_advantages.append(sample.step_advantages)
+                batch_sampled.append(sample.sampled_makespan)
+                batch_baseline.append(sample.baseline_makespan)
+                batch_improvement.append(sample.improvement)
+                batch_wins.append(1.0 if sample.win else 0.0)
+                batch_sampled_invalid.append(sample.sampled_invalid_jobs)
+                batch_baseline_invalid.append(sample.baseline_invalid_jobs)
+                max_load, _, load_gap = assignment_load_stats(individual)
+                batch_max_load.append(max_load)
+                batch_load_gap.append(load_gap)
 
         normalized_advantages = normalize_advantage_batches(
             batch_advantages, enabled=args.normalize_advantage
@@ -500,6 +514,15 @@ def train_reinforce(args):
         improvements.append(avg_improvement)
         win_rates.append(win_rate)
 
+        # Group CV is the saturation monitor for --baseline_mode multisample:
+        # the group mean IS the baseline, so a collapsing group means vanishing
+        # advantages. Healthy is ~6-8%; under ~1-2% the signal is dying.
+        group_cv_note = (
+            f" | Group CV: {sum(batch_group_cvs) / len(batch_group_cvs):.4f}"
+            if args.samples_per_instance > 1
+            else ""
+        )
+
         print(
             f"Epoch [{epoch}/{args.epochs}] | Sampled: {avg_sampled:.2f} "
             f"| Baseline: {avg_baseline:.2f} | Improvement: {avg_improvement:.2f} "
@@ -507,6 +530,7 @@ def train_reinforce(args):
             f"| Entropy: {avg_entropy:.4f} "
             f"| Invalid S/B: {avg_sampled_invalid:.2f}/{avg_baseline_invalid:.2f} "
             f"| Max Load: {avg_max_load:.1f} | Load Gap: {avg_load_gap:.1f}"
+            f"{group_cv_note}"
         )
 
         if _should_validate(epoch, args, validation_events):
@@ -754,7 +778,23 @@ def build_parser():
     parser.add_argument("--best_model_path", type=str, default="", help="Optional best model weights path")
     parser.add_argument("--rl_method", choices=["reinforce", "ppo"], default="reinforce")
     parser.add_argument("--baseline_rule", type=str, default=DEFAULT_BASELINE_RULE)
-    parser.add_argument("--baseline_mode", choices=["stepwise", "episode"], default="stepwise")
+    parser.add_argument(
+        "--baseline_mode",
+        choices=["stepwise", "episode", "multisample"],
+        default="stepwise",
+        help="How the REINFORCE baseline is built. 'multisample' centres each "
+             "sample on the mean score of --samples_per_instance samples of the "
+             "SAME instance instead of on the dispatch rule",
+    )
+    parser.add_argument(
+        "--samples_per_instance",
+        type=int,
+        default=1,
+        help="Rollouts drawn per training instance (K). Must divide --batch_size. "
+             "K>=2 is required by --baseline_mode multisample; K>1 with the other "
+             "modes is the ablation that changes instance sampling but keeps the "
+             "dispatch-rule baseline",
+    )
     parser.add_argument("--entropy_coef", type=float, default=0.01)
     parser.add_argument(
         "--load_balance_coef",
