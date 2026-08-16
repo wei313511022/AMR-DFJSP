@@ -1,0 +1,57 @@
+
+Run 0 -- dispatching rules on val_60 (50 instances, m=16)
+----------------------------------------------------------
+                               combo  executed    ideal   Lambda     clean
+        milk_run+earliest_completion     356.8    288.6   23.88%     50/50
+                milk_run+nearest_amr     356.8    288.6   23.88%     50/50
+         milk_run+earliest_available     358.1    289.7   23.94%     50/50
+               milk_run+least_loaded     358.1    288.6   24.54%     50/50
+                     milk_run+random     359.3    296.2   21.65%     50/50
+             milk_run+material_match     360.2    302.6   19.33%     50/50
+              lpt+earliest_available     383.6    323.2   18.95%     48/50
+                    lpt+least_loaded     387.0    313.4   23.57%     48/50
+             lpt+earliest_completion     388.0    323.8   20.18%     50/50
+                  lpt+material_match     391.9    334.9   17.22%     49/50
+                     lpt+nearest_amr     553.0    434.4   28.00%     50/50
+                          lpt+random     965.4    567.5   74.52%     50/50
+
+
+Run 1 -- every candidate checkpoint on val_60 (SELECTION SURFACE, not a result)
+------------------------------------------------------------------------------
+                     run_key  fam    arm  seed    kind  executed    ideal    clean  s/inst
+            ppo_gc1_s44_best   v8    gc1    44    best    335.38    277.2    50/50    0.51
+          ppo_gc1_s44_latest   v8    gc1    44  latest    336.86    273.6    49/50    0.52
+          ppo_gc1.5_s42_best   v8  gc1.5    42    best    340.50    283.0    50/50    0.51
+          ppo_gc1.5_s44_best   v8  gc1.5    44    best    340.90    272.0    50/50    0.51
+             v7_ppo_s42_best   v7   None    42    best    341.64    287.3    50/50    0.51
+          ppo_gc1.5_s43_best   v8  gc1.5    43    best    341.92    266.5    50/50    0.51
+            ppo_gc1_s42_best   v8    gc1    42    best    344.38    267.2    50/50    0.51
+          ppo_gc1_s42_latest   v8    gc1    42  latest    345.50    285.7    50/50    0.51
+            ppo_gc1_s43_best   v8    gc1    43    best    347.04    269.1    50/50    0.52
+        ppo_gc1.5_s42_latest   v8  gc1.5    42  latest    347.84    284.2    50/50    0.51
+        ppo_gc1.5_s44_latest   v8  gc1.5    44  latest    348.02    279.1    50/50    0.52
+          v7_clip50_s42_best   v7   None    42    best    348.36    282.2    50/50    0.52
+          ppo_gc1_s43_latest   v8    gc1    43  latest    349.73    276.5    49/50    0.51
+        ppo_gc1.5_s43_latest   v8  gc1.5    43  latest    349.94    270.5    50/50    0.51
+         v7_episode_s42_best   v7   None    42    best    352.48    313.6    50/50    0.52
+  v7_stepwise_clip50_s42_best   v7   None    42    best    370.76    285.7    50/50    0.51
+        v7_stepwise_s42_best   v7   None    42    best    376.68    296.0    50/50    0.51
+
+
+HARNESS SELF-TEST -- recomputed val vs the value logged during training
+------------------------------------------------------------------------------
+          ppo_gc1.5_s42_best  logged   340.50  recomputed   340.50  PASS
+          ppo_gc1.5_s44_best  logged   340.90  recomputed   340.90  PASS
+            ppo_gc1_s42_best  logged   344.38  recomputed   344.38  PASS
+            ppo_gc1_s44_best  logged   335.38  recomputed   335.38  PASS
+
+
+ARM SELECTION (pre-registered: argmin of mean val executed, tie band 2.0 makespan units, tie-break = gc1)
+------------------------------------------------------------------------------
+  A(   gc1) =  342.27   seeds [335.38, 344.38, 347.04]
+  A( gc1.5) =  341.11   seeds [340.5, 340.9, 341.92]
+  gap = 1.16  ->  TIE
+  headline arm = gc1  (tie-break; report both arms on test, label the other exploratory)
+  between-seed sd within gc1 = 6.11 vs arm gap 1.16 -> grad_clip is NOT resolvable at 3 seeds
+
+  comparison rule (val-selected) = milk_run+earliest_completion  [val executed 356.8]

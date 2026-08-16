@@ -1,0 +1,14 @@
+{
+  "headline_arm": "gc1",
+  "arm_scores": {
+    "gc1": 342.26666666666665,
+    "gc1.5": 341.1066666666667
+  },
+  "arm_gap": 1.1599999999999682,
+  "tie": true,
+  "tie_band": 2.0,
+  "between_seed_sd": 6.110526436677404,
+  "baseline_rule": "milk_run+earliest_completion",
+  "baseline_val_executed": 356.78,
+  "self_test_failures": []
+}

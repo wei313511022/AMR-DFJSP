@@ -1,0 +1,13 @@
+job_rule,amr_rule,combo,executed,ideal,penalty_pct,clean,instances
+milk_run,earliest_completion,milk_run+earliest_completion,356.78,288.64,23.88,50,50
+milk_run,nearest_amr,milk_run+nearest_amr,356.78,288.64,23.88,50,50
+milk_run,earliest_available,milk_run+earliest_available,358.08,289.68,23.94,50,50
+milk_run,least_loaded,milk_run+least_loaded,358.08,288.56,24.54,50,50
+milk_run,random,milk_run+random,359.26,296.24,21.65,50,50
+milk_run,material_match,milk_run+material_match,360.18,302.6,19.33,50,50
+lpt,earliest_available,lpt+earliest_available,383.62,323.25,18.95,48,50
+lpt,least_loaded,lpt+least_loaded,387.04,313.38,23.57,48,50
+lpt,earliest_completion,lpt+earliest_completion,388.0,323.8,20.18,50,50
+lpt,material_match,lpt+material_match,391.86,334.9,17.22,49,50
+lpt,nearest_amr,lpt+nearest_amr,553.02,434.36,28.0,50,50
+lpt,random,lpt+random,965.38,567.48,74.52,50,50
