@@ -1,3 +1,16 @@
+# Environments
 .venv/
 __pycache__/
 *.pyc
+
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json
+
+# Model weights -- not versioned in git; see checkpoints_README.md for the map
+# of which directory backs which experiment, and where superseded runs are archived.
+*.pth
+
+# Training telemetry -- regenerable, and large
+training_logs/
+runs/

@@ -1,2 +1,0 @@
-Training on: cuda
-Starting Attention REINFORCE training with dispatch baseline 'earliest_completion_job+earliest_completion' (stepwise).
