@@ -1,0 +1,4 @@
+n_jobs,parcels_per_robot,policy_unroutable,n_pairs,n_seeds,policy_mean,rule_mean,delta,delta_ci95,delta_pct,boot_lo,boot_hi,wins,losses,win_rate_pct,perm_p,significant
+60,3.75,2,98,3,339.49,350.8,-11.3,6.22,-3.22,-17.53,-5.09,57,41,58.2,0.0004,yes
+120,7.5,3,97,3,610.4,575.35,35.05,7.44,6.09,27.82,42.43,16,81,16.5,0.0001,yes
+240,15.0,7,93,3,1173.3,1015.43,157.87,9.4,15.55,148.87,167.0,0,93,0.0,0.0001,yes

@@ -1,0 +1,441 @@
+<title>AMR-DFJSP Method Benchmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#F5F8F8; --card:#FFFFFF; --ink:#131A1D; --body:#2C383B;
+  --muted:#5C6B6E; --rule:#D6DEDF; --rule-soft:#E7EDED;
+  --accent:#0E646D; --accent-soft:#E2F0F1; --accent-line:#8FC4C9;
+  --warn:#A9521B; --warn-soft:#F7E9DE;
+  --good:#1F6F4A; --good-soft:#E2F0E9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+    --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+    --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+    --warn:#DC9257; --warn-soft:#2F2118;
+    --good:#63BE93; --good-soft:#14291F;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+  --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+  --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+  --warn:#DC9257; --warn-soft:#2F2118;
+  --good:#63BE93; --good-soft:#14291F;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--body);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17px; line-height:1.62;
+  margin:0; padding:0 24px 96px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto}
+.prose{max-width:68ch}
+
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,5vw,3.1rem);font-weight:700;letter-spacing:-.015em;line-height:1.06}
+h2{font-size:1.72rem;font-weight:600;letter-spacing:-.005em}
+h3{font-size:1.12rem;font-weight:600}
+p{margin:0}
+strong{color:var(--ink);font-weight:600}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em}
+code{background:var(--rule-soft);padding:.1em .36em;border-radius:3px;color:var(--ink)}
+
+/* ---- masthead ---- */
+header.mast{padding:72px 0 34px;border-bottom:2px solid var(--ink)}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.mast .lede{margin-top:20px;font-size:1.18rem;color:var(--muted);max-width:60ch}
+.facts{display:flex;flex-wrap:wrap;gap:0;margin-top:34px;
+  border-top:1px solid var(--rule);border-left:1px solid var(--rule)}
+.fact{flex:1 1 150px;padding:14px 18px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.fact dt{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+.fact dd{margin:0;font-family:"IBM Plex Sans Condensed",sans-serif;font-weight:600;
+  font-size:1.42rem;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---- sections ---- */
+section{padding:56px 0 0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  padding-left:13px;border-left:2px solid var(--accent);margin-bottom:12px}
+section > h2{margin-bottom:16px}
+.stack{display:flex;flex-direction:column;gap:17px}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto;margin-top:26px;border:1px solid var(--rule);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",monospace;
+  font-size:.79rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+caption{caption-side:top;text-align:left;padding:14px 16px 12px;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:.95rem;font-weight:600;
+  color:var(--ink);border-bottom:1px solid var(--rule)}
+th,td{padding:7px 14px;text-align:right;border-bottom:1px solid var(--rule-soft)}
+th{font-weight:600;color:var(--muted);font-size:.68rem;letter-spacing:.07em;
+  text-transform:uppercase;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--card)}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+td.name{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:.88rem;
+  font-weight:500;color:var(--ink);white-space:nowrap}
+.win{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.bad{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.dim{color:var(--muted)}
+tr.group td{background:var(--rule-soft);font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:6px 14px}
+.ci{color:var(--muted);font-size:.92em}
+
+/* ---- callout ---- */
+.note{border-left:2px solid var(--accent-line);padding:2px 0 2px 20px;color:var(--muted);font-size:.97rem}
+.finding{background:var(--card);border:1px solid var(--rule);padding:22px 24px;
+  display:flex;flex-direction:column;gap:9px;margin-top:26px}
+.finding h3{color:var(--accent)}
+
+/* ---- chart ---- */
+figure{margin:28px 0 0;background:var(--card);border:1px solid var(--rule);padding:20px}
+figcaption{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);
+  margin-top:12px;line-height:1.5}
+svg{display:block;width:100%;height:auto;max-width:620px;margin:0 auto}
+.legend{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:6px;
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted)}
+.swatch{display:inline-block;width:15px;height:2px;vertical-align:middle;margin-right:7px}
+
+ul{margin:0;padding-left:1.15rem}
+li{margin-bottom:.5rem}
+li::marker{color:var(--accent)}
+a{color:var(--accent)}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);line-height:1.8}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">Scenario v3 &middot; m = 16 robots &middot; executor-scored</div>
+  <h1>Every method, every workload</h1>
+  <p class="lede">Sixty dispatching rules, eleven learned checkpoints, and the genetic algorithm,
+  benchmarked across five parcel counts on identical held-out instances.</p>
+  <dl class="facts">
+    <div class="fact"><dt>Schedules built</dt><dd>41,500</dd></div>
+    <div class="fact"><dt>Instances per size</dt><dd>100</dd></div>
+    <div class="fact"><dt>Parcel counts</dt><dd>20&ndash;100</dd></div>
+    <div class="fact"><dt>Methods</dt><dd>72</dd></div>
+    <div class="fact"><dt>Compute</dt><dd>~24 h</dd></div>
+  </dl>
+</header>
+
+<section>
+  <div class="eyebrow">Headline</div>
+  <h2>The best of each family, at each workload</h2>
+  <div class="stack prose">
+    <p>Every method plans under the calibrated surrogate and every schedule is scored once by
+    the collision-aware executor &mdash; the standard pairing, so rules and policies consume
+    identical state and identical estimators. Makespan is averaged over routable instances only.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Best method per family &middot; makespan, ideal, and the execution gap</caption>
+      <thead><tr>
+        <th>n</th><th>Family</th><th>Method</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap</th><th>Gap %</th><th>Compute</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>20</td><td class="dim">rule</td><td class="name">earliest_completion_job+material_match</td><td>166.2</td><td class="ci">2.83</td><td>151.5</td><td>14.7</td><td>9.7%</td><td>0.025 s</td></tr>
+        <tr><td>20</td><td class="dim">policy</td><td class="name">v9_only60_s42 · greedy</td><td>166.2</td><td class="ci">3.21</td><td>128.0</td><td>38.3</td><td>32.5%</td><td>0.098 s</td></tr>
+        <tr><td>20</td><td class="dim">policy</td><td class="name">v10_C_s44 · best-of-8</td><td>160.2</td><td class="ci">2.96</td><td>140.4</td><td>19.8</td><td>14.3%</td><td>1.096 s</td></tr>
+        <tr><td>20</td><td class="dim">GA</td><td class="name">GA</td><td class="win">153.9</td><td class="ci">2.84</td><td>138.4</td><td>15.5</td><td>11.7%</td><td>15.7 s</td></tr>
+
+        <tr class="group"><td colspan="9">n = 40</td></tr>
+        <tr><td>40</td><td class="dim">rule</td><td class="name">earliest_completion_job+material_match</td><td>257.7</td><td class="ci">3.68</td><td>229.6</td><td>28.2</td><td>12.3%</td><td>0.111 s</td></tr>
+        <tr><td>40</td><td class="dim">policy</td><td class="name">v9_only60_s44 · greedy</td><td>254.1</td><td class="ci">4.18</td><td>203.8</td><td>50.3</td><td>25.3%</td><td>0.337 s</td></tr>
+        <tr><td>40</td><td class="dim">policy</td><td class="name">v9_only60_s44 · best-of-8</td><td class="win">242.2</td><td class="ci">3.08</td><td>202.1</td><td>40.0</td><td>20.3%</td><td>3.20 s</td></tr>
+        <tr><td>40</td><td class="dim">GA</td><td class="name">GA</td><td>246.3</td><td class="ci">3.00</td><td>220.6</td><td>25.7</td><td>11.7%</td><td>37.2 s</td></tr>
+
+        <tr class="group"><td colspan="9">n = 60</td></tr>
+        <tr><td>60</td><td class="dim">rule</td><td class="name">milk_run+least_loaded</td><td>346.9</td><td class="ci">6.49</td><td>282.8</td><td>64.0</td><td>22.9%</td><td>0.312 s</td></tr>
+        <tr><td>60</td><td class="dim">policy</td><td class="name">v9_only60_s42 · greedy</td><td>338.9</td><td class="ci">4.54</td><td>263.1</td><td>75.8</td><td>29.1%</td><td>0.749 s</td></tr>
+        <tr><td>60</td><td class="dim">policy</td><td class="name">v9_only60_s44 · best-of-8</td><td class="win">326.1</td><td class="ci">3.05</td><td>276.7</td><td>49.4</td><td>18.1%</td><td>6.75 s</td></tr>
+        <tr><td>60</td><td class="dim">GA</td><td class="name">GA</td><td>338.7</td><td class="ci">2.98</td><td>297.8</td><td>40.9</td><td>13.8%</td><td>65.9 s</td></tr>
+
+        <tr class="group"><td colspan="9">n = 80</td></tr>
+        <tr><td>80</td><td class="dim">rule</td><td class="name">milk_run+earliest_completion</td><td>426.2</td><td class="ci">7.22</td><td>354.6</td><td>71.7</td><td>20.4%</td><td>0.571 s</td></tr>
+        <tr><td>80</td><td class="dim">policy</td><td class="name">v9_only60_s43 · greedy</td><td>432.3</td><td class="ci">4.43</td><td>354.0</td><td>78.2</td><td>22.3%</td><td>1.33 s</td></tr>
+        <tr><td>80</td><td class="dim">policy</td><td class="name">v9_only60_s43 · best-of-8</td><td class="win">412.0</td><td class="ci">3.06</td><td>349.5</td><td>62.6</td><td>18.0%</td><td>11.6 s</td></tr>
+        <tr><td>80</td><td class="dim">GA</td><td class="name">GA</td><td>435.9</td><td class="ci">4.02</td><td>386.7</td><td>49.2</td><td>12.8%</td><td>102 s</td></tr>
+
+        <tr class="group"><td colspan="9">n = 100</td></tr>
+        <tr><td>100</td><td class="dim">rule</td><td class="name">milk_run+earliest_available</td><td>501.5</td><td class="ci">7.49</td><td>409.0</td><td>92.5</td><td>22.9%</td><td>0.894 s</td></tr>
+        <tr><td>100</td><td class="dim">policy</td><td class="name">v9_only60_s43 · greedy</td><td>521.8</td><td class="ci">4.14</td><td>423.5</td><td>98.3</td><td>23.4%</td><td>2.05 s</td></tr>
+        <tr><td>100</td><td class="dim">policy</td><td class="name">v9_only60_s43 · best-of-8</td><td class="win">496.6</td><td class="ci">3.05</td><td>419.1</td><td>77.5</td><td>18.6%</td><td>17.6 s</td></tr>
+        <tr><td>100</td><td class="dim">GA</td><td class="name">GA</td><td>525.9</td><td class="ci">4.07</td><td>477.5</td><td>48.4</td><td>10.1%</td><td>145 s</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:16px">Per-family winners are picked on this test set, which makes the
+  <em>choice of checkpoint</em> post-hoc. The pre-specified comparison &mdash; the three <code>only60</code>
+  seeds averaged &mdash; is in the next section and tells the same story.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Scaling</div>
+  <h2>Greedy crosses over; best-of-8 does not</h2>
+  <div class="stack prose">
+    <p>Against the strongest rule at each size, the seed-averaged <code>only60</code> arm flips sign.
+    A single greedy rollout beats the rules through n = 60 and then loses, badly, by n = 100.
+    Spending eight samples and letting the executor pick among them keeps the policy ahead
+    everywhere &mdash; but that lead also erodes as the workload grows.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 620 210" role="img" aria-label="Policy minus best rule, by parcel count. Greedy rises from about minus 6 at n=60 to plus 26 at n=100, crossing zero near n=70. Best-of-8 stays below zero at every size.">
+      <line x1="52" y1="107.1" x2="586" y2="107.1" stroke="var(--rule)" stroke-width="1"/>
+      <text x="44" y="111" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">0</text>
+      <text x="44" y="37" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">+25</text>
+      <text x="44" y="170" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">−20</text>
+      <polyline points="60,99.7 170,114 280,123.1 390,81.1 500,33.4" fill="none" stroke="var(--warn)" stroke-width="2.2"/>
+      <polyline points="60,122.6 170,149.7 280,165.1 390,142.3 500,109.7" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+      <g fill="var(--warn)"><circle cx="60" cy="99.7" r="3.4"/><circle cx="170" cy="114" r="3.4"/><circle cx="280" cy="123.1" r="3.4"/><circle cx="390" cy="81.1" r="3.4"/><circle cx="500" cy="33.4" r="4.6"/></g>
+      <g fill="var(--accent)"><circle cx="60" cy="122.6" r="3.4"/><circle cx="170" cy="149.7" r="3.4"/><circle cx="280" cy="165.1" r="3.4"/><circle cx="390" cy="142.3" r="3.4"/><circle cx="500" cy="109.7" r="3.4"/></g>
+      <text x="500" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" font-weight="600" fill="var(--warn)">+25.8</text>
+      <text x="280" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" font-weight="600" fill="var(--accent)">−20.3</text>
+      <g font-family="IBM Plex Mono" font-size="10" fill="var(--muted)" text-anchor="middle">
+        <text x="60" y="202">n=20</text><text x="170" y="202">n=40</text><text x="280" y="202">n=60</text><text x="390" y="202">n=80</text><text x="500" y="202">n=100</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--warn)"></span>greedy &minus; best rule</span>
+      <span><span class="swatch" style="background:var(--accent)"></span>best-of-8 &minus; best rule</span>
+    </div>
+    <figcaption>Paired per instance, three <code>only60</code> seeds averaged within instance before averaging
+    across instances. Negative is better for the policy. Crossover for greedy falls between n = 60 and n = 80.</figcaption>
+  </figure>
+
+  <div class="scroll">
+    <table>
+      <caption>Seed-averaged <code>only60</code> vs the strongest rule &middot; paired per instance</caption>
+      <thead><tr><th>n</th><th>Best rule</th><th>Greedy</th><th>&Delta; greedy</th><th>Best-of-8</th><th>&Delta; best-of-8</th></tr></thead>
+      <tbody>
+        <tr><td>20</td><td>166.2</td><td>168.8</td><td class="bad">+2.6 <span class="ci">±2.3</span></td><td>160.8</td><td class="win">−5.4 <span class="ci">±1.9</span></td></tr>
+        <tr><td>40</td><td>257.7</td><td>255.4</td><td>−2.4 <span class="ci">±2.7</span></td><td>242.8</td><td class="win">−14.9 <span class="ci">±2.4</span></td></tr>
+        <tr><td>60</td><td>346.9</td><td>341.5</td><td>−5.6 <span class="ci">±6.0</span></td><td>326.6</td><td class="win">−20.3 <span class="ci">±5.8</span></td></tr>
+        <tr><td>80</td><td>426.2</td><td>435.3</td><td class="bad">+9.1 <span class="ci">±6.1</span></td><td>414.0</td><td class="win">−12.3 <span class="ci">±5.6</span></td></tr>
+        <tr><td>100</td><td>501.5</td><td>527.3</td><td class="bad">+25.8 <span class="ci">±6.6</span></td><td>500.6</td><td>−0.9 <span class="ci">±6.2</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">v10 factorial &middot; seed 44</div>
+  <h2>The training return is the whole story</h2>
+  <div class="stack prose">
+    <p>The A/B/C/D cells cross two factors: whether the congestion channels are masked during
+    training, and whether the return is the idealised makespan or the executor's. Cell D is
+    v9's <code>only60_s44</code>. One factor dominates and the two interact sharply.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Greedy makespan by factorial cell</caption>
+      <thead><tr><th>Cell</th><th>Mask</th><th>Return</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th></tr></thead>
+      <tbody>
+        <tr><td class="name">A</td><td class="dim">L3</td><td class="dim">idealised</td><td class="bad">196.9</td><td class="bad">399.4</td><td class="bad">671.6</td><td class="bad">875.0</td><td class="bad">1042.6</td></tr>
+        <tr><td class="name">B</td><td class="dim">none</td><td class="dim">idealised</td><td>236.1</td><td>330.3</td><td>407.5</td><td>502.8</td><td>607.9</td></tr>
+        <tr><td class="name">C</td><td class="dim">L3</td><td class="dim">executor</td><td>168.0</td><td>260.7</td><td>353.3</td><td>460.2</td><td>567.0</td></tr>
+        <tr><td class="name">D</td><td class="dim">none</td><td class="dim">executor</td><td class="win">168.5</td><td class="win">254.1</td><td class="win">342.8</td><td class="win">440.6</td><td class="win">531.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding">
+    <h3>Training on the idealised return costs far more than masking congestion</h3>
+    <p>At n = 60, swapping the return from idealised to executor is worth <strong>318 units</strong> when the
+    mask is on (A → C) and <strong>65 units</strong> when it is off (B → D). Masking the congestion
+    channels costs only <strong>11 units</strong> under an executor return (D → C) but <strong>264 units</strong>
+    under an idealised one (B → A).</p>
+    <p>The two factors are not additive. A policy trained on a return that cannot see congestion
+    <em>and</em> denied the features that would let it infer congestion degrades catastrophically, and
+    the damage widens with workload &mdash; cell A is nearly twice cell D by n = 100.</p>
+  </div>
+
+  <p class="note" style="margin-top:20px"><strong>One thing to check:</strong> <code>v10_B_s44_best.pth</code> and
+  <code>v10_B_s44_bestideal.pth</code> contain byte-identical weight tensors, so cell B's two selection
+  criteria landed on the same epoch. The files differ only in metadata. Cell A's two selections
+  are genuinely different, and the C̃-selected checkpoint is the better of them at every size
+  &mdash; 945.0 vs 1042.6 at n = 100.</p>
+</section>
+
+<section>
+  <div class="eyebrow">All checkpoints</div>
+  <h2>Eleven models, five workloads</h2>
+  <div class="scroll">
+    <table>
+      <caption>Makespan on routable instances &middot; mean &plusmn; 95% CI</caption>
+      <thead><tr><th>Checkpoint</th><th>Mode</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="7">Greedy · single deterministic rollout</td></tr>
+        <tr><td class="name">v9_only60_s42</td><td class="dim">greedy</td><td class="win">166.2</td><td>254.5</td><td class="win">338.9</td><td>433.8</td><td>528.6</td></tr>
+        <tr><td class="name">v9_only60_s43</td><td class="dim">greedy</td><td>171.7</td><td>257.6</td><td>343.3</td><td class="win">432.3</td><td class="win">521.8</td></tr>
+        <tr><td class="name">v9_only60_s44</td><td class="dim">greedy</td><td>168.5</td><td class="win">254.1</td><td>342.8</td><td>440.6</td><td>531.5</td></tr>
+        <tr><td class="name">v9_mix_s42</td><td class="dim">greedy</td><td>180.2</td><td>286.9</td><td>389.3</td><td>490.5</td><td>586.6</td></tr>
+        <tr><td class="name">v9_mix_s43</td><td class="dim">greedy</td><td>183.2</td><td>306.8</td><td>402.1</td><td>498.2</td><td>593.6</td></tr>
+        <tr><td class="name">v9_mix_s44</td><td class="dim">greedy</td><td>181.8</td><td>284.2</td><td>383.3</td><td>493.8</td><td>598.5</td></tr>
+        <tr><td class="name">v10_C_s44</td><td class="dim">greedy</td><td>168.0</td><td>260.7</td><td>353.3</td><td>460.2</td><td>567.0</td></tr>
+        <tr><td class="name">v10_B_s44</td><td class="dim">greedy</td><td>236.1</td><td>330.3</td><td>407.5</td><td>502.8</td><td>607.9</td></tr>
+        <tr><td class="name">v10_B_s44_bestideal</td><td class="dim">greedy</td><td>236.1</td><td>330.3</td><td>407.5</td><td>502.8</td><td>607.9</td></tr>
+        <tr><td class="name">v10_A_s44_bestideal</td><td class="dim">greedy</td><td>214.2</td><td>394.0</td><td>584.0</td><td>759.6</td><td>945.0</td></tr>
+        <tr><td class="name">v10_A_s44</td><td class="dim">greedy</td><td>196.9</td><td>399.4</td><td class="bad">671.6</td><td class="bad">875.0</td><td class="bad">1042.6</td></tr>
+
+        <tr class="group"><td colspan="7">Best-of-8 · executor picks among 8 sampled rollouts</td></tr>
+        <tr><td class="name">v9_only60_s42</td><td class="dim">best-8</td><td>160.3</td><td>243.2</td><td>326.6</td><td class="win">413.4</td><td>500.9</td></tr>
+        <tr><td class="name">v9_only60_s43</td><td class="dim">best-8</td><td>161.0</td><td>243.1</td><td>327.0</td><td>412.0</td><td class="win">496.6</td></tr>
+        <tr><td class="name">v9_only60_s44</td><td class="dim">best-8</td><td>161.1</td><td class="win">242.2</td><td class="win">326.1</td><td>416.6</td><td>504.3</td></tr>
+        <tr><td class="name">v10_C_s44</td><td class="dim">best-8</td><td class="win">160.2</td><td>246.6</td><td>338.5</td><td>436.1</td><td>534.5</td></tr>
+        <tr><td class="name">v9_mix_s42</td><td class="dim">best-8</td><td>167.1</td><td>266.4</td><td>365.1</td><td>461.5</td><td>559.0</td></tr>
+        <tr><td class="name">v9_mix_s44</td><td class="dim">best-8</td><td>170.7</td><td>264.8</td><td>361.2</td><td>465.1</td><td>571.3</td></tr>
+        <tr><td class="name">v9_mix_s43</td><td class="dim">best-8</td><td>172.7</td><td>289.0</td><td>379.9</td><td>474.9</td><td>568.0</td></tr>
+        <tr><td class="name">v10_B_s44</td><td class="dim">best-8</td><td>222.7</td><td>325.5</td><td>419.6</td><td>524.4</td><td>630.1</td></tr>
+        <tr><td class="name">v10_A_s44_bestideal</td><td class="dim">best-8</td><td>195.3</td><td>377.9</td><td>546.8</td><td>722.9</td><td>907.4</td></tr>
+        <tr><td class="name">v10_A_s44</td><td class="dim">best-8</td><td>192.7</td><td>378.7</td><td>603.0</td><td>800.0</td><td>968.2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="stack prose" style="margin-top:22px">
+    <p>The <code>mix</code> arm &mdash; trained across n = 20…140 &mdash; is beaten by <code>only60</code> at
+    <em>every</em> size, including the sizes <code>only60</code> never saw. Training on a single workload
+    and generalising outperformed training on the range, which answers v9's question in the negative
+    across the board rather than only at n = 60.</p>
+    <p>Best-of-8 also fixes routability: <strong>zero</strong> of its 5,500 schedules were unroutable, against
+    39 for greedy, because the selection ranks on failure count before makespan.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Dispatching rules</div>
+  <h2>Which rule, and how much the choice matters</h2>
+  <div class="stack prose">
+    <p>The ranking moves with workload. Below n = 60 the completion-time and material-matching job
+    rules lead; from n = 60 up, <code>milk_run</code> takes over as door contention starts to dominate.
+    The AMR rule matters far less than the job rule &mdash; the top six at n = 100 are all
+    <code>milk_run</code> paired with six different AMR rules.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>Best and worst of the 60 combinations, by size</caption>
+      <thead><tr><th>n</th><th>Best combination</th><th>Makespan</th><th>Gap %</th><th>Worst combination</th><th>Makespan</th><th>Spread</th></tr></thead>
+      <tbody>
+        <tr><td>20</td><td class="name">earliest_completion_job+material_match</td><td>166.2</td><td>9.7%</td><td class="name dim">least_congested_station+random</td><td>415.9</td><td class="bad">2.5×</td></tr>
+        <tr><td>40</td><td class="name">earliest_completion_job+material_match</td><td>257.7</td><td>12.3%</td><td class="name dim">least_congested_station+random</td><td>816.0</td><td class="bad">3.2×</td></tr>
+        <tr><td>60</td><td class="name">milk_run+least_loaded</td><td>346.9</td><td>22.9%</td><td class="name dim">least_congested_station+random</td><td>1244.2</td><td class="bad">3.6×</td></tr>
+        <tr><td>80</td><td class="name">milk_run+earliest_completion</td><td>426.2</td><td>20.4%</td><td class="name dim">least_congested_station+random</td><td>1655.3</td><td class="bad">3.9×</td></tr>
+        <tr><td>100</td><td class="name">milk_run+earliest_available</td><td>501.5</td><td>22.9%</td><td class="name dim">least_congested_station+random</td><td>2073.1</td><td class="bad">4.1×</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:16px">The spread between best and worst rule widens with n, from 2.5× to 4.1×.
+  Picking the rule badly costs more than any method choice in this benchmark.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Cost</div>
+  <h2>What each method costs to run</h2>
+  <div class="stack prose">
+    <p>Measured in a single process with the machine otherwise idle. The parallel sweep's wall-clock
+    is not reported here &mdash; twenty-two workers contending for memory bandwidth inflate each
+    other's timings, so quality came from the parallel run and cost from a separate serial pass.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>Seconds per instance &middot; single process, no contention</caption>
+      <thead><tr><th>Method</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th><th>Growth</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Dispatching rule (cheapest)</td><td>0.025</td><td>0.100</td><td>0.237</td><td>0.437</td><td>0.688</td><td class="dim">28×</td></tr>
+        <tr><td class="name">Dispatching rule (milk_run)</td><td>0.041</td><td>0.134</td><td>0.312</td><td>0.571</td><td>0.894</td><td class="dim">22×</td></tr>
+        <tr><td class="name">Policy · greedy</td><td>0.098</td><td>0.337</td><td>0.744</td><td>1.315</td><td>2.053</td><td class="dim">21×</td></tr>
+        <tr><td class="name">Policy · best-of-8</td><td>1.050</td><td>3.204</td><td>6.747</td><td>11.503</td><td>17.547</td><td class="dim">17×</td></tr>
+        <tr><td class="name">GA</td><td>15.73</td><td>37.21</td><td>65.85</td><td>101.9</td><td>144.9</td><td class="dim">9×</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="stack prose" style="margin-top:22px">
+    <p>Best-of-8 buys its 12&ndash;20 unit advantage for roughly <strong>20× a rule</strong> and
+    <strong>9× a greedy rollout</strong> &mdash; but it stays an order of magnitude cheaper than the GA,
+    which it also beats from n = 40 upward. The GA's cost grows most gently in relative terms only
+    because it starts so high.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Execution gap</div>
+  <h2>Ideal versus real</h2>
+  <div class="stack prose">
+    <p>The gap is the distance between the idealised decode &mdash; free-space travel, service on
+    arrival, no interference &mdash; and what the executor actually delivers. It is a diagnostic,
+    not the objective: a method that changes the assignment changes the ideal too, so it can lower
+    its gap percentage by inflating the denominator. That is exactly what happens here.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>At n = 60, best method in each family</caption>
+      <thead><tr><th>Family</th><th>Ideal</th><th>Executed</th><th>Gap %</th><th>&Omega;<sub>q</sub> queueing</th><th>&Omega;<sub>r</sub> routing</th></tr></thead>
+      <tbody>
+        <tr><td class="name">GA</td><td class="bad">297.8</td><td>338.7</td><td class="win">13.8%</td><td>0.087</td><td>0.052</td></tr>
+        <tr><td class="name">Rule · milk_run+least_loaded</td><td>282.8</td><td>346.9</td><td>22.9%</td><td class="bad">0.377</td><td>0.058</td></tr>
+        <tr><td class="name">Policy · greedy</td><td class="win">263.1</td><td>338.9</td><td class="bad">29.1%</td><td>0.290</td><td class="bad">0.108</td></tr>
+        <tr><td class="name">Policy · best-of-8</td><td>276.7</td><td class="win">326.1</td><td>18.1%</td><td>0.214</td><td>0.086</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="finding">
+    <h3>The policy earns a better plan and gives part of it back to congestion</h3>
+    <p>Greedy finds the lowest ideal of any method at n = 60 &mdash; 263.1 against the rule's 282.8 and
+    the GA's 297.8 &mdash; meaning it assigns parcels to robots better than anything else here. It then
+    surrenders 75.8 units to queueing and routing, more than the rule's 64.0, and finishes in a
+    near-tie.</p>
+    <p>The GA sits at the opposite corner: the worst assignment, the mildest congestion. Its
+    &Omega;<sub>q</sub> of 0.087 is a quarter of the rule's, because the collision-free surrogate it
+    optimises against still enforces exclusive doors, so it learns to stagger arrivals even though
+    it cannot see collisions.</p>
+    <p>Best-of-8 is the only method that gets both: it gives up a little ideal relative to greedy and
+    recovers far more in execution, which is what an executor-scored selection is supposed to do.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Method</div>
+  <h2>How this was run</h2>
+  <div class="stack prose">
+    <ul>
+      <li><strong>Instances.</strong> <code>test_case/v3/trend/full_{20,40,60,80,100}.jsonl</code>, 100 per size.
+      Verified zero overlap against <code>train_60</code>, <code>test_60</code>, and every
+      <code>train_mix_n</code> / <code>val_mix_n</code> pool &mdash; so clean for v9 and v10 alike.
+      There are no held-out test sets at 20/40/80/100 other than these; <code>val_mix</code> is the
+      checkpoint-<em>selection</em> set and could not be used.</li>
+      <li><strong>Inference.</strong> The standard pairing throughout: plan under the calibrated
+      surrogate, score once with the collision-aware executor. Not the executor-in-the-loop variant.</li>
+      <li><strong>Masks.</strong> v10 cells A and C were trained with the L3 congestion mask installed
+      and are evaluated with it installed. Cells B and D and all of v9 run unmasked. The mask zeroes
+      <code>amr[9]</code>, <code>dock[2:7]</code>, and <code>action[2]</code>; this was verified against
+      live feature tensors before the sweep.</li>
+      <li><strong>Averaging.</strong> Makespan, ideal, and gap are averaged over routable instances only
+      (&nu; = 0). Unroutable counts are kept separately: 40 of 30,000 rule schedules, 39 of 5,500
+      greedy, none for best-of-8 or GA.</li>
+      <li><strong>Excluded.</strong> <code>_latest</code> checkpoints (end-of-training, not selected) and
+      the GA's collision-aware search arm, which is far slower per evaluation and would have dominated
+      the compute budget.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  41,500 schedules · 415 aggregates · scenario v3 · m = 16<br>
+  results.csv · results_per_instance.csv · summary.txt · experiments/full_benchmark/
+</footer>
+
+</div>

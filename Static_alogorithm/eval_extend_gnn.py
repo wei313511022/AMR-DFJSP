@@ -51,10 +51,17 @@ from pathlib import Path
 import torch
 
 STATIC_DIR = os.path.abspath(os.path.dirname(__file__))
-EXTEND_DIR = os.path.join(STATIC_DIR, "extend_GNN")
-for _path in (STATIC_DIR, EXTEND_DIR):
-    if _path not in sys.path:
-        sys.path.insert(0, _path)
+# None of extend_GNN/, GNN/, Attention/ is a package, and each shadows the module of the
+# same name inside it, so the SUBDIRECTORY has to precede STATIC_DIR on sys.path or
+# `from GNN import SchedulerGNN` resolves to the empty namespace package. Inserting at 0 in
+# this order leaves the subdirectories ahead of STATIC_DIR, matching eval_fleet_size.py.
+for _path in (STATIC_DIR,
+              os.path.join(STATIC_DIR, "extend_GNN"),
+              os.path.join(STATIC_DIR, "GNN"),
+              os.path.join(STATIC_DIR, "Attention")):
+    if _path in sys.path:
+        sys.path.remove(_path)
+    sys.path.insert(0, _path)
 
 import GA.GA as GA  # noqa: E402
 import ideal_evaluator as ie  # noqa: E402
@@ -66,6 +73,68 @@ from neural_local_improvement import apply_neural_local_improvement  # noqa: E40
 from operation_policy import load_required_operation_checkpoint  # noqa: E402
 
 REQUIRED_KEYS = ("op_emb.weight", "operation_actor.0.weight")
+
+# Architectures sharing the operation-policy interface. `gnn` is the station-feature
+# ablation of `extend_gnn`: SchedulerGNN has no dock encoder and no dock/AMR attention at
+# all (job_in_dim=16, amr_in_dim=8), whereas ExtendSchedulerGNN adds dock_in_dim=9 plus the
+# cross-attention block. checkpoints_v6 holds all three trained under one recipe
+# (REINFORCE/multisample, 2000 epochs, seeds 42/43/44), which is the matched comparison.
+def _build_extend():
+    return ExtendSchedulerGNN(hidden_dim=128, gin_layers=3)
+
+
+def _build_gnn():
+    from GNN import SchedulerGNN
+    return SchedulerGNN(job_in_dim=16, amr_in_dim=8, hidden_dim=128, gin_layers=3)
+
+
+def _build_attention():
+    from Attention import SchedulerAttention
+    return SchedulerAttention(hidden_dim=128)
+
+
+def _solve_gnn(jobs, model, deterministic=True):
+    from GNN import solve_with_gnn
+    return solve_with_gnn(jobs, model, deterministic=deterministic)
+
+
+def _solve_attention(jobs, model, deterministic=True):
+    from Attention import solve_with_attention
+    return solve_with_attention(jobs, model, deterministic=deterministic)
+
+
+MODELS = {
+    "extend_gnn": (_build_extend, solve_with_extend_gnn),
+    "gnn": (_build_gnn, _solve_gnn),
+    "attention": (_build_attention, _solve_attention),
+}
+# Congestion-blind inference: zero named feature slices AFTER the state extractor returns,
+# so the trained forward path is untouched and the mask is auditable in one place.
+#
+# This is NOT an observability ablation -- the network was trained WITH these inputs, so a
+# drop mixes loss of congestion signal with distribution shift. What it does measure is the
+# question "what if the policy plans believing the facility is uncongested, then we execute
+# it for real": zero is the least-congested value of every one of these features, so masking
+# installs a specific false belief rather than hiding information.
+#
+# Levels are nested so the ladder localises where congestion actually enters the policy.
+#   amr[9]    local_density        neighbours within Manhattan 2
+#   dock[2]   available_delay      max(0, station_availabilities - t)
+#   dock[3]   queue_count / m
+#   dock[4]   queue_count / valid waiting slots, clipped at 1
+#   dock[5]   service_remaining    remaining time of the in-progress service
+#   dock[6]   committed_workload   sum over all unfinished events
+#   act[2]    estimated_dock_wait  per-action predicted wait -- same source as dock[2]
+MASKS = {
+    "none": {},
+    "L1": {"amr": (9,), "dock": (2, 3, 4)},
+    "L2": {"amr": (9,), "dock": (2, 3, 4, 5, 6)},
+    "L3": {"amr": (9,), "dock": (2, 3, 4, 5, 6), "action": (2,)},
+    # Control: four non-congestion slices of comparable magnitude. If this degrades as much
+    # as L1 then the effect is distribution shift, not congestion blindness.
+    "control": {"amr": (10, 11), "dock": (7, 8)},
+}
+
 CONTAMINATED = "instances_60.jsonl"
 MAX_FLEET = 24          # aisle_bays() offers 6 columns x 4 aisle rows
 EXPECTED_DOCK_KEYS = 10  # 5 inbound + 5 outbound
@@ -184,8 +253,9 @@ def install_fleet(num_amrs: int) -> None:
         )
 
 
-def load_model(weights: Path, device: torch.device) -> ExtendSchedulerGNN:
-    model = ExtendSchedulerGNN(hidden_dim=128, gin_layers=3)
+def load_model(weights: Path, device: torch.device, arch: str = "extend_gnn"):
+    build, _ = MODELS[arch]
+    model = build()
     status = load_required_operation_checkpoint(model, weights, torch, required_keys=REQUIRED_KEYS)
 
     match = re.match(r"loaded (\d+)/(\d+) tensors", status)
@@ -197,9 +267,33 @@ def load_model(weights: Path, device: torch.device) -> ExtendSchedulerGNN:
         # initialised. The eval would still produce a number, just not a meaningful one.
         raise SystemExit(
             f"{weights}: only {n_loaded}/{n_total} tensors loaded. The checkpoint does not "
-            f"match ExtendSchedulerGNN(hidden_dim=128, gin_layers=3); refusing to evaluate."
+            f"match the {arch} architecture; refusing to evaluate."
         )
     return model.to(device).eval()
+
+
+def install_feature_mask(level: str):
+    """Wrap extract_state_extend_gnn so the named slices are zeroed on every call."""
+    import extend_GNN as _xg
+    spec = MASKS[level]
+    if not spec:
+        return
+    original = _xg.extract_state_extend_gnn
+
+    def masked(*a, **kw):
+        t = list(original(*a, **kw))
+        for idx in spec.get("amr", ()):       # t[0] = (1, num_amrs, AMR_IN_DIM)
+            t[0][..., idx] = 0.0
+        for idx in spec.get("dock", ()):      # t[2] = (1, num_docks, DOCK_IN_DIM)
+            t[2][..., idx] = 0.0
+        for idx in spec.get("action", ()):    # t[3] = (1, 2, amrs, jobs, ACTION_IN_DIM)
+            t[3][..., idx] = 0.0
+        return tuple(t)
+
+    _xg.extract_state_extend_gnn = masked
+    # solve_with_extend_gnn resolved the symbol at import time, so rebind there too.
+    if getattr(_xg.solve_with_extend_gnn, "__globals__", {}).get("extract_state_extend_gnn"):
+        _xg.solve_with_extend_gnn.__globals__["extract_state_extend_gnn"] = masked
 
 
 def resolve_device(choice: str) -> torch.device:
@@ -229,35 +323,58 @@ def parse_run_meta(run_key: str) -> dict:
 # rollout
 # --------------------------------------------------------------------------
 
+def _sync() -> None:
+    """CUDA kernels are launched asynchronously, so a perf_counter delta taken right after
+    the last forward pass measures launch time, not compute time. `bench_compute.py`
+    synchronises before every stop-clock for exactly this reason; without the same call
+    here `solve_s` on the policy rows is not comparable to the rule rows, which are pure
+    CPU and therefore always "synchronous"."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+
 def rollout(model, jobs, args, instance_index: int) -> tuple:
-    """One evaluated schedule. Returns (metrics, solve_s, samples_clean)."""
+    """One evaluated schedule. Returns (individual, solve_s, select_s, samples_clean).
+
+    `select_s` is the executor time best-of-K spends SCORING its K candidates in order to
+    choose one. It is zero for greedy, which has nothing to choose between. Charging it is
+    not optional: without a score there is no "best" of K, so those K evaluations are part
+    of the scheduler's cost rather than of the measurement. The `eval_s` recorded by the
+    caller stays what it has always been -- one final evaluation of the returned schedule,
+    which greedy and every dispatching rule pay identically.
+    """
+    solve_fn = MODELS[args.model][1]
     if args.samples <= 1:
         t0 = time.perf_counter()
         with torch.no_grad():
-            individual, _, _ = solve_with_extend_gnn(jobs, model, deterministic=True)
+            individual, _, _ = solve_fn(jobs, model, deterministic=True)
+        _sync()
         solve_s = time.perf_counter() - t0
         model.eval()
-        return individual, solve_s, 1
+        return individual, solve_s, 0.0, 1
 
     # Best-of-K: a search budget the single-shot dispatching rules do not have. Reported
     # separately from the greedy headline, never mixed into it.
-    best, best_metrics, solve_s, clean = None, None, 0.0, 0
+    best, best_metrics, solve_s, select_s, clean = None, None, 0.0, 0.0, 0
     for k in range(args.samples):
         torch.manual_seed(args.sample_seed + 1_000_003 * instance_index + k)
         t0 = time.perf_counter()
         with torch.no_grad():
-            candidate, _, _ = solve_with_extend_gnn(jobs, model, deterministic=False)
+            candidate, _, _ = solve_fn(jobs, model, deterministic=False)
+        _sync()
         solve_s += time.perf_counter() - t0
         # solve_with_extend_gnn flips the module into train() for sampling and never
         # restores it; without this the next greedy rollout would run in the wrong regime.
         model.eval()
 
+        t0 = time.perf_counter()
         metrics = ie.evaluate(candidate, jobs)
+        select_s += time.perf_counter() - t0
         if metrics["nu"] == 0:
             clean += 1
         if best_metrics is None or _better(metrics, best_metrics):
             best, best_metrics = candidate, metrics
-    return best, solve_s, clean
+    return best, solve_s, select_s, clean
 
 
 def _better(a: dict, b: dict) -> bool:
@@ -300,6 +417,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="label per --weights; defaults to the checkpoint stem")
     ap.add_argument("--inbox", type=str,
                     default=os.path.join(STATIC_DIR, "..", "test_case", "v3", "test_60.jsonl"))
+    ap.add_argument("--mask", choices=tuple(MASKS), default="none",
+                    help="congestion-blind inference level; see MASKS")
+    ap.add_argument("--model", choices=tuple(MODELS), default="extend_gnn",
+                    help="architecture; `gnn` is the no-station-features ablation")
     ap.add_argument("--num_amrs", type=int, default=16)
     ap.add_argument("--events", type=int, default=0, help="0 = all")
     ap.add_argument("--start", type=int, default=0)
@@ -352,6 +473,10 @@ def main() -> None:
         )
 
     install_fleet(args.num_amrs)
+    if args.mask != "none":
+        if args.model != "extend_gnn":
+            raise SystemExit("--mask is defined against extend_gnn feature indices only")
+        install_feature_mask(args.mask)
     device = resolve_device(args.device)
     events = load_dispatch_events(inbox)
     if args.start:
@@ -370,6 +495,7 @@ def main() -> None:
         "inbox": str(inbox), "dataset": dataset, "dataset_sha256": dataset_sha,
         "n_jobs": n_jobs, "events": len(events), "start": args.start,
         "num_amrs": args.num_amrs, "mode": mode, "samples": args.samples,
+        "mask": args.mask, "mask_spec": MASKS[args.mask],
         "local_improve": bool(args.local_improve),
         "li_simplified": args.li_simplified if args.local_improve else 0,
         "li_collision": args.li_collision if args.local_improve else 0,
@@ -397,7 +523,7 @@ def main() -> None:
             for w in warnings:
                 print(f"  WARNING {w}")
 
-            model = load_model(weight, device)
+            model = load_model(weight, device, args.model)
             ckpt_sha = sha256_file(weight)
             meta = parse_run_meta(run_key)
             manifest["checkpoints"].append({
@@ -412,7 +538,8 @@ def main() -> None:
             executed = []
             for event in events:
                 jobs = list(event["jobs"])
-                individual, solve_s, samples_clean = rollout(model, jobs, args, event["index"])
+                individual, solve_s, select_s, samples_clean = rollout(
+                    model, jobs, args, event["index"])
 
                 li_s = 0.0
                 if args.local_improve:
@@ -433,15 +560,16 @@ def main() -> None:
                 row.update({
                     "amrs": args.num_amrs, "instance": event["index"],
                     "job_rule": "policy", "rule": run_key,
-                    "family": "policy", "model": "extend_gnn", "run_key": run_key,
+                    "family": "policy", "model": args.model, "run_key": run_key,
                     "ckpt_sha8": ckpt_sha[:8], "dataset": dataset,
                     "dataset_sha8": dataset_sha[:8], "n_jobs": n_jobs,
                     "mode": mode, "samples": args.samples, "samples_clean": samples_clean,
+                    "mask": args.mask,
                     "local_improve": bool(args.local_improve),
                     "li_simplified": args.li_simplified if args.local_improve else 0,
                     "li_collision": args.li_collision if args.local_improve else 0,
                     "solve_s": round(solve_s, 4), "li_s": round(li_s, 4),
-                    "eval_s": round(eval_s, 4),
+                    "select_s": round(select_s, 4), "eval_s": round(eval_s, 4),
                     **meta,
                 })
                 fh.write(json.dumps(row) + "\n")

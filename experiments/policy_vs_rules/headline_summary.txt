@@ -1,0 +1,35 @@
+
+HEADLINE -- test_60, 100 instances, m=16, greedy, no local improvement
+pre-registered arm = gc1 | val-selected rule = milk_run+earliest_completion
+strongest rule on test = milk_run+earliest_available (347.2)
+================================================================================================
+
+vs milk_run+earliest_completion  [val-selected (PRIMARY)]
+                   run_key   policy     rule             delta     bootstrap 95%   win%   perm p     n   nu>0
+          ppo_gc1_s42_best    344.7    351.1    -6.33 +/-6.04  [ -12.32,  -0.33]  52.5%   0.0436    99    1/0
+          ppo_gc1_s43_best    342.9    350.6    -7.65 +/-7.28  [ -15.01,  -0.51]  55.0%   0.0444   100    0/0
+          ppo_gc1_s44_best    331.3    350.3   -19.06 +/-6.92  [ -25.92, -12.03]  72.7%   0.0001    99    1/0
+             SEED-AVERAGED    339.5    350.8   -11.30 +/-6.22  [ -17.53,  -5.09]  58.2%   0.0004    98
+  -> -3.22% of rule makespan, SIGNIFICANT
+
+vs milk_run+earliest_available  [strongest on test]
+                   run_key   policy     rule             delta     bootstrap 95%   win%   perm p     n   nu>0
+          ppo_gc1_s42_best    344.7    347.4    -2.64 +/-6.11  [  -8.74,  +3.62]  49.5%   0.4058    99    1/0
+          ppo_gc1_s43_best    342.9    347.2    -4.22 +/-7.59  [ -11.93,  +3.18]  48.0%   0.2842   100    0/0
+          ppo_gc1_s44_best    331.3    346.2   -14.97 +/-6.89  [ -21.87,  -8.10]  64.6%   0.0001    99    1/0
+             SEED-AVERAGED    339.5    346.4    -6.94 +/-6.32  [ -13.20,  -0.43]  56.1%   0.0373    98
+  -> -2.00% of rule makespan, SIGNIFICANT
+  nu>0 column is policy/rule: instances the executor could not route. A policy explores a wider
+  schedule distribution than a dispatching rule, so this is not expected to be symmetric.
+
+SEED VARIANCE (gc1 arm)
+------------------------------------------------------------------------------------------------
+          ppo_gc1_s42_best   344.72
+          ppo_gc1_s43_best   342.95
+          ppo_gc1_s44_best   331.28
+  between-seed sd 7.30 | range 13.43 | within-seed instance sd 20.10
+
+POST-HOC (examined after test rows existed; 2 extra comparisons)
+------------------------------------------------------------------------------------------------
+     other arm gc1.5 _best policy   340.2 delta  -10.49 +/-5.92  win  59.6%  (3 seeds)
+               gc1 _latest policy   341.4 delta   -9.23 +/-5.76  win  58.0%  (3 seeds)

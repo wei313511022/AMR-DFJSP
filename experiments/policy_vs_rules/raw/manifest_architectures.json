@@ -1,0 +1,80 @@
+{
+  "inbox": "/home/wei/Desktop/AMR-DFJSP/test_case/v3/test_60.jsonl",
+  "dataset": "test_60",
+  "dataset_sha256": "bffd8f0663d609273b7b586d05facdc0a76e614429cd8a16ad6c29268d5b01c5",
+  "n_jobs": 60,
+  "events": 100,
+  "start": 0,
+  "num_amrs": 16,
+  "mode": "greedy",
+  "samples": 1,
+  "local_improve": false,
+  "li_simplified": 0,
+  "li_collision": 0,
+  "geometry": {
+    "queue_geometry": "inward",
+    "depot_layout": "aisle",
+    "dock_clearance_ticks": 1,
+    "grid_w": 19,
+    "grid_h": 19,
+    "door_rows": [
+      2,
+      6,
+      10,
+      14,
+      18
+    ],
+    "slot_capacity": {
+      "A": 1,
+      "B": 1,
+      "C": 1
+    }
+  },
+  "git_head": "e6022ef2e083890a317a52fa33c5fe8cf14f2227",
+  "torch": "2.11.0+cu128",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 5080",
+  "checkpoints": [
+    {
+      "run_key": "v6_extend_gnn_s44_best",
+      "path": "/home/wei/Desktop/AMR-DFJSP/checkpoints_v6/extend_gnn_s44_best.pth",
+      "sha256": "02a1c918994cf899d4efdbb36dd10978cb0c9da73be21694c1e75ecdf664b347",
+      "train_seed": 44,
+      "arm": null,
+      "ckpt_kind": "best",
+      "train_args": {
+        "inbox": "/home/wei/Desktop/AMR-DFJSP/test_case/v3/train_60.jsonl",
+        "inboxes": "",
+        "validation_inbox": "/home/wei/Desktop/AMR-DFJSP/test_case/v3/val_60.jsonl",
+        "validation_inboxes": "",
+        "validation_interval": 10,
+        "validation_invalid_penalty": 100.0,
+        "epochs": 2000,
+        "batch_size": 8,
+        "lr_actor": 0.0003,
+        "lr_min": 3e-05,
+        "train_invalid_penalty": 100.0,
+        "lr_critic": 0.0003,
+        "seed": 44,
+        "init_checkpoint": "",
+        "latest_checkpoint_path": "/home/wei/Desktop/AMR-DFJSP/checkpoints_v6/extend_gnn_s44_latest.pth",
+        "best_model_path": "/home/wei/Desktop/AMR-DFJSP/checkpoints_v6/extend_gnn_s44_best.pth",
+        "rl_method": "reinforce",
+        "baseline_rule": "milk_run+earliest_completion",
+        "baseline_mode": "multisample",
+        "samples_per_instance": 4,
+        "entropy_coef": 0.0,
+        "load_balance_coef": 0.0,
+        "normalize_advantage": true,
+        "grad_clip": 1.0,
+        "ppo_epochs": 4,
+        "clip_eps": 0.2,
+        "value_loss_coef": 0.5
+      },
+      "run_dir": null,
+      "train_epoch": 2000,
+      "train_best_metric": 355.38,
+      "provenance_warnings": []
+    }
+  ]
+}

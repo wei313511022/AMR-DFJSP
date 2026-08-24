@@ -1,0 +1,47 @@
+
+PARCEL-COUNT TREND -- m=16, greedy, no local improvement, 10 instances/size
+policy = extend_GNN + PPO, arm gc1, seeds 42/43/44 (_best), trained only at n=60
+========================================================================================================
+vs milk_run+earliest_completion  [pre-registered baseline, = the policy's own training baseline]
+      n  n/robot    policy      rule             delta   delta%   win%   perm p  seed sd  nu>0
+     20     1.25     167.3     178.4   -11.07 +/-13.63   -6.20%  70.0%   0.1420     4.55     0
+     40     2.50     249.0     272.1   -23.07 +/-9.71    -8.48% 100.0%   0.0021     5.53     0
+     60     3.75     340.2     335.6    +4.60 +/-18.21   +1.37%  50.0%   0.6449     3.21     0
+     80     5.00     433.8     416.3   +17.47 +/-15.93   +4.20%  20.0%   0.0658    11.18     0
+    100     6.25     516.1     515.1    +1.03 +/-26.91   +0.20%  50.0%   0.9455     5.94     0
+
+vs the strongest rule AT EACH n  [re-selected per size, post-hoc by construction]
+      n                      best rule    policy      rule             delta   delta%   win%   perm p
+     20 earliest_completion_job+material_match     167.3     160.0    +7.33 +/-6.58    +4.58%  30.0%   0.0613
+     40 earliest_completion_job+earliest_completion     249.0     258.1    -9.07 +/-10.76   -3.51%  80.0%   0.1290
+     60   milk_run+earliest_completion     340.2     335.6    +4.60 +/-18.21   +1.37%  50.0%   0.6449
+     80   milk_run+earliest_completion     433.8     416.3   +17.47 +/-15.93   +4.20%  20.0%   0.0658
+    100    milk_run+earliest_available     516.1     502.4   +13.73 +/-22.05   +2.73%  40.0%   0.2617
+
+PER SEED, vs the pre-registered baseline
+      n              run_key    policy             delta   win%   perm p
+     20     ppo_gc1_s42_best     167.5   -10.90 +/-14.58  80.0%   0.1822
+     20     ppo_gc1_s43_best     171.8    -6.60 +/-13.85  70.0%   0.3837
+     20     ppo_gc1_s44_best     162.7   -15.70 +/-13.92  80.0%   0.0540
+     40     ppo_gc1_s42_best     252.9   -19.20 +/-10.24  80.0%   0.0068
+     40     ppo_gc1_s43_best     251.5   -20.60 +/-14.52  70.0%   0.0198
+     40     ppo_gc1_s44_best     242.7   -29.40 +/-11.54  90.0%   0.0056
+     60     ppo_gc1_s42_best     343.0    +7.40 +/-22.27  40.0%   0.5372
+     60     ppo_gc1_s43_best     340.9    +5.30 +/-13.20  40.0%   0.4710
+     60     ppo_gc1_s44_best     336.7    +1.10 +/-22.63  50.0%   0.9085
+     80     ppo_gc1_s42_best     438.5   +22.20 +/-13.10  10.0%   0.0194
+     80     ppo_gc1_s43_best     441.8   +25.50 +/-19.43  30.0%   0.0333
+     80     ppo_gc1_s44_best     421.0    +4.70 +/-21.55  40.0%   0.6857
+    100     ppo_gc1_s42_best     514.2    -0.90 +/-27.86  50.0%   0.9393
+    100     ppo_gc1_s43_best     522.8    +7.70 +/-29.88  60.0%   0.6351
+    100     ppo_gc1_s44_best     511.4    -3.70 +/-30.81  60.0%   0.8081
+
+TOP 5 RULE COMBINATIONS PER SIZE (executed makespan)
+  n=20: earliest_completion_job+material_match 160.0 | material_match+material_match 160.4 | earliest_completion_job+earliest_completion 160.9 | earliest_completion_job+nearest_amr 160.9 | material_match+earliest_completion 161.3
+  n=40: earliest_completion_job+earliest_completion 258.1 | earliest_completion_job+nearest_amr 258.1 | material_match+earliest_completion 258.1 | material_match+nearest_amr 258.1 | earliest_completion_job+earliest_available 260.0
+  n=60: milk_run+earliest_completion 335.6 | milk_run+nearest_amr 335.6 | milk_run+random 345.8 | milk_run+earliest_available 347.8 | milk_run+least_loaded 348.7
+  n=80: milk_run+earliest_completion 416.3 | milk_run+nearest_amr 416.3 | milk_run+random 423.6 | milk_run+earliest_available 426.0 | milk_run+least_loaded 428.2
+  n=100: milk_run+earliest_available 502.4 | milk_run+least_loaded 506.3 | milk_run+random 513.3 | milk_run+earliest_completion 515.1 | milk_run+nearest_amr 515.1
+
+10 instances per size: CIs are wide by design. Read the SIGN and the SLOPE
+of delta%, not the individual p-values.

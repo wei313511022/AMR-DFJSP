@@ -206,11 +206,20 @@ def variance_decomposition(policy_by_seed: dict) -> dict:
 
 
 def write_csv(path: Path, rows: list) -> None:
+    """Union of keys across rows, in first-seen order.
+
+    Per-seed and seed-averaged rows carry different fields (the latter has n_seeds and no
+    tie/better columns), so taking fieldnames from rows[0] would raise on the second kind.
+    """
     if not rows:
         return
-    keys = list(rows[0])
+    keys = []
+    for row in rows:
+        for k in row:
+            if k not in keys:
+                keys.append(k)
     with path.open("w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=keys)
+        w = csv.DictWriter(fh, fieldnames=keys, restval="")
         w.writeheader()
         w.writerows(rows)
     print(f"  wrote {path.name}")
@@ -328,12 +337,266 @@ def stage_select() -> None:
     print("\nself-test passed; selection written to selection.json")
 
 
+def _load_selection() -> dict:
+    path = HERE / "selection.json"
+    if not path.exists():
+        raise SystemExit("run --stage select first; selection.json is missing")
+    return json.loads(path.read_text())
+
+
+def stage_headline() -> None:
+    """test_60. Everything here is a reported number."""
+    sel = _load_selection()
+    arm, baseline = sel["headline_arm"], sel["baseline_rule"]
+    rules16 = rule_table(load(CONGESTION / "final_fleet_test60.jsonl"), 16)
+    ranked = rank_rules(rules16)
+    strongest = ranked[0]["combo"]
+
+    pol = policy_table(load(RAW / "policy_test60_m16.jsonl"), 16)
+    out = [f"\nHEADLINE -- test_60, 100 instances, m=16, greedy, no local improvement",
+           f"pre-registered arm = {arm} | val-selected rule = {baseline}",
+           f"strongest rule on test = {strongest} ({ranked[0]['executed']:.1f})", "=" * 96]
+
+    tables = {}
+    for rule_combo, tag in ((baseline, "val-selected (PRIMARY)"), (strongest, "strongest on test")):
+        rule = rules16[tuple(rule_combo.split("+", 1))]
+        out.append(f"\nvs {rule_combo}  [{tag}]")
+        out.append(f"  {'run_key':>24} {'policy':>8} {'rule':>8} {'delta':>17} "
+                   f"{'bootstrap 95%':>17} {'win%':>6} {'perm p':>8} {'n':>5} {'nu>0':>6}")
+        rows = []
+        for key in sorted(pol):
+            if f"_{arm}_" not in key or not key.endswith("_best"):
+                continue
+            kept, dropped = pair(pol[key], rule, key)
+            st = paired_stats(pol[key], rule, kept)
+            p_nu = sum(1 for r in pol[key].values() if r["nu"] > 0)
+            r_nu = sum(1 for r in rule.values() if r["nu"] > 0)
+            rows.append({"run_key": key, "rule": rule_combo, "tag": tag,
+                         "dropped": len(dropped), "policy_unroutable": p_nu,
+                         "rule_unroutable": r_nu, **st})
+            out.append(f"  {key:>24} {st['policy_mean']:>8.1f} {st['rule_mean']:>8.1f} "
+                       f"{st['delta']:>+8.2f} +/-{st['delta_ci95']:<5.2f} "
+                       f"[{st['boot_lo']:>+7.2f},{st['boot_hi']:>+7.2f}] "
+                       f"{st['win_rate_pct']:>5.1f}% {st['perm_p']:>8.4f} {st['n_pairs']:>5} "
+                       f"{str(p_nu) + '/' + str(r_nu):>6}")
+
+        by_seed = {k: pol[k] for k in pol if f"_{arm}_" in k and k.endswith("_best")}
+        agg = seed_averaged(by_seed, rule)
+        if agg:
+            rows.append({"run_key": f"SEED-AVERAGED ({agg['n_seeds']} seeds)", "rule": rule_combo,
+                         "tag": tag, "dropped": 0, **agg})
+            out.append(f"  {'SEED-AVERAGED':>24} {agg['policy_mean']:>8.1f} {agg['rule_mean']:>8.1f} "
+                       f"{agg['delta']:>+8.2f} +/-{agg['delta_ci95']:<5.2f} "
+                       f"[{agg['boot_lo']:>+7.2f},{agg['boot_hi']:>+7.2f}] "
+                       f"{agg['win_rate_pct']:>5.1f}% {agg['perm_p']:>8.4f} {agg['n_pairs']:>5}")
+            out.append(f"  -> {agg['delta_pct']:+.2f}% of rule makespan, "
+                       f"{'SIGNIFICANT' if agg['significant'] == 'yes' else 'not significant'}")
+        tables[tag] = rows
+
+    # seed variance vs treatment effect
+    by_seed = {k: pol[k] for k in pol if f"_{arm}_" in k and k.endswith("_best")}
+    var = variance_decomposition(by_seed)
+    out.append("  nu>0 column is policy/rule: instances the executor could not route. "
+               "A policy explores a wider")
+    out.append("  schedule distribution than a dispatching rule, so this is not "
+               "expected to be symmetric.")
+
+    out.append(f"\nSEED VARIANCE ({arm} arm)")
+    out.append("-" * 96)
+    for k, v in sorted(var["seed_means"].items()):
+        out.append(f"  {k:>24} {v:>8.2f}")
+    out.append(f"  between-seed sd {var['between_seed_sd']:.2f} | range {var['between_seed_range']:.2f} "
+               f"| within-seed instance sd {var['within_seed_instance_sd']:.2f}")
+
+    # post-hoc: other arm, and _best vs _latest
+    out.append("\nPOST-HOC (examined after test rows existed; 2 extra comparisons)")
+    out.append("-" * 96)
+    rule = rules16[tuple(baseline.split("+", 1))]
+    posthoc = []
+    for label, pred in (("other arm gc1.5 _best", lambda k: "_gc1.5_" in k and k.endswith("_best")),
+                        (f"{arm} _latest", lambda k: f"_{arm}_" in k and k.endswith("_latest"))):
+        sub = {k: pol[k] for k in pol if pred(k)}
+        if not sub:
+            continue
+        agg = seed_averaged(sub, rule)
+        if agg:
+            posthoc.append({"label": label, "rule": baseline, **agg})
+            out.append(f"  {label:>24} policy {agg['policy_mean']:>7.1f} "
+                       f"delta {agg['delta']:>+7.2f} +/-{agg['delta_ci95']:<5.2f} "
+                       f"win {agg['win_rate_pct']:>5.1f}%  ({agg['n_seeds']} seeds)")
+
+    write_csv(HERE / "headline.csv", tables["val-selected (PRIMARY)"] + tables["strongest on test"])
+    write_csv(HERE / "posthoc.csv", posthoc)
+    write_csv(HERE / "by_seed.csv", [{"arm": arm, "run_key": k, "mean_executed": v,
+                                      **{kk: vv for kk, vv in var.items() if kk != "seed_means"}}
+                                     for k, v in sorted(var["seed_means"].items())])
+    text = "\n".join(out)
+    (HERE / "headline_summary.txt").write_text(text + "\n")
+    print(text)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=("select", "headline"), required=True)
+    ap.add_argument("--stage",
+                    choices=("select", "headline", "robustness", "scaling", "v7"),
+                    required=True)
     args = ap.parse_args()
     if args.stage == "select":
         stage_select()
+    elif args.stage == "headline":
+        stage_headline()
+    elif args.stage == "robustness":
+        stage_robustness()
+    elif args.stage == "scaling":
+        stage_scaling()
+    elif args.stage == "v7":
+        stage_v7()
+
+
+
+
+def stage_robustness() -> None:
+    """Leave-one-seed-out and the shape of the per-instance delta distribution.
+
+    Two things the headline mean hides. First, whether the result depends on a single seed:
+    with 3 seeds and a between-seed sd comparable to the effect, one lucky run can carry the
+    average. Second, whether the policy is uniformly better or merely higher-variance -- a
+    mean improvement built from rare large wins is a different claim from one built from
+    consistent small ones, and only the second would survive a risk-averse deployment.
+    """
+    sel = _load_selection()
+    arm, baseline = sel["headline_arm"], sel["baseline_rule"]
+    rules = rule_table(load(CONGESTION / "final_fleet_test60.jsonl"), 16)
+    strongest = rank_rules(rules)[0]["combo"]
+    pol = policy_table(load(RAW / "policy_test60_m16.jsonl"), 16)
+    keys = [k for k in sorted(pol) if f"_{arm}_" in k and k.endswith("_best")]
+
+    out, rows = ["\nROBUSTNESS -- test_60, m=16"], []
+    for combo, tag in ((baseline, "val-selected (PRIMARY)"), (strongest, "strongest on test")):
+        rule = rules[tuple(combo.split("+", 1))]
+        out.append(f"\nvs {combo}  [{tag}]")
+        out.append("  leave-one-seed-out:")
+        for drop in keys:
+            sub = [k for k in keys if k != drop]
+            inst = [i for i in sorted(rule)
+                    if rule[i]["nu"] == 0 and all(pol[k][i]["nu"] == 0 for k in sub)]
+            d = [statistics.mean([pol[k][i]["executed"] for k in sub]) - rule[i]["executed"]
+                 for i in inst]
+            m, h, p = statistics.mean(d), ci95(d), permutation_p(d)
+            sig = abs(m) > h
+            rows.append({"rule": combo, "tag": tag, "dropped_seed": drop, "n": len(d),
+                         "delta": round(m, 2), "ci95": round(h, 2), "perm_p": round(p, 4),
+                         "significant": "yes" if sig else "no"})
+            out.append(f"    without {drop:>24}: {m:>+7.2f} +/-{h:<5.2f} "
+                       f"p={p:.4f}  {'SIG' if sig else 'ns'}")
+
+        inst = [i for i in sorted(rule)
+                if rule[i]["nu"] == 0 and all(pol[k][i]["nu"] == 0 for k in keys)]
+        d = sorted(statistics.mean([pol[k][i]["executed"] for k in keys]) - rule[i]["executed"]
+                   for i in inst)
+        n = len(d)
+        wins = [x for x in d if x < 0]
+        losses = [x for x in d if x > 0]
+        out.append(f"  delta distribution (n={n}): min {d[0]:+.1f} | p10 {d[n // 10]:+.1f} "
+                   f"| median {statistics.median(d):+.1f} | p90 {d[9 * n // 10]:+.1f} "
+                   f"| max {d[-1]:+.1f}")
+        out.append(f"  wins n={len(wins)} mean {statistics.mean(wins):+.1f} | "
+                   f"losses n={len(losses)} mean {statistics.mean(losses):+.1f}")
+        rows.append({"rule": combo, "tag": tag, "dropped_seed": "(none) distribution",
+                     "n": n, "delta": round(statistics.mean(d), 2),
+                     "median": round(statistics.median(d), 2),
+                     "p10": round(d[n // 10], 2), "p90": round(d[9 * n // 10], 2),
+                     "win_mean": round(statistics.mean(wins), 2), "n_wins": len(wins),
+                     "loss_mean": round(statistics.mean(losses), 2), "n_losses": len(losses)})
+
+    write_csv(HERE / "robustness.csv", rows)
+    text = "\n".join(out)
+    (HERE / "robustness_summary.txt").write_text(text + "\n")
+    print(text)
+
+
+def stage_scaling() -> None:
+    """Zero-shot parcel count: does a policy trained only at n=60 hold at 2x and 4x?"""
+    sel = _load_selection()
+    arm, baseline = sel["headline_arm"], sel["baseline_rule"]
+    combo = tuple(baseline.split("+", 1))
+    sources = {
+        60: (RAW / "policy_test60_m16.jsonl", CONGESTION / "final_fleet_test60.jsonl"),
+        120: (RAW / "policy_test120_m16.jsonl", CONGESTION / "parcels_120_m16.jsonl"),
+        240: (RAW / "policy_test240_m16.jsonl", CONGESTION / "parcels_240_m16.jsonl"),
+    }
+    out = ["\nZERO-SHOT PARCEL COUNT -- m=16, policy trained only at n=60",
+           f"baseline rule = {baseline}", "-" * 92,
+           f"  {'n':>5} {'n/robot':>8} {'policy':>9} {'rule':>9} {'delta':>17} "
+           f"{'delta%':>8} {'win%':>6} {'perm p':>8} {'nu>0':>6}"]
+    rows = []
+    for n, (ppath, rpath) in sources.items():
+        if not ppath.exists():
+            out.append(f"  {n:>5}  (missing {ppath.name})")
+            continue
+        rule = rule_table(load(rpath), 16)[combo]
+        pol = policy_table(load(ppath), 16)
+        by_seed = {k: pol[k] for k in pol if f"_{arm}_" in k and k.endswith("_best")}
+        if not by_seed:
+            continue
+        agg = seed_averaged(by_seed, rule)
+        p_nu = sum(1 for p in by_seed.values() for r in p.values() if r["nu"] > 0)
+        rows.append({"n_jobs": n, "parcels_per_robot": round(n / 16, 2),
+                     "policy_unroutable": p_nu, **agg})
+        out.append(f"  {n:>5} {n / 16:>8.2f} {agg['policy_mean']:>9.1f} {agg['rule_mean']:>9.1f} "
+                   f"{agg['delta']:>+8.2f} +/-{agg['delta_ci95']:<5.2f} "
+                   f"{agg['delta_pct']:>+7.2f}% {agg['win_rate_pct']:>5.1f}% "
+                   f"{agg['perm_p']:>8.4f} {p_nu:>6}")
+    write_csv(HERE / "parcel_scaling.csv", rows)
+    text = "\n".join(out)
+    (HERE / "scaling_summary.txt").write_text(text + "\n")
+    print(text)
+
+
+def stage_v7() -> None:
+    """PPO vs REINFORCE at a matched 2000-epoch budget, plus 2000 vs 4000 epochs of PPO.
+
+    stepwise_s42 and stepwise_clip50_s42 are deliberately absent: those runs were killed at
+    epoch 528 and 536 of 2000, so including them would understate REINFORCE and inflate the
+    apparent advantage of PPO.
+    """
+    sel = _load_selection()
+    arm, baseline = sel["headline_arm"], sel["baseline_rule"]
+    rule = rule_table(load(CONGESTION / "final_fleet_test60.jsonl"), 16)[tuple(baseline.split("+", 1))]
+
+    v7 = policy_table(load(RAW / "policy_test60_v7.jsonl"), 16)
+    v8 = policy_table(load(RAW / "policy_test60_m16.jsonl"), 16)
+    cand = {k: v for k, v in v7.items()}
+    cand[f"v8_ppo_{arm}_s42_best (4000ep)"] = v8[f"ppo_{arm}_s42_best"]
+
+    out = ["\nPPO vs REINFORCE -- test_60, m=16, seed 42, greedy, no local improvement",
+           f"baseline rule = {baseline}", "-" * 96,
+           f"  {'checkpoint':>30} {'method':>10} {'epochs':>7} {'policy':>8} "
+           f"{'delta':>17} {'win%':>6} {'perm p':>8} {'nu>0':>5}"]
+    meta = {
+        "v7_ppo_s42_best": ("ppo", 2000),
+        "v7_episode_s42_best": ("reinforce/episode", 2000),
+        "v7_clip50_s42_best": ("reinforce/multisample", 2000),
+        f"v8_ppo_{arm}_s42_best (4000ep)": ("ppo", 4000),
+    }
+    rows = []
+    for key in sorted(cand, key=lambda k: statistics.mean(
+            [r["executed"] for r in cand[k].values() if r["nu"] == 0])):
+        kept, _ = pair(cand[key], rule, key)
+        st = paired_stats(cand[key], rule, kept)
+        method, epochs = meta.get(key, ("?", 0))
+        nu = sum(1 for r in cand[key].values() if r["nu"] > 0)
+        rows.append({"checkpoint": key, "method": method, "epochs": epochs,
+                     "unroutable": nu, **st})
+        out.append(f"  {key:>30} {method:>10} {epochs:>7} {st['policy_mean']:>8.1f} "
+                   f"{st['delta']:>+8.2f} +/-{st['delta_ci95']:<5.2f} "
+                   f"{st['win_rate_pct']:>5.1f}% {st['perm_p']:>8.4f} {nu:>5}")
+    out.append("  stepwise_s42 / stepwise_clip50_s42 excluded: killed at epoch 528/536 of 2000.")
+    write_csv(HERE / "ppo_vs_reinforce.csv", rows)
+    text = "\n".join(out)
+    (HERE / "v7_summary.txt").write_text(text + "\n")
+    print(text)
+
 
 
 if __name__ == "__main__":

@@ -35,13 +35,19 @@ C_BAY = "#CECBF6"
 C_QUEUE = "#EDEDED"
 
 
-def draw(ax, num_amrs: int, show_queues: bool, show_flow: bool) -> None:
+def draw(ax, num_amrs: int, show_queues: bool, show_flow: bool,
+         show_pool: bool = True) -> None:
     sc.apply_layout(num_amrs=num_amrs, depot_x=4)
 
     w, h = GA.GRID_MAX_X, GA.GRID_MAX_Y
     docks = dict(GA.INBOUND_DOCK_LOCATIONS)
     stations = dict(GA.STATIONS)
     bays = list(GA.AMR_STARTS.values())
+    # Bays the depot offers but this fleet does not use. Drawn as outlines so
+    # one figure stays valid across the contention sweep: the pool is filled
+    # column-major, so m=20 and m=24 extend these same aisle rows rightwards
+    # rather than moving the depot.
+    spare = [c for c in GA.aisle_bays() if c not in set(bays)] if show_pool else []
 
     # grid
     for x in range(w + 2):
@@ -68,10 +74,14 @@ def draw(ax, num_amrs: int, show_queues: bool, show_flow: bool) -> None:
         ax.add_patch(Rectangle((x - 0.5, y - 0.5), 1, 1, facecolor=C_STATION,
                                edgecolor="#993C1D", lw=0.8, zorder=3))
 
-    # charging bays
+    # charging bays -- in use by this fleet, then the sweep-only remainder
     for (x, y) in bays:
         ax.add_patch(Rectangle((x - 0.5, y - 0.5), 1, 1, facecolor=C_BAY,
                                edgecolor="#534AB7", lw=0.8, zorder=3))
+    for (x, y) in spare:
+        ax.add_patch(Rectangle((x - 0.5, y - 0.5), 1, 1, facecolor="none",
+                               edgecolor="#534AB7", lw=0.7, linestyle=(0, (2, 1.6)),
+                               zorder=3))
 
     # one illustrative pickup -> delivery flow
     if show_flow:
@@ -101,8 +111,14 @@ def draw(ax, num_amrs: int, show_queues: bool, show_flow: bool) -> None:
         Rectangle((0, 0), 1, 1, facecolor=C_QUEUE, edgecolor="#BBBBBB", lw=0.5),
     ]
     labels = ["inbound door", "outbound station", "charging bay", "waiting cells"]
-    ax.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.10),
-              ncol=4, frameon=False, fontsize=6.6, handlelength=1.0,
+    if spare:
+        handles.append(Rectangle((0, 0), 1, 1, facecolor="none",
+                                 edgecolor="#534AB7", lw=0.7,
+                                 linestyle=(0, (2, 1.6))))
+        labels.append("bay, larger fleets")
+    ncol = 3 if len(handles) > 4 else 4
+    ax.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.13),
+              ncol=ncol, frameon=False, fontsize=6.6, handlelength=1.0,
               handleheight=1.0, columnspacing=1.0, handletextpad=0.4)
 
 

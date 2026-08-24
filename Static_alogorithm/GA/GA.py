@@ -159,7 +159,7 @@ def aisle_rows(door_rows=DOOR_ROWS, grid_h=GRID_H):
     return tuple(rows)
 
 
-def aisle_bays(door_rows=DOOR_ROWS, grid_h=GRID_H, width=4):
+def aisle_bays(door_rows=DOOR_ROWS, grid_h=GRID_H, width=6):
     """Bays on the rows BETWEEN doors, in the strip the inward queue vacates.
 
     The pod depot parked AMRs on the door rows themselves (x=4,5 beside rows
@@ -168,8 +168,15 @@ def aisle_bays(door_rows=DOOR_ROWS, grid_h=GRID_H, width=4):
     clear from wall to wall, and the columns the lateral queue used to occupy
     (x=0..3) are free once QUEUE_GEOMETRY is "inward".
 
-    Filled column-major so a fleet smaller than 4*len(rows) spreads across the
-    floor rather than piling onto one row -- the same principle as depot_bays.
+    Filled column-major so a fleet smaller than width*len(rows) spreads across
+    the floor rather than piling onto one row -- the same principle as
+    depot_bays.
+
+    `width` 6 gives 24 bays (columns 0-5 are clear of both doors and the inward
+    queue). It must stay wide enough for the largest fleet under study: at
+    width 4 the depot offered only 16, which silently capped contention sweeps
+    at the headline setting. Widening does not disturb m<=16, since the
+    column-major order fills columns 0-3 first either way.
     """
     rows = aisle_rows(door_rows, grid_h)
     return [(x, y) for x in range(width) for y in rows]
@@ -1895,11 +1902,53 @@ def get_parent_via_tournament(population_scored, k=3):
     winner = min(candidates, key=lambda x: x[0])
     return winner[1]
 
-def evolve(jobs: List[Job], init_state: dict = None) -> Tuple[Individual, List[Tuple]]:
-    # Initial Population = 80% random group + 20% greedy group
+def rule_seeded_individuals(jobs: List[Job], count: int) -> List[Individual]:
+    """`count` distinct dispatching-rule schedules, for the initial population.
+
+    Imported locally because reinforce_baseline imports from this module; a
+    top-level import would be circular.
+    """
+    from reinforce_baseline import complete_with_dispatch_rule
+    from dispatching_rules import dispatching_rules as dr
+
+    combos = [f"{jr}+{ar}"
+              for jr in dr.JOB_RULES if jr != "random"
+              for ar in dr.AMR_RULES if ar != "random"]
+    return [complete_with_dispatch_rule(jobs, [], {},
+                                        baseline_rule=combos[i % len(combos)],
+                                        seed=42 + i // len(combos))
+            for i in range(count)]
+
+
+def evolve(jobs: List[Job], init_state: dict = None,
+           search_check_collision: bool = False) -> Tuple[Individual, List[Tuple]]:
+    """Evolve a schedule.
+
+    `search_check_collision` selects the model the SEARCH optimises against, not the model
+    the result is reported under -- the final fitness call below is always collision-aware.
+
+      False (default)  the historical behaviour: every fitness evaluation inside the loop
+                       uses the collision-free decode. Fast, but the GA is then optimising
+                       a surrogate that omits exactly the congestion the executor imposes.
+      True             fitness inside the loop is the collision-aware executor, so the GA
+                       optimises the objective it is scored on. Far slower per evaluation.
+
+    The pair isolates "optimising against the wrong model" from "searching badly", which is
+    the same distinction the learned-policy arms are built around.
+    """
+    # Initial population = 80% random + 20% dispatching-rule solutions.
+    #
+    # The 20% used to come from greedy_individual(), which assigns round-robin and
+    # clusters by material without consulting distance, capacity or dock state. On
+    # test_60 it scores ~2387 executed against ~359 for a dispatching rule and ~918
+    # for a random individual: the "greedy" seed was worse than random, and the GA
+    # spent its entire budget climbing back out of that hole rather than improving
+    # on anything. Seeding with heuristic solutions is standard for this problem
+    # family, and it is what makes the search a credible baseline instead of a
+    # demonstration that 150 generations beats noise.
     pop_random_count = int(POPULATION_SIZE * 0.8)
     population = [random_individual(jobs) for _ in range(pop_random_count)]
-    population += [greedy_individual(jobs) for _ in range(POPULATION_SIZE - pop_random_count)]
+    population += rule_seeded_individuals(jobs, POPULATION_SIZE - pop_random_count)
     # Global best solution
     archive_best: Individual = population[0]
     best_fitness = float("inf")
@@ -1909,14 +1958,17 @@ def evolve(jobs: List[Job], init_state: dict = None) -> Tuple[Individual, List[T
     for gen in range(GENERATIONS):
         scored = []
         for ind in population:
-            m, _ = fitness(ind, jobs, init_state=init_state)
+            m, _ = fitness(ind, jobs, check_collision=search_check_collision,
+                           init_state=init_state)
             scored.append((m, ind))
         scored.sort(key=lambda pair: pair[0])
         current_best = scored[0][1]
         f_val = scored[0][0]
         if f_val < best_fitness:
             best_fitness = f_val
-            best_timeline = fitness(current_best, jobs, init_state=init_state)[1]
+            best_timeline = fitness(current_best, jobs,
+                                    check_collision=search_check_collision,
+                                    init_state=init_state)[1]
             archive_best = current_best
             stagnation_counter = 0
         else:
@@ -1941,7 +1993,9 @@ def evolve(jobs: List[Job], init_state: dict = None) -> Tuple[Individual, List[T
 
         population = new_generation
 
-    archive_best = local_improve(archive_best, jobs, max_iters=routing_iters, init_state=init_state)
+    archive_best = local_improve(archive_best, jobs, max_iters=routing_iters,
+                                 check_collision=search_check_collision,
+                                 init_state=init_state)
     
     if collision_routing_iters > 0:
         archive_best = local_improve(archive_best, jobs, max_iters=collision_routing_iters, check_collision=True, init_state=init_state)

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 940" width="1220" height="940" font-family="Inter, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52525b"/>
+    </marker>
+    <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a1a1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1220" height="940" fill="#ffffff"/>
+
+  <text x="40" y="46" font-size="25" font-weight="700" fill="#18181b">ExtendSchedulerGNN</text>
+  <text x="40" y="70" font-size="13.5" fill="#71717a">Dock-aware encoder with a joint (operation × AMR × job) actor head — 617,605 parameters, hidden_dim 128</text>
+  <text x="1180" y="46" font-size="12.5" fill="#a1a1aa" text-anchor="end">actor 568,196  ·  critic 49,409</text>
+
+  <!-- ============ STAGE 1 : INPUTS + ENCODERS ============ -->
+  <text x="40" y="112" font-size="11.5" font-weight="700" fill="#3b82f6" letter-spacing="1.1">STAGE 1 — PER-ENTITY ENCODERS</text>
+
+  <g>
+    <rect x="40" y="126" width="228" height="52" rx="7" fill="#f4f4f5" stroke="#d4d4d8"/>
+    <text x="154" y="149" font-size="14" font-weight="600" fill="#18181b" text-anchor="middle">AMR features</text>
+    <text x="154" y="167" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#71717a" text-anchor="middle">(n_amr × 12)</text>
+
+    <rect x="296" y="126" width="228" height="52" rx="7" fill="#f4f4f5" stroke="#d4d4d8"/>
+    <text x="410" y="149" font-size="14" font-weight="600" fill="#18181b" text-anchor="middle">Dock features</text>
+    <text x="410" y="167" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#71717a" text-anchor="middle">(n_dock × 9)</text>
+
+    <rect x="552" y="126" width="228" height="52" rx="7" fill="#f4f4f5" stroke="#d4d4d8"/>
+    <text x="666" y="149" font-size="14" font-weight="600" fill="#18181b" text-anchor="middle">Job features</text>
+    <text x="666" y="167" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#71717a" text-anchor="middle">(n_job × 15)</text>
+
+    <rect x="808" y="126" width="228" height="52" rx="7" fill="#f4f4f5" stroke="#d4d4d8" stroke-dasharray="4 3"/>
+    <text x="922" y="149" font-size="14" font-weight="600" fill="#18181b" text-anchor="middle">Action features</text>
+    <text x="922" y="167" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#71717a" text-anchor="middle">(… × 3)  → actor only</text>
+  </g>
+
+  <line x1="154" y1="178" x2="154" y2="202" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="410" y1="178" x2="410" y2="202" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="666" y1="178" x2="666" y2="202" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <g>
+    <rect x="40" y="206" width="228" height="50" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="154" y="228" font-size="13.5" font-weight="600" fill="#1e3a8a" text-anchor="middle">amr_emb</text>
+    <text x="154" y="245" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#3b82f6" text-anchor="middle">12→128→128   18,176</text>
+
+    <rect x="296" y="206" width="228" height="50" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="410" y="228" font-size="13.5" font-weight="600" fill="#1e3a8a" text-anchor="middle">dock_emb</text>
+    <text x="410" y="245" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#3b82f6" text-anchor="middle">9→128→128   17,792</text>
+
+    <rect x="552" y="206" width="228" height="50" rx="7" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="666" y="228" font-size="13.5" font-weight="600" fill="#1e3a8a" text-anchor="middle">job_emb</text>
+    <text x="666" y="245" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#3b82f6" text-anchor="middle">15→128 (linear)   2,048</text>
+  </g>
+
+  <!-- ============ STAGE 2 : AMR <-> DOCK ATTENTION ============ -->
+  <text x="40" y="296" font-size="11.5" font-weight="700" fill="#8b5cf6" letter-spacing="1.1">STAGE 2 — AMR ↔ DOCK INTERACTION</text>
+
+  <line x1="154" y1="256" x2="154" y2="306" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="410" y1="256" x2="410" y2="306" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <rect x="40" y="310" width="484" height="116" rx="8" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="58" y="332" font-size="13" font-weight="600" fill="#5b21b6">3 × pre-LN residual MultiheadAttention · 4 heads · 198,144</text>
+  <text x="58" y="354" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#6d28d9">dock ← attend(AMR)</text>
+  <text x="238" y="354" font-size="11.5" fill="#71717a">which AMRs are heading here</text>
+  <text x="58" y="374" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#6d28d9">AMR  ← self-attend</text>
+  <text x="238" y="374" font-size="11.5" fill="#71717a">what the rest of the fleet is doing</text>
+  <text x="58" y="394" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#6d28d9">AMR  ← attend(dock)</text>
+  <text x="238" y="394" font-size="11.5" fill="#71717a">dock congestion</text>
+  <text x="58" y="415" font-size="11.5" font-style="italic" fill="#7c3aed">out_proj zero-initialised → block starts as an exact identity</text>
+
+  <!-- ============ STAGE 3 : JOB GRAPH ============ -->
+  <text x="552" y="296" font-size="11.5" font-weight="700" fill="#10b981" letter-spacing="1.1">STAGE 3 — JOB ENCODING</text>
+
+  <line x1="666" y1="256" x2="666" y2="306" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <path d="M524,368 L560,368" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ahl)"/>
+  <text x="542" y="360" font-size="10.5" fill="#a1a1aa" text-anchor="middle">dock ctx</text>
+
+  <rect x="552" y="310" width="484" height="116" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="570" y="332" font-size="13" font-weight="600" fill="#065f46">dock fusion + 3 × residual GIN · 264,323</text>
+  <text x="570" y="356" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#047857">x = job + fusion([job, dock_in, dock_out])</text>
+  <text x="570" y="376" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#047857">x = x + GIN(x, adj)      × 3</text>
+  <text x="570" y="399" font-size="11.5" fill="#71717a">residual fusion keeps per-job identity — only ~10 dock</text>
+  <text x="570" y="415" font-size="11.5" fill="#71717a">embeddings are shared by all jobs; GIN uses mean aggregation</text>
+
+  <!-- embeddings bar -->
+  <rect x="40" y="462" width="996" height="46" rx="7" fill="#fafafa" stroke="#d4d4d8"/>
+  <text x="60" y="490" font-size="12.5" font-weight="600" fill="#3f3f46">encoded state</text>
+  <text x="205" y="490" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#52525b">amr′ (n_amr × 128)</text>
+  <text x="425" y="490" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#52525b">dock′ (n_dock × 128)</text>
+  <text x="665" y="490" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#52525b">job′ (n_job × 128)</text>
+  <text x="880" y="490" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#52525b">op_emb (2 × 128)</text>
+
+  <line x1="154" y1="426" x2="154" y2="458" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="410" y1="426" x2="410" y2="458" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="794" y1="426" x2="794" y2="458" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <line x1="330" y1="508" x2="330" y2="556" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+  <line x1="800" y1="508" x2="800" y2="556" stroke="#52525b" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ============ STAGE 4 : ACTOR ============ -->
+  <text x="40" y="546" font-size="11.5" font-weight="700" fill="#f97316" letter-spacing="1.1">STAGE 4 — ACTOR HEAD</text>
+
+  <rect x="40" y="560" width="580" height="176" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="58" y="584" font-size="13" font-weight="600" fill="#9a3412">joint (operation × AMR × job) scoring · 66,177</text>
+
+  <rect x="58" y="598" width="544" height="42" rx="5" fill="#ffffff" stroke="#fed7aa"/>
+  <text x="70" y="616" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#c2410c">pairs = cat[op_emb, amr′, job′, dock′, action_feats]</text>
+  <text x="70" y="632" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#71717a">shape (B, 2, n_amr, n_job, 4·128 + 3 = 515)</text>
+
+  <line x1="330" y1="640" x2="330" y2="658" stroke="#52525b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="58" y="662" width="544" height="26" rx="5" fill="#ffffff" stroke="#fed7aa"/>
+  <text x="70" y="680" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#c2410c">operation_actor : 515 → 128 → 1</text>
+
+  <line x1="330" y1="688" x2="330" y2="702" stroke="#52525b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="58" y="704" width="544" height="26" rx="5" fill="#ffffff" stroke="#fed7aa"/>
+  <text x="70" y="722" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#c2410c">logits (B, 2, n_amr, n_job) → mask invalid = −inf → softmax</text>
+
+  <!-- ============ STAGE 5 : CRITIC ============ -->
+  <text x="656" y="546" font-size="11.5" font-weight="700" fill="#ef4444" letter-spacing="1.1">STAGE 5 — CRITIC HEAD</text>
+
+  <rect x="656" y="560" width="380" height="176" rx="8" fill="#fef2f2" stroke="#fca5a5"/>
+  <text x="674" y="584" font-size="13" font-weight="600" fill="#991b1b">pooled state value V(s) · 49,409</text>
+
+  <rect x="674" y="598" width="344" height="42" rx="5" fill="#ffffff" stroke="#fecaca"/>
+  <text x="686" y="616" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#b91c1c">masked mean-pool jobs, AMRs, docks</text>
+  <text x="686" y="632" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#71717a">→ cat → (B, 384)</text>
+
+  <line x1="846" y1="640" x2="846" y2="658" stroke="#52525b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="674" y="662" width="344" height="26" rx="5" fill="#ffffff" stroke="#fecaca"/>
+  <text x="686" y="680" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#b91c1c">critic : 384 → 128 → 1</text>
+
+  <line x1="846" y1="688" x2="846" y2="702" stroke="#52525b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="674" y="704" width="344" height="26" rx="5" fill="#ffffff" stroke="#fecaca"/>
+  <text x="686" y="722" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#b91c1c">V(s_t) — sole source of per-step credit</text>
+
+  <!-- ============ ROLLOUT LOOP ============ -->
+  <rect x="40" y="768" width="996" height="60" rx="8" fill="#fafafa" stroke="#d4d4d8"/>
+  <text x="60" y="792" font-size="13" font-weight="600" fill="#3f3f46">Autoregressive rollout</text>
+  <text x="60" y="812" font-size="11.5" fill="#71717a">sample one (operation, AMR, job) → apply to simulator → re-encode → repeat. 60 jobs × 2 operations = <tspan font-weight="700" fill="#3f3f46">120 decisions</tspan> per schedule; makespan is revealed only at the end.</text>
+
+  <path d="M1052,650 L1078,650 L1078,798 L1044,798" fill="none" stroke="#a1a1aa" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ahl)"/>
+  <path d="M1078,650 L1078,484 L1044,484" fill="none" stroke="#a1a1aa" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ahl)"/>
+  <text x="1094" y="626" font-size="11" fill="#a1a1aa">state</text>
+  <text x="1094" y="642" font-size="11" fill="#a1a1aa">update</text>
+
+  <text x="40" y="868" font-size="11.5" fill="#a1a1aa">Asymmetry worth noting: the actor resolves every entity individually (1,920 candidate actions scored per decision at n_job=60, n_amr=16), while the critic sees only three</text>
+  <text x="40" y="886" font-size="11.5" fill="#a1a1aa">mean-pooled vectors — it cannot distinguish states differing in <tspan font-style="italic">which</tspan> jobs remain. With a terminal-only, undiscounted reward, that pooling bounds how fine</text>
+  <text x="40" y="904" font-size="11.5" fill="#a1a1aa">the per-step advantage can ever be. The critic head is separate, but it reads the shared encoder, so its loss also trains the trunk.</text>
+</svg>

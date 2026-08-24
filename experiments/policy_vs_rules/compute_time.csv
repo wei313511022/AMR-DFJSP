@@ -1,0 +1,19 @@
+n_jobs,scheduler,kind,k,solve_s,eval_s,total_s,executed,instances
+60,milk_run+earliest_completion,rule,1,0.3093,0.0469,0.3562,380.3,10
+60,milk_run+earliest_available,rule,1,0.3023,0.0501,0.3524,355.1,10
+60,lpt+earliest_completion,rule,1,0.233,0.084,0.317,383.8,10
+60,extend_gnn_ppo greedy,policy,1,0.506,0.0651,0.571,350.6,10
+60,extend_gnn_ppo best-of-8,policy,8,4.1993,0.5102,4.7095,335.1,10
+60,extend_gnn_ppo best-of-16,policy,16,8.3712,1.0189,9.3902,332.7,10
+120,milk_run+earliest_completion,rule,1,1.2837,0.0915,1.3752,561.4,10
+120,milk_run+earliest_available,rule,1,1.2805,0.0974,1.3779,553.6,10
+120,lpt+earliest_completion,rule,1,0.9928,0.1653,1.1581,709.5,10
+120,extend_gnn_ppo greedy,policy,1,1.9097,0.1153,2.025,607.1,10
+120,extend_gnn_ppo best-of-8,policy,8,15.5604,0.9803,16.5407,591.1,10
+120,extend_gnn_ppo best-of-16,policy,16,31.1471,1.9797,33.1269,584.0,10
+240,milk_run+earliest_completion,rule,1,5.5534,0.2004,5.7538,1019.2,10
+240,milk_run+earliest_available,rule,1,5.5432,0.2203,5.7635,1018.9,10
+240,lpt+earliest_completion,rule,1,4.4025,0.343,4.7455,1360.1,10
+240,extend_gnn_ppo greedy,policy,1,8.337,0.2461,8.5832,1162.9,10
+240,extend_gnn_ppo best-of-8,policy,8,66.6628,2.145,68.8078,1140.1,10
+240,extend_gnn_ppo best-of-16,policy,16,133.3259,4.2946,137.6205,1133.6,10

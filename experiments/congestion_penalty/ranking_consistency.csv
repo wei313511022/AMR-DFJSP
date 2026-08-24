@@ -1,0 +1,6 @@
+m,eta,combos,concordant,discordant,kendall_tau,best_by_ideal,best_by_executed,ideal_picks_the_executed_best
+8,1.6,12,56,9,0.723,milk_run+earliest_available,milk_run+earliest_completion,no
+12,2.4,12,56,9,0.723,milk_run+least_loaded,milk_run+random,no
+16,3.2,12,58,7,0.785,milk_run+least_loaded,milk_run+earliest_completion,no
+20,4.0,12,51,14,0.569,lpt+least_loaded,milk_run+earliest_completion,no
+24,4.8,12,54,11,0.662,lpt+least_loaded,lpt+earliest_available,no

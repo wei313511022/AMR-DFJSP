@@ -1,0 +1,40 @@
+    20/415 |    0.1 min | ETA    1.1 min
+    40/415 |    0.1 min | ETA    1.0 min
+    60/415 |    0.2 min | ETA    1.0 min
+    80/415 |    0.8 min | ETA    3.4 min
+   100/415 |    1.8 min | ETA    5.6 min
+   120/415 |    1.9 min | ETA    4.8 min
+   140/415 |    2.1 min | ETA    4.1 min
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 20 (inbound_line path: (0, 10) -> (2, 14) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@11 by AMR11)
+   160/415 |    3.7 min | ETA    5.8 min
+   180/415 |    6.3 min | ETA    8.2 min
+   200/415 |    6.6 min | ETA    7.1 min
+   220/415 |    6.9 min | ETA    6.1 min
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 19 (outbound_line path: (0, 10) -> (16, 2) at t=193.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@194 by AMR2), ((0, 6)@197 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 17 (inbound_line path: (0, 10) -> (1, 14) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@29 by AMR6)
+   240/415 |    9.8 min | ETA    7.1 min
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 37 (outbound_line path: (0, 6) -> (17, 6) at t=270.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 37 (outbound_line path: (0, 6) -> (17, 6) at t=270.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+   260/415 |   15.0 min | ETA    8.9 min
+   280/415 |   15.4 min | ETA    7.4 min
+   300/415 |   16.0 min | ETA    6.1 min
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 32 (inbound_line path: (0, 6) -> (1, 10) at t=57.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR1, (0, 7) res by AMR8, (0, 5) res by AMR2, (0, 6) res by AMR9
+   320/415 |   19.7 min | ETA    5.9 min
+   340/415 |   29.1 min | ETA    6.4 min
+   360/415 |   29.9 min | ETA    4.6 min
+   380/415 |   30.7 min | ETA    2.8 min
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 95 (unload path: (0, 10) -> (19, 10) at t=184.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@185 by AMR3), ((17, 10)@201 by AMR2)
+   400/415 |   35.3 min | ETA    1.3 min
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 96 (outbound_line path: (0, 6) -> (16, 6) at t=137.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR9, (0, 7) res by AMR5, (0, 5) res by AMR8, (0, 6) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 36 (inbound_line path: (0, 14) -> (1, 14) at t=179.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+   415/415 |   49.9 min | ETA    0.0 min
+timings -> experiments/full_benchmark/raw/timing.jsonl

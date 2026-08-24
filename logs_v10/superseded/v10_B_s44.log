@@ -1,0 +1,115 @@
+Training on: cuda
+Run directory: /home/wei/Desktop/AMR-DFJSP/runs/20260819_144529_v10_B_s44
+Loaded 5000 dispatch events from test_case/v3/train_60.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_20.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_40.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_60.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_80.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_100.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_120.jsonl
+Loaded 40 dispatch events from test_case/v3/mix/val_mix_140.jsonl
+Loaded 280 validation event(s).
+Starting hybrid dock-aware extend_GNN PPO training with critic-based advantage.
+Epoch [1/4000] | Avg Makespan: 330.00 | Actor Loss: -0.0044 | Critic Loss: 1.0276 | Grad Norm: 2.6985 | Clipped: 3/4
+   -> Validation | Samples: 280 | Makespan: 3136.47 | Invalid Jobs: 0.00 | Score: 3136.47
+   -> Val Score 3136.47 (warming up 1/5, no selection yet)
+   -> Saved updated training chart to /home/wei/Desktop/AMR-DFJSP/runs/20260819_144529_v10_B_s44/chart.png
+Epoch [2/4000] | Avg Makespan: 326.00 | Actor Loss: -0.0033 | Critic Loss: 0.7927 | Grad Norm: 1.9651 | Clipped: 3/4
+Epoch [3/4000] | Avg Makespan: 367.50 | Actor Loss: -0.0022 | Critic Loss: 1.6461 | Grad Norm: 3.3577 | Clipped: 4/4
+Epoch [4/4000] | Avg Makespan: 316.00 | Actor Loss: -0.0001 | Critic Loss: 0.5949 | Grad Norm: 2.7959 | Clipped: 4/4
+Epoch [5/4000] | Avg Makespan: 348.00 | Actor Loss: -0.0030 | Critic Loss: 1.3430 | Grad Norm: 0.8838 | Clipped: 1/4
+Epoch [6/4000] | Avg Makespan: 338.75 | Actor Loss: -0.0031 | Critic Loss: 1.0980 | Grad Norm: 0.7790 | Clipped: 0/4
+Epoch [7/4000] | Avg Makespan: 329.00 | Actor Loss: -0.0016 | Critic Loss: 0.3982 | Grad Norm: 0.5265 | Clipped: 0/4
+Epoch [8/4000] | Avg Makespan: 357.25 | Actor Loss: -0.0006 | Critic Loss: 0.9898 | Grad Norm: 2.2480 | Clipped: 4/4
+Epoch [9/4000] | Avg Makespan: 335.75 | Actor Loss: -0.0021 | Critic Loss: 0.5647 | Grad Norm: 0.8330 | Clipped: 1/4
+Epoch [10/4000] | Avg Makespan: 361.00 | Actor Loss: -0.0033 | Critic Loss: 0.9189 | Grad Norm: 1.0679 | Clipped: 3/4
+Epoch [11/4000] | Avg Makespan: 383.00 | Actor Loss: -0.0003 | Critic Loss: 1.6031 | Grad Norm: 1.0045 | Clipped: 2/4
+Epoch [12/4000] | Avg Makespan: 366.25 | Actor Loss: 0.0000 | Critic Loss: 1.1693 | Grad Norm: 2.4144 | Clipped: 4/4
+Epoch [13/4000] | Avg Makespan: 346.00 | Actor Loss: -0.0027 | Critic Loss: 0.7939 | Grad Norm: 2.0582 | Clipped: 3/4
+Epoch [14/4000] | Avg Makespan: 381.00 | Actor Loss: 0.0014 | Critic Loss: 1.2243 | Grad Norm: 2.8602 | Clipped: 4/4
+Epoch [15/4000] | Avg Makespan: 374.75 | Actor Loss: -0.0016 | Critic Loss: 0.9642 | Grad Norm: 1.2155 | Clipped: 2/4
+Epoch [16/4000] | Avg Makespan: 380.50 | Actor Loss: -0.0015 | Critic Loss: 0.9091 | Grad Norm: 0.6155 | Clipped: 0/4
+Epoch [17/4000] | Avg Makespan: 352.25 | Actor Loss: 0.0008 | Critic Loss: 1.1284 | Grad Norm: 1.7678 | Clipped: 4/4
+Epoch [18/4000] | Avg Makespan: 359.00 | Actor Loss: -0.0018 | Critic Loss: 0.4481 | Grad Norm: 0.3712 | Clipped: 0/4
+Epoch [19/4000] | Avg Makespan: 342.25 | Actor Loss: -0.0012 | Critic Loss: 0.3005 | Grad Norm: 0.1274 | Clipped: 0/4
+Epoch [20/4000] | Avg Makespan: 348.50 | Actor Loss: -0.0004 | Critic Loss: 0.7674 | Grad Norm: 0.2996 | Clipped: 0/4
+Epoch [21/4000] | Avg Makespan: 310.00 | Actor Loss: 0.0002 | Critic Loss: 0.8273 | Grad Norm: 1.6090 | Clipped: 4/4
+Epoch [22/4000] | Avg Makespan: 344.50 | Actor Loss: -0.0014 | Critic Loss: 1.2085 | Grad Norm: 0.5359 | Clipped: 0/4
+Epoch [23/4000] | Avg Makespan: 358.50 | Actor Loss: -0.0019 | Critic Loss: 0.8146 | Grad Norm: 0.6933 | Clipped: 1/4
+Epoch [24/4000] | Avg Makespan: 332.25 | Actor Loss: -0.0013 | Critic Loss: 0.7392 | Grad Norm: 0.9501 | Clipped: 1/4
+Epoch [25/4000] | Avg Makespan: 360.75 | Actor Loss: -0.0005 | Critic Loss: 1.7019 | Grad Norm: 0.2941 | Clipped: 0/4
+Epoch [26/4000] | Avg Makespan: 328.25 | Actor Loss: -0.0010 | Critic Loss: 1.1670 | Grad Norm: 0.8961 | Clipped: 0/4
+Epoch [27/4000] | Avg Makespan: 320.00 | Actor Loss: -0.0047 | Critic Loss: 0.2888 | Grad Norm: 0.5997 | Clipped: 0/4
+Epoch [28/4000] | Avg Makespan: 323.75 | Actor Loss: -0.0010 | Critic Loss: 0.5383 | Grad Norm: 0.5563 | Clipped: 0/4
+Epoch [29/4000] | Avg Makespan: 299.50 | Actor Loss: -0.0011 | Critic Loss: 0.1179 | Grad Norm: 0.4087 | Clipped: 0/4
+Epoch [30/4000] | Avg Makespan: 345.50 | Actor Loss: -0.0010 | Critic Loss: 1.6534 | Grad Norm: 1.8966 | Clipped: 4/4
+Epoch [31/4000] | Avg Makespan: 351.25 | Actor Loss: -0.0004 | Critic Loss: 1.7686 | Grad Norm: 1.1021 | Clipped: 2/4
+Epoch [32/4000] | Avg Makespan: 326.50 | Actor Loss: -0.0008 | Critic Loss: 1.4759 | Grad Norm: 1.3732 | Clipped: 4/4
+Epoch [33/4000] | Avg Makespan: 305.25 | Actor Loss: -0.0004 | Critic Loss: 0.7848 | Grad Norm: 1.6014 | Clipped: 4/4
+Epoch [34/4000] | Avg Makespan: 324.50 | Actor Loss: -0.0022 | Critic Loss: 0.3456 | Grad Norm: 0.2812 | Clipped: 0/4
+Epoch [35/4000] | Avg Makespan: 324.75 | Actor Loss: -0.0016 | Critic Loss: 0.4870 | Grad Norm: 0.3817 | Clipped: 0/4
+Epoch [36/4000] | Avg Makespan: 325.25 | Actor Loss: -0.0021 | Critic Loss: 0.5466 | Grad Norm: 0.2025 | Clipped: 0/4
+Epoch [37/4000] | Avg Makespan: 342.25 | Actor Loss: -0.0010 | Critic Loss: 0.5236 | Grad Norm: 0.2674 | Clipped: 0/4
+Epoch [38/4000] | Avg Makespan: 332.50 | Actor Loss: -0.0024 | Critic Loss: 0.3561 | Grad Norm: 0.4688 | Clipped: 0/4
+Epoch [39/4000] | Avg Makespan: 310.75 | Actor Loss: -0.0016 | Critic Loss: 1.0021 | Grad Norm: 0.7808 | Clipped: 1/4
+Epoch [40/4000] | Avg Makespan: 341.00 | Actor Loss: -0.0012 | Critic Loss: 1.0324 | Grad Norm: 0.5407 | Clipped: 0/4
+Epoch [41/4000] | Avg Makespan: 314.00 | Actor Loss: -0.0027 | Critic Loss: 0.4372 | Grad Norm: 0.3102 | Clipped: 0/4
+Epoch [42/4000] | Avg Makespan: 327.25 | Actor Loss: -0.0008 | Critic Loss: 1.3752 | Grad Norm: 0.2709 | Clipped: 0/4
+Epoch [43/4000] | Avg Makespan: 325.00 | Actor Loss: -0.0034 | Critic Loss: 0.3869 | Grad Norm: 0.2267 | Clipped: 0/4
+Epoch [44/4000] | Avg Makespan: 325.25 | Actor Loss: -0.0027 | Critic Loss: 1.1255 | Grad Norm: 0.2146 | Clipped: 0/4
+Epoch [45/4000] | Avg Makespan: 317.00 | Actor Loss: -0.0019 | Critic Loss: 1.0911 | Grad Norm: 0.2982 | Clipped: 0/4
+Epoch [46/4000] | Avg Makespan: 307.25 | Actor Loss: -0.0020 | Critic Loss: 0.3859 | Grad Norm: 0.2317 | Clipped: 0/4
+Epoch [47/4000] | Avg Makespan: 313.50 | Actor Loss: -0.0032 | Critic Loss: 0.7777 | Grad Norm: 0.3849 | Clipped: 0/4
+Epoch [48/4000] | Avg Makespan: 307.00 | Actor Loss: -0.0032 | Critic Loss: 0.3805 | Grad Norm: 0.1979 | Clipped: 0/4
+Epoch [49/4000] | Avg Makespan: 316.25 | Actor Loss: -0.0022 | Critic Loss: 0.6273 | Grad Norm: 0.2447 | Clipped: 0/4
+Epoch [50/4000] | Avg Makespan: 330.75 | Actor Loss: -0.0021 | Critic Loss: 0.7257 | Grad Norm: 0.3090 | Clipped: 0/4
+Epoch [51/4000] | Avg Makespan: 295.75 | Actor Loss: -0.0030 | Critic Loss: 0.9888 | Grad Norm: 1.2810 | Clipped: 4/4
+Epoch [52/4000] | Avg Makespan: 316.25 | Actor Loss: -0.0057 | Critic Loss: 0.4983 | Grad Norm: 0.3064 | Clipped: 0/4
+Epoch [53/4000] | Avg Makespan: 309.25 | Actor Loss: -0.0045 | Critic Loss: 0.2507 | Grad Norm: 0.2955 | Clipped: 0/4
+Epoch [54/4000] | Avg Makespan: 291.00 | Actor Loss: -0.0023 | Critic Loss: 0.2206 | Grad Norm: 0.3867 | Clipped: 0/4
+Epoch [55/4000] | Avg Makespan: 317.00 | Actor Loss: -0.0019 | Critic Loss: 0.8441 | Grad Norm: 0.6577 | Clipped: 0/4
+Epoch [56/4000] | Avg Makespan: 319.75 | Actor Loss: -0.0047 | Critic Loss: 1.1933 | Grad Norm: 0.5706 | Clipped: 0/4
+Epoch [57/4000] | Avg Makespan: 295.50 | Actor Loss: -0.0043 | Critic Loss: 0.4227 | Grad Norm: 0.5906 | Clipped: 0/4
+Epoch [58/4000] | Avg Makespan: 308.50 | Actor Loss: -0.0027 | Critic Loss: 0.3600 | Grad Norm: 0.2562 | Clipped: 0/4
+Epoch [59/4000] | Avg Makespan: 317.25 | Actor Loss: -0.0034 | Critic Loss: 0.6838 | Grad Norm: 0.3253 | Clipped: 0/4
+Epoch [60/4000] | Avg Makespan: 280.75 | Actor Loss: -0.0041 | Critic Loss: 0.6011 | Grad Norm: 0.7449 | Clipped: 0/4
+Epoch [61/4000] | Avg Makespan: 308.00 | Actor Loss: -0.0057 | Critic Loss: 1.0157 | Grad Norm: 0.2883 | Clipped: 0/4
+Epoch [62/4000] | Avg Makespan: 304.25 | Actor Loss: -0.0012 | Critic Loss: 0.3810 | Grad Norm: 0.2340 | Clipped: 0/4
+Epoch [63/4000] | Avg Makespan: 295.50 | Actor Loss: -0.0051 | Critic Loss: 0.5433 | Grad Norm: 0.2621 | Clipped: 0/4
+Epoch [64/4000] | Avg Makespan: 309.00 | Actor Loss: -0.0037 | Critic Loss: 1.9079 | Grad Norm: 0.4226 | Clipped: 0/4
+Epoch [65/4000] | Avg Makespan: 304.25 | Actor Loss: -0.0038 | Critic Loss: 0.5401 | Grad Norm: 0.2327 | Clipped: 0/4
+Epoch [66/4000] | Avg Makespan: 315.25 | Actor Loss: -0.0054 | Critic Loss: 0.4260 | Grad Norm: 0.3057 | Clipped: 0/4
+Epoch [67/4000] | Avg Makespan: 270.00 | Actor Loss: -0.0017 | Critic Loss: 1.2763 | Grad Norm: 1.2558 | Clipped: 4/4
+Epoch [68/4000] | Avg Makespan: 282.50 | Actor Loss: -0.0026 | Critic Loss: 0.4948 | Grad Norm: 0.5093 | Clipped: 0/4
+Epoch [69/4000] | Avg Makespan: 293.25 | Actor Loss: -0.0052 | Critic Loss: 0.0988 | Grad Norm: 0.3536 | Clipped: 0/4
+Epoch [70/4000] | Avg Makespan: 297.50 | Actor Loss: -0.0025 | Critic Loss: 0.5510 | Grad Norm: 0.4418 | Clipped: 0/4
+Epoch [71/4000] | Avg Makespan: 270.75 | Actor Loss: -0.0036 | Critic Loss: 0.4056 | Grad Norm: 0.7517 | Clipped: 0/4
+Epoch [72/4000] | Avg Makespan: 276.00 | Actor Loss: -0.0067 | Critic Loss: 0.3222 | Grad Norm: 0.3733 | Clipped: 0/4
+Epoch [73/4000] | Avg Makespan: 254.75 | Actor Loss: -0.0025 | Critic Loss: 0.4668 | Grad Norm: 0.4843 | Clipped: 0/4
+Epoch [74/4000] | Avg Makespan: 296.25 | Actor Loss: -0.0019 | Critic Loss: 1.4331 | Grad Norm: 1.2553 | Clipped: 4/4
+Epoch [75/4000] | Avg Makespan: 290.50 | Actor Loss: -0.0032 | Critic Loss: 0.6080 | Grad Norm: 0.7010 | Clipped: 0/4
+Epoch [76/4000] | Avg Makespan: 273.75 | Actor Loss: -0.0067 | Critic Loss: 0.3642 | Grad Norm: 0.4617 | Clipped: 0/4
+Epoch [77/4000] | Avg Makespan: 275.25 | Actor Loss: -0.0032 | Critic Loss: 0.2749 | Grad Norm: 0.4533 | Clipped: 0/4
+Epoch [78/4000] | Avg Makespan: 290.50 | Actor Loss: -0.0045 | Critic Loss: 0.1777 | Grad Norm: 0.4153 | Clipped: 0/4
+Epoch [79/4000] | Avg Makespan: 286.25 | Actor Loss: -0.0015 | Critic Loss: 0.2465 | Grad Norm: 0.2437 | Clipped: 0/4
+Epoch [80/4000] | Avg Makespan: 271.50 | Actor Loss: -0.0030 | Critic Loss: 0.7017 | Grad Norm: 0.4129 | Clipped: 0/4
+Epoch [81/4000] | Avg Makespan: 268.75 | Actor Loss: -0.0027 | Critic Loss: 0.1971 | Grad Norm: 0.3484 | Clipped: 0/4
+Epoch [82/4000] | Avg Makespan: 269.25 | Actor Loss: -0.0040 | Critic Loss: 0.2215 | Grad Norm: 0.2657 | Clipped: 0/4
+Epoch [83/4000] | Avg Makespan: 277.00 | Actor Loss: -0.0022 | Critic Loss: 0.3622 | Grad Norm: 0.4159 | Clipped: 0/4
+Epoch [84/4000] | Avg Makespan: 273.25 | Actor Loss: -0.0036 | Critic Loss: 0.2524 | Grad Norm: 0.2840 | Clipped: 0/4
+Epoch [85/4000] | Avg Makespan: 274.75 | Actor Loss: -0.0046 | Critic Loss: 0.1457 | Grad Norm: 0.2162 | Clipped: 0/4
+Epoch [86/4000] | Avg Makespan: 256.00 | Actor Loss: -0.0029 | Critic Loss: 0.2960 | Grad Norm: 0.5616 | Clipped: 0/4
+Epoch [87/4000] | Avg Makespan: 264.50 | Actor Loss: -0.0030 | Critic Loss: 0.2153 | Grad Norm: 0.2899 | Clipped: 0/4
+Epoch [88/4000] | Avg Makespan: 276.00 | Actor Loss: -0.0021 | Critic Loss: 0.3823 | Grad Norm: 0.4896 | Clipped: 0/4
+Epoch [89/4000] | Avg Makespan: 267.25 | Actor Loss: -0.0037 | Critic Loss: 0.3181 | Grad Norm: 0.3274 | Clipped: 0/4
+Epoch [90/4000] | Avg Makespan: 274.50 | Actor Loss: -0.0041 | Critic Loss: 0.3136 | Grad Norm: 0.3485 | Clipped: 0/4
+Epoch [91/4000] | Avg Makespan: 276.00 | Actor Loss: -0.0038 | Critic Loss: 0.2191 | Grad Norm: 0.3235 | Clipped: 0/4
+Epoch [92/4000] | Avg Makespan: 264.25 | Actor Loss: -0.0019 | Critic Loss: 0.3200 | Grad Norm: 0.4593 | Clipped: 0/4
+Epoch [93/4000] | Avg Makespan: 276.25 | Actor Loss: -0.0034 | Critic Loss: 0.2836 | Grad Norm: 0.3771 | Clipped: 0/4
+Epoch [94/4000] | Avg Makespan: 257.50 | Actor Loss: -0.0055 | Critic Loss: 0.1808 | Grad Norm: 0.5261 | Clipped: 0/4
+Epoch [95/4000] | Avg Makespan: 271.75 | Actor Loss: -0.0068 | Critic Loss: 0.1912 | Grad Norm: 0.3298 | Clipped: 0/4
+Epoch [96/4000] | Avg Makespan: 284.50 | Actor Loss: -0.0054 | Critic Loss: 0.7848 | Grad Norm: 0.5482 | Clipped: 0/4
+Epoch [97/4000] | Avg Makespan: 265.75 | Actor Loss: -0.0062 | Critic Loss: 0.4588 | Grad Norm: 0.4968 | Clipped: 0/4
+Epoch [98/4000] | Avg Makespan: 248.75 | Actor Loss: -0.0064 | Critic Loss: 0.2906 | Grad Norm: 0.6456 | Clipped: 0/4
+Epoch [99/4000] | Avg Makespan: 254.00 | Actor Loss: -0.0044 | Critic Loss: 0.2714 | Grad Norm: 0.4647 | Clipped: 0/4
+Epoch [100/4000] | Avg Makespan: 260.50 | Actor Loss: -0.0071 | Critic Loss: 0.4100 | Grad Norm: 0.4171 | Clipped: 0/4

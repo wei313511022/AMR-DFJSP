@@ -1,0 +1,9 @@
+run_key,rule,tag,dropped,policy_unroutable,rule_unroutable,n_pairs,policy_mean,rule_mean,delta,delta_ci95,delta_pct,boot_lo,boot_hi,wins,ties,losses,win_rate_pct,perm_p,better,significant,n_seeds
+ppo_gc1_s42_best,milk_run+earliest_completion,val-selected (PRIMARY),1,1,0,99,344.72,351.05,-6.33,6.04,-1.8,-12.32,-0.33,52,1,46,52.5,0.0436,policy,yes,
+ppo_gc1_s43_best,milk_run+earliest_completion,val-selected (PRIMARY),0,0,0,100,342.95,350.6,-7.65,7.28,-2.18,-15.01,-0.51,55,2,43,55.0,0.0444,policy,yes,
+ppo_gc1_s44_best,milk_run+earliest_completion,val-selected (PRIMARY),1,1,0,99,331.28,350.34,-19.06,6.92,-5.44,-25.92,-12.03,72,1,26,72.7,0.0001,policy,yes,
+SEED-AVERAGED (3 seeds),milk_run+earliest_completion,val-selected (PRIMARY),0,,,98,339.49,350.8,-11.3,6.22,-3.22,-17.53,-5.09,57,,41,58.2,0.0004,,yes,3
+ppo_gc1_s42_best,milk_run+earliest_available,strongest on test,1,1,0,99,344.72,347.35,-2.64,6.11,-0.76,-8.74,3.62,49,1,49,49.5,0.4058,policy,no,
+ppo_gc1_s43_best,milk_run+earliest_available,strongest on test,0,0,0,100,342.95,347.17,-4.22,7.59,-1.22,-11.93,3.18,48,1,51,48.0,0.2842,policy,no,
+ppo_gc1_s44_best,milk_run+earliest_available,strongest on test,1,1,0,99,331.28,346.25,-14.97,6.89,-4.32,-21.87,-8.1,64,0,35,64.6,0.0001,policy,yes,
+SEED-AVERAGED (3 seeds),milk_run+earliest_available,strongest on test,0,,,98,339.49,346.43,-6.94,6.32,-2.0,-13.2,-0.43,55,,43,56.1,0.0373,,yes,3

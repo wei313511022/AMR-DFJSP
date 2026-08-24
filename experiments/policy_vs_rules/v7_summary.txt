@@ -1,0 +1,10 @@
+
+PPO vs REINFORCE -- test_60, m=16, seed 42, greedy, no local improvement
+baseline rule = milk_run+earliest_completion
+------------------------------------------------------------------------------------------------
+                      checkpoint     method  epochs   policy             delta   win%   perm p  nu>0
+                 v7_ppo_s42_best        ppo    2000    344.3    -6.31 +/-6.18   55.0%   0.0512     0
+    v8_ppo_gc1_s42_best (4000ep)        ppo    4000    344.7    -6.33 +/-6.04   52.5%   0.0436     1
+              v7_clip50_s42_best reinforce/multisample    2000    345.8    -4.85 +/-6.42   51.0%   0.1462     0
+             v7_episode_s42_best reinforce/episode    2000    354.0    +3.37 +/-6.20   45.0%   0.2928     0
+  stepwise_s42 / stepwise_clip50_s42 excluded: killed at epoch 528/536 of 2000.

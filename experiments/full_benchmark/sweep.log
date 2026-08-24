@@ -1,0 +1,1009 @@
+3075 tasks -> 22 workers -> experiments/full_benchmark/raw/rows.jsonl
+     25/3075 tasks |      25 rows |    5.6 min elapsed | ETA  682.1 min
+     50/3075 tasks |      50 rows |    8.4 min elapsed | ETA  507.4 min
+     75/3075 tasks |      75 rows |   12.3 min elapsed | ETA  493.6 min
+    100/3075 tasks |     100 rows |   16.0 min elapsed | ETA  476.2 min
+    125/3075 tasks |     125 rows |   18.5 min elapsed | ETA  435.8 min
+    150/3075 tasks |     150 rows |   21.1 min elapsed | ETA  411.7 min
+    175/3075 tasks |     175 rows |   23.7 min elapsed | ETA  391.9 min
+    200/3075 tasks |     200 rows |   25.5 min elapsed | ETA  365.9 min
+    225/3075 tasks |     225 rows |   27.0 min elapsed | ETA  342.2 min
+    250/3075 tasks |     250 rows |   28.8 min elapsed | ETA  325.0 min
+    275/3075 tasks |     275 rows |   30.3 min elapsed | ETA  308.9 min
+    300/3075 tasks |     300 rows |   31.7 min elapsed | ETA  293.0 min
+    325/3075 tasks |     325 rows |   32.6 min elapsed | ETA  275.7 min
+    350/3075 tasks |     350 rows |   33.5 min elapsed | ETA  261.0 min
+    375/3075 tasks |     375 rows |   34.4 min elapsed | ETA  247.9 min
+    400/3075 tasks |     400 rows |   35.1 min elapsed | ETA  234.9 min
+    425/3075 tasks |     425 rows |   35.6 min elapsed | ETA  221.7 min
+    450/3075 tasks |     450 rows |   35.9 min elapsed | ETA  209.6 min
+    475/3075 tasks |     475 rows |   36.3 min elapsed | ETA  198.7 min
+    500/3075 tasks |     500 rows |   36.7 min elapsed | ETA  189.1 min
+    525/3075 tasks |     760 rows |   39.7 min elapsed | ETA  193.1 min
+    550/3075 tasks |     975 rows |   42.7 min elapsed | ETA  196.2 min
+    575/3075 tasks |    1175 rows |   45.7 min elapsed | ETA  198.8 min
+    600/3075 tasks |    1375 rows |   48.7 min elapsed | ETA  201.0 min
+    625/3075 tasks |    1575 rows |   51.3 min elapsed | ETA  201.1 min
+    650/3075 tasks |    1775 rows |   54.1 min elapsed | ETA  201.9 min
+    675/3075 tasks |    1975 rows |   57.0 min elapsed | ETA  202.8 min
+    700/3075 tasks |    2175 rows |   59.4 min elapsed | ETA  201.4 min
+    725/3075 tasks |    2375 rows |   62.2 min elapsed | ETA  201.7 min
+    750/3075 tasks |    2575 rows |   65.0 min elapsed | ETA  201.4 min
+    775/3075 tasks |    2775 rows |   67.9 min elapsed | ETA  201.6 min
+    800/3075 tasks |    2975 rows |   69.2 min elapsed | ETA  196.7 min
+    825/3075 tasks |    3175 rows |   70.8 min elapsed | ETA  193.0 min
+    850/3075 tasks |    3360 rows |   72.7 min elapsed | ETA  190.2 min
+    875/3075 tasks |    3575 rows |   74.4 min elapsed | ETA  187.1 min
+    900/3075 tasks |    3775 rows |   76.3 min elapsed | ETA  184.3 min
+    925/3075 tasks |    3975 rows |   78.0 min elapsed | ETA  181.3 min
+    950/3075 tasks |    4175 rows |   79.6 min elapsed | ETA  178.1 min
+    975/3075 tasks |    4375 rows |   81.3 min elapsed | ETA  175.2 min
+   1000/3075 tasks |    4575 rows |   83.3 min elapsed | ETA  172.8 min
+   1025/3075 tasks |    4775 rows |   84.9 min elapsed | ETA  169.9 min
+   1050/3075 tasks |    4975 rows |   86.5 min elapsed | ETA  166.8 min
+   1075/3075 tasks |    5175 rows |   87.2 min elapsed | ETA  162.3 min
+   1100/3075 tasks |    5360 rows |   88.3 min elapsed | ETA  158.5 min
+   1125/3075 tasks |    5575 rows |   89.3 min elapsed | ETA  154.7 min
+   1150/3075 tasks |    5775 rows |   90.3 min elapsed | ETA  151.2 min
+   1175/3075 tasks |    5975 rows |   91.4 min elapsed | ETA  147.9 min
+   1200/3075 tasks |    6175 rows |   92.4 min elapsed | ETA  144.3 min
+   1225/3075 tasks |    6375 rows |   93.2 min elapsed | ETA  140.7 min
+   1250/3075 tasks |    6575 rows |   94.2 min elapsed | ETA  137.6 min
+   1275/3075 tasks |    6775 rows |   95.3 min elapsed | ETA  134.6 min
+   1300/3075 tasks |    6975 rows |   96.3 min elapsed | ETA  131.5 min
+   1325/3075 tasks |    7175 rows |   97.0 min elapsed | ETA  128.2 min
+   1350/3075 tasks |    7360 rows |   97.4 min elapsed | ETA  124.5 min
+   1375/3075 tasks |    7560 rows |   97.9 min elapsed | ETA  121.0 min
+   1400/3075 tasks |    7775 rows |   98.4 min elapsed | ETA  117.7 min
+   1425/3075 tasks |    7975 rows |   98.9 min elapsed | ETA  114.5 min
+   1450/3075 tasks |    8175 rows |   99.4 min elapsed | ETA  111.4 min
+   1475/3075 tasks |    8375 rows |   99.8 min elapsed | ETA  108.2 min
+   1500/3075 tasks |    8575 rows |  100.2 min elapsed | ETA  105.2 min
+   1525/3075 tasks |    8775 rows |  100.7 min elapsed | ETA  102.3 min
+   1550/3075 tasks |    8975 rows |  101.2 min elapsed | ETA   99.6 min
+   1575/3075 tasks |    9175 rows |  101.6 min elapsed | ETA   96.7 min
+   1600/3075 tasks |    9375 rows |  102.0 min elapsed | ETA   94.0 min
+   1625/3075 tasks |    9575 rows |  102.1 min elapsed | ETA   91.1 min
+   1650/3075 tasks |    9775 rows |  102.2 min elapsed | ETA   88.3 min
+   1675/3075 tasks |    9975 rows |  102.4 min elapsed | ETA   85.6 min
+   1700/3075 tasks |   10175 rows |  102.6 min elapsed | ETA   82.9 min
+   1725/3075 tasks |   10375 rows |  102.7 min elapsed | ETA   80.4 min
+   1750/3075 tasks |   10575 rows |  102.8 min elapsed | ETA   77.9 min
+   1775/3075 tasks |   10775 rows |  103.0 min elapsed | ETA   75.4 min
+   1800/3075 tasks |   10975 rows |  103.1 min elapsed | ETA   73.0 min
+   1825/3075 tasks |   11175 rows |  103.3 min elapsed | ETA   70.7 min
+   1850/3075 tasks |   11375 rows |  103.4 min elapsed | ETA   68.5 min
+   1875/3075 tasks |   11500 rows |  103.6 min elapsed | ETA   66.3 min
+   1900/3075 tasks |   12125 rows |  104.2 min elapsed | ETA   64.5 min
+   1925/3075 tasks |   12750 rows |  104.7 min elapsed | ETA   62.6 min
+   1950/3075 tasks |   13375 rows |  105.1 min elapsed | ETA   60.7 min
+   1975/3075 tasks |   14000 rows |  105.6 min elapsed | ETA   58.8 min
+   2000/3075 tasks |   14625 rows |  106.1 min elapsed | ETA   57.0 min
+   2025/3075 tasks |   15250 rows |  106.7 min elapsed | ETA   55.3 min
+   2050/3075 tasks |   15875 rows |  107.2 min elapsed | ETA   53.6 min
+   2075/3075 tasks |   16500 rows |  107.7 min elapsed | ETA   51.9 min
+   2100/3075 tasks |   17125 rows |  108.1 min elapsed | ETA   50.2 min
+   2125/3075 tasks |   17750 rows |  108.4 min elapsed | ETA   48.5 min
+   2150/3075 tasks |   18375 rows |  108.7 min elapsed | ETA   46.8 min
+   2175/3075 tasks |   19000 rows |  109.1 min elapsed | ETA   45.1 min
+   2200/3075 tasks |   19625 rows |  109.3 min elapsed | ETA   43.5 min
+   2225/3075 tasks |   20250 rows |  109.6 min elapsed | ETA   41.9 min
+   2250/3075 tasks |   20875 rows |  110.0 min elapsed | ETA   40.3 min
+   2275/3075 tasks |   21500 rows |  110.3 min elapsed | ETA   38.8 min
+   2300/3075 tasks |   22125 rows |  110.6 min elapsed | ETA   37.3 min
+   2325/3075 tasks |   22750 rows |  111.0 min elapsed | ETA   35.8 min
+   2350/3075 tasks |   23375 rows |  111.2 min elapsed | ETA   34.3 min
+   2375/3075 tasks |   24000 rows |  111.4 min elapsed | ETA   32.8 min
+   2400/3075 tasks |   24625 rows |  111.6 min elapsed | ETA   31.4 min
+   2425/3075 tasks |   25250 rows |  111.8 min elapsed | ETA   30.0 min
+   2450/3075 tasks |   25875 rows |  111.9 min elapsed | ETA   28.5 min
+   2475/3075 tasks |   26500 rows |  112.1 min elapsed | ETA   27.2 min
+   2500/3075 tasks |   27125 rows |  112.3 min elapsed | ETA   25.8 min
+   2525/3075 tasks |   27750 rows |  112.5 min elapsed | ETA   24.5 min
+   2550/3075 tasks |   28375 rows |  112.8 min elapsed | ETA   23.2 min
+   2575/3075 tasks |   29000 rows |  112.9 min elapsed | ETA   21.9 min
+   2600/3075 tasks |   29625 rows |  113.0 min elapsed | ETA   20.6 min
+   2625/3075 tasks |   30250 rows |  113.1 min elapsed | ETA   19.4 min
+   2650/3075 tasks |   30875 rows |  113.2 min elapsed | ETA   18.2 min
+   2675/3075 tasks |   31500 rows |  113.3 min elapsed | ETA   16.9 min
+   2700/3075 tasks |   32125 rows |  113.4 min elapsed | ETA   15.7 min
+   2725/3075 tasks |   32750 rows |  113.5 min elapsed | ETA   14.6 min
+   2750/3075 tasks |   33375 rows |  113.6 min elapsed | ETA   13.4 min
+   2775/3075 tasks |   34000 rows |  113.7 min elapsed | ETA   12.3 min
+   2800/3075 tasks |   34625 rows |  113.8 min elapsed | ETA   11.2 min
+   2825/3075 tasks |   35250 rows |  113.8 min elapsed | ETA   10.1 min
+   2850/3075 tasks |   35875 rows |  113.9 min elapsed | ETA    9.0 min
+   2875/3075 tasks |   36500 rows |  113.9 min elapsed | ETA    7.9 min
+   2900/3075 tasks |   37125 rows |  113.9 min elapsed | ETA    6.9 min
+   2925/3075 tasks |   37750 rows |  114.0 min elapsed | ETA    5.8 min
+   2950/3075 tasks |   38375 rows |  114.0 min elapsed | ETA    4.8 min
+   2975/3075 tasks |   39000 rows |  114.0 min elapsed | ETA    3.8 min
+   3000/3075 tasks |   39625 rows |  114.1 min elapsed | ETA    2.9 min
+   3025/3075 tasks |   40250 rows |  114.1 min elapsed | ETA    1.9 min
+   3050/3075 tasks |   40875 rows |  114.1 min elapsed | ETA    0.9 min
+   3075/3075 tasks |   41500 rows |  114.2 min elapsed | ETA    0.0 min
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 35 (outbound_line path: (0, 10) -> (17, 18) at t=290.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@292 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 68 (unload path: (0, 6) -> (19, 6) at t=655.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@656 by AMR16), ((2, 6)@657 by AMR14), ((7, 6)@662 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 77 (return path: (0, 14) -> (1, 16) at t=28.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@30 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 23 (return path: (0, 14) -> (3, 8) at t=123.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR2, (0, 15) res by AMR15, (0, 13) res by AMR1, (0, 14) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 7 (unload path: (0, 6) -> (19, 18) at t=190.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 26 (inbound_line path: (0, 10) -> (1, 18) at t=59.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@61 by AMR5), ((0, 14)@63 by AMR14), ((0, 17)@66 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 36 (unload path: (0, 10) -> (19, 6) at t=105.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@107 by AMR10), ((0, 6)@109 by AMR13), ((2, 6)@111 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 33 (outbound_line path: (0, 10) -> (16, 6) at t=109.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 25 (return path: (0, 10) -> (0, 4) at t=58.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@59 by AMR11), ((0, 6)@62 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 26 (inbound_line path: (0, 10) -> (2, 2) at t=77.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@78 by AMR1), ((0, 2)@85 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 69 (outbound_line path: (0, 10) -> (16, 10) at t=480.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR13, (0, 9) res by AMR5, (0, 10) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 57 (unload path: (0, 14) -> (19, 2) at t=310.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR6, (0, 15) res by AMR2, (0, 13) res by AMR4, (0, 14) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 50 (outbound_line path: (0, 6) -> (17, 2) at t=233.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 2)@237 by AMR3), ((1, 2)@238 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 78 (inbound_line path: (0, 10) -> (3, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR11, (0, 11) res by AMR8, (0, 9) res by AMR10, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 64 (unload path: (0, 10) -> (19, 6) at t=67.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR5, (0, 11) res by AMR3, (0, 9) res by AMR8, (0, 10) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 73 (inbound_line path: (1, 12) -> (1, 14) at t=201.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 13)@202 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 60 (return path: (0, 14) -> (3, 16) at t=157.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@159 by AMR4), ((2, 16)@161 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 97 (unload path: (0, 6) -> (19, 18) at t=575.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@577 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 34 (inbound_line path: (0, 14) -> (2, 14) at t=66.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@67 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 9 (outbound_line path: (0, 2) -> (16, 6) at t=717.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@722 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 4 (inbound_line path: (0, 10) -> (3, 14) at t=50.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@51 by AMR5), ((0, 14)@54 by AMR9), ((2, 14)@56 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 9 (inbound_line path: (0, 10) -> (2, 10) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@8 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 7 (inbound_line path: (0, 6) -> (1, 2) at t=163.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@164 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 68 (unload path: (0, 10) -> (19, 10) at t=187.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@188 by AMR2), ((2, 10)@189 by AMR13), ((3, 10)@190 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 73 (return path: (0, 14) -> (0, 12) at t=103.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@104 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 1 (outbound_line path: (0, 6) -> (16, 14) at t=337.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@339 by AMR2), ((6, 14)@351 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 56 (return path: (0, 10) -> (0, 12) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@8 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 55 (inbound_line path: (0, 10) -> (3, 2) at t=46.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@47 by AMR11), ((0, 4)@52 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 9 (inbound_line path: (0, 14) -> (1, 10) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@61 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 38 (outbound_line path: (0, 10) -> (16, 6) at t=50.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@51 by AMR11), ((0, 6)@54 by AMR7), ((1, 6)@55 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 9 (return path: (0, 10) -> (0, 8) at t=7.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 12 (inbound_line path: (0, 14) -> (1, 6) at t=51.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@52 by AMR6), ((0, 10)@55 by AMR13), ((0, 6)@59 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 30 (unload path: (0, 10) -> (19, 18) at t=34.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@36 by AMR4), ((0, 14)@38 by AMR16), ((0, 18)@42 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 37 (inbound_line path: (0, 6) -> (1, 10) at t=94.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@95 by AMR11), ((0, 10)@98 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 28 (unload path: (0, 10) -> (19, 14) at t=82.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR15, (0, 11) res by AMR10, (0, 9) res by AMR6, (0, 10) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 4 (outbound_line path: (0, 10) -> (16, 6) at t=36.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@37 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 2 (unload path: (0, 14) -> (19, 2) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR5, (0, 15) res by AMR4, (0, 13) res by AMR14, (0, 14) res by AMR11
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 5 (outbound_line path: (0, 14) -> (16, 6) at t=17.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@18 by AMR11), ((0, 6)@25 by AMR2), ((1, 6)@26 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 41 (unload path: (0, 6) -> (19, 14) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@61 by AMR2), ((0, 14)@68 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 62 (inbound_line path: (0, 10) -> (1, 10) at t=9.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 95 (unload path: (0, 10) -> (19, 10) at t=184.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@185 by AMR3), ((17, 10)@201 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 73 (return path: (0, 6) -> (2, 4) at t=32.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@33 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 65 (unload path: (0, 14) -> (19, 6) at t=426.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR1, (0, 15) res by AMR4, (0, 13) res by AMR14, (0, 14) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 80 (outbound_line path: (0, 14) -> (16, 6) at t=246.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@247 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 72 (outbound_line path: (0, 2) -> (17, 2) at t=615.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@616 by AMR16), ((3, 2)@618 by AMR8), ((11, 2)@626 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 64 (inbound_line path: (0, 14) -> (3, 2) at t=47.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@48 by AMR8), ((0, 10)@51 by AMR12), ((0, 6)@55 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 59 (inbound_line path: (0, 14) -> (2, 14) at t=81.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@82 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 4 (inbound_line path: (0, 10) -> (2, 10) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@10 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 57 (inbound_line path: (0, 10) -> (2, 10) at t=9.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 17 (inbound_line path: (0, 10) -> (1, 14) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@29 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 39 (inbound_line path: (0, 10) -> (1, 14) at t=212.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@216 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 32 (outbound_line path: (0, 6) -> (16, 10) at t=216.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 9 (return path: (0, 10) -> (2, 4) at t=155.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR10, (0, 11) res by AMR1, (0, 9) res by AMR8, (0, 10) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 11 (inbound_line path: (0, 10) -> (3, 10) at t=72.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 9 (inbound_line path: (0, 10) -> (3, 18) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@8 by AMR8), ((1, 18)@16 by AMR12), ((2, 18)@17 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 16 (inbound_line path: (0, 10) -> (3, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR12, (0, 9) res by AMR6, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 36 (inbound_line path: (0, 6) -> (1, 14) at t=26.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@30 by AMR8), ((0, 13)@33 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 15 (outbound_line path: (0, 6) -> (16, 18) at t=14.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@17 by AMR12), ((0, 12)@20 by idle AMR3), ((0, 14)@22 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 23 (outbound_line path: (0, 10) -> (16, 10) at t=140.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR2, (0, 9) res by AMR11, (0, 10) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 18 (inbound_line path: (0, 12) -> (3, 14) at t=44.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@46 by AMR12), ((1, 14)@47 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 12 (unload path: (0, 6) -> (19, 10) at t=34.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR13, (0, 7) res by AMR12, (0, 5) res by AMR16, (0, 6) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 4 (outbound_line path: (0, 10) -> (16, 6) at t=36.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@37 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 4 (outbound_line path: (0, 10) -> (16, 6) at t=36.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@37 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 16 (unload path: (0, 6) -> (19, 10) at t=15.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 19 (unload path: (0, 6) -> (19, 14) at t=114.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@116 by idle AMR2), ((5, 14)@127 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 0 (unload path: (0, 6) -> (19, 2) at t=122.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@123 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 9 (unload path: (0, 6) -> (19, 2) at t=119.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@120 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 78 (outbound_line path: (0, 10) -> (16, 18) at t=88.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@89 by AMR11), ((0, 14)@92 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 2 (return path: (0, 14) -> (3, 8) at t=66.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((2, 8)@74 by idle AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 61 (outbound_line path: (0, 6) -> (17, 6) at t=430.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR10, (0, 7) res by AMR12, (0, 5) res by AMR16, (0, 6) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 33 (inbound_line path: (0, 6) -> (1, 14) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@27 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 65 (inbound_line path: (0, 14) -> (2, 10) at t=227.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@228 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 56 (unload path: (0, 2) -> (19, 10) at t=80.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@82 by AMR4), ((0, 10)@88 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 65 (outbound_line path: (0, 10) -> (16, 6) at t=464.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@469 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 18 (outbound_line path: (0, 2) -> (16, 18) at t=694.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@708 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 57 (outbound_line path: (0, 10) -> (16, 2) at t=230.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 2)@238 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 73 (pickup path: (0, 10) -> (0, 18) at t=25.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 51 (inbound_line path: (0, 10) -> (1, 10) at t=23.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@24 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 10 (inbound_line path: (0, 10) -> (1, 14) at t=193.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 37 (inbound_line path: (0, 10) -> (1, 14) at t=15.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@19 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 17 (inbound_line path: (0, 10) -> (1, 10) at t=125.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR12, (0, 11) res by AMR16, (0, 9) res by AMR6, (0, 10) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 12 (unload path: (0, 6) -> (19, 14) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@29 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 31 (unload path: (0, 10) -> (19, 6) at t=244.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR9, (0, 11) res by AMR14, (0, 9) res by AMR8, (0, 10) res by AMR13
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 50 (inbound_line path: (0, 10) -> (2, 2) at t=119.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@128 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 29 (outbound_line path: (0, 6) -> (18, 2) at t=126.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((5, 2)@135 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 97 (outbound_line path: (0, 14) -> (16, 18) at t=292.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR16, (0, 15) res by AMR3, (0, 13) res by AMR2, (0, 14) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 6 (inbound_line path: (0, 10) -> (1, 18) at t=241.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR16, (0, 11) res by AMR11, (0, 9) res by AMR2, (0, 10) res by AMR13
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 85 (return path: (0, 14) -> (3, 16) at t=72.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 16)@75 by AMR4), ((2, 16)@76 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 1 (outbound_line path: (0, 6) -> (18, 6) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR2, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 51 (inbound_line path: (0, 14) -> (2, 14) at t=49.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@50 by AMR5), ((2, 14)@51 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 50 (unload path: (0, 10) -> (19, 18) at t=172.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@176 by AMR11), ((1, 18)@181 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 54 (pickup path: (0, 2) -> (0, 6) at t=208.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 2) res by AMR5, (0, 3) res by AMR16, (0, 1) res by AMR9, (0, 2) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 21 (outbound_line path: (0, 10) -> (16, 10) at t=224.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@225 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 56 (outbound_line path: (0, 6) -> (16, 18) at t=241.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@243 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 55 (unload path: (0, 10) -> (19, 2) at t=305.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR2, (0, 9) res by AMR5, (0, 10) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 39 (return path: (0, 10) -> (2, 8) at t=93.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@94 by AMR6), ((2, 8)@97 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 22 (pickup path: (0, 14) -> (0, 2) at t=139.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@140 by AMR9), ((0, 10)@143 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 46 (return path: (0, 14) -> (2, 4) at t=114.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@115 by AMR15), ((0, 12)@116 by AMR3), ((0, 6)@122 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 3 (inbound_line path: (0, 10) -> (2, 6) at t=8.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR8, (0, 9) res by AMR9, (0, 10) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 19 (inbound_line path: (0, 10) -> (1, 14) at t=17.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@19 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 30 (unload path: (0, 10) -> (19, 10) at t=127.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR10, (0, 9) res by AMR14, (0, 10) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 44 (outbound_line path: (0, 6) -> (17, 6) at t=134.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR9, (0, 7) res by AMR10, (0, 5) res by AMR3, (0, 6) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 20 (unload path: (0, 6) -> (19, 10) at t=225.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@227 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 23 (unload path: (0, 10) -> (19, 2) at t=96.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR10, (0, 11) res by AMR3, (0, 9) res by AMR4, (0, 10) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 24 (inbound_line path: (0, 14) -> (2, 2) at t=55.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@56 by AMR13), ((0, 6)@63 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 41 (unload path: (0, 6) -> (19, 14) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@61 by AMR2), ((0, 14)@68 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 63 (unload path: (0, 6) -> (19, 18) at t=311.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR2, (0, 7) res by AMR1, (0, 5) res by AMR16, (0, 6) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 39 (inbound_line path: (0, 14) -> (1, 2) at t=32.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@40 by AMR3), ((0, 2)@44 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 21 (outbound_line path: (0, 14) -> (16, 14) at t=198.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@199 by AMR10), ((12, 14)@210 by AMR7), ((13, 14)@211 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 34 (pickup path: (0, 6) -> (0, 18) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@26 by idle AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 53 (inbound_line path: (0, 14) -> (1, 6) at t=194.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@198 by AMR4), ((0, 6)@202 by AMR14), ((1, 6)@203 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 34 (outbound_line path: (0, 6) -> (16, 18) at t=202.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@203 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 85 (unload path: (0, 10) -> (19, 14) at t=420.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@423 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 17 (inbound_line path: (0, 14) -> (3, 10) at t=198.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@199 by AMR13), ((0, 12)@200 by AMR3), ((2, 10)@204 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 52 (outbound_line path: (0, 6) -> (16, 14) at t=465.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((3, 14)@476 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 58 (inbound_line path: (0, 14) -> (1, 18) at t=13.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 9 (inbound_line path: (0, 10) -> (2, 6) at t=42.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@43 by AMR15), ((0, 8)@44 by AMR2), ((0, 6)@46 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 73 (inbound_line path: (0, 6) -> (2, 6) at t=18.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@19 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 11 (pickup path: (0, 14) -> (0, 2) at t=61.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@62 by AMR6), ((0, 10)@65 by AMR14), ((0, 6)@69 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 21 (unload path: (0, 14) -> (19, 14) at t=216.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 19 (outbound_line path: (0, 10) -> (16, 2) at t=193.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@194 by AMR2), ((0, 6)@197 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 55 (unload path: (0, 2) -> (19, 6) at t=357.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@359 by AMR2), ((0, 6)@361 by AMR3), ((1, 6)@362 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 36 (inbound_line path: (0, 14) -> (1, 6) at t=116.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@120 by AMR4), ((0, 6)@124 by AMR2), ((1, 6)@125 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 11 (outbound_line path: (0, 10) -> (16, 6) at t=8.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR8, (0, 9) res by AMR7, (0, 10) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 16 (outbound_line path: (0, 10) -> (16, 14) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@8 by AMR4), ((2, 14)@13 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 36 (unload path: (0, 6) -> (19, 10) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR15, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 94 (inbound_line path: (0, 12) -> (3, 14) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@25 by AMR15), ((1, 14)@27 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 57 (inbound_line path: (0, 6) -> (1, 10) at t=42.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@44 by AMR13), ((0, 10)@46 by AMR14), ((1, 10)@47 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 76 (outbound_line path: (0, 6) -> (16, 18) at t=270.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@278 by AMR10), ((0, 18)@282 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 82 (unload path: (0, 14) -> (19, 6) at t=221.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@222 by AMR12), ((0, 12)@223 by AMR3), ((0, 10)@225 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 89 (unload path: (0, 10) -> (19, 6) at t=282.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@283 by AMR14), ((0, 6)@286 by AMR3), ((1, 6)@287 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 79 (outbound_line path: (0, 10) -> (16, 6) at t=256.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@257 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 3 (unload path: (0, 2) -> (19, 10) at t=431.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 2) res by AMR16, (0, 3) res by AMR11, (0, 1) res by AMR6, (0, 2) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 31 (inbound_line path: (0, 10) -> (1, 2) at t=45.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@46 by AMR6), ((0, 2)@53 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 34 (inbound_line path: (0, 10) -> (1, 6) at t=57.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@58 by AMR6), ((0, 8)@59 by AMR4), ((0, 6)@61 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 18 (outbound_line path: (0, 14) -> (16, 10) at t=76.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@77 by AMR2), ((0, 12)@78 by AMR3), ((0, 10)@80 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 32 (inbound_line path: (0, 6) -> (2, 6) at t=10.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@11 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 44 (return path: (0, 2) -> (1, 16) at t=603.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@611 by AMR5), ((0, 12)@613 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 46 (return path: (0, 14) -> (1, 4) at t=343.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR4, (0, 15) res by AMR9, (0, 13) res by AMR15, (0, 14) res by AMR5
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 86 (inbound_line path: (0, 12) -> (2, 18) at t=42.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@44 by AMR11), ((0, 18)@48 by AMR13), ((1, 18)@49 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 4 (pickup path: (0, 2) -> (0, 18) at t=44.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@46 by AMR2), ((0, 12)@54 by AMR4), ((0, 14)@56 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 22 (inbound_line path: (0, 14) -> (2, 10) at t=55.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@56 by AMR6), ((0, 10)@59 by AMR3), ((1, 10)@60 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 21 (inbound_line path: (0, 10) -> (1, 6) at t=267.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 35 (pickup path: (1, 10) -> (0, 10) at t=335.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@336 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 36 (inbound_line path: (0, 14) -> (1, 14) at t=179.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 17 (unload path: (0, 14) -> (19, 14) at t=271.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@272 by AMR7), ((2, 14)@273 by AMR14), ((3, 14)@274 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 15 (outbound_line path: (0, 6) -> (16, 14) at t=591.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 99 (outbound_line path: (0, 6) -> (17, 6) at t=483.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@484 by AMR4), ((2, 6)@485 by AMR3), ((16, 6)@499 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 46 (outbound_line path: (0, 14) -> (17, 10) at t=203.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@207 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 61 (outbound_line path: (0, 6) -> (17, 18) at t=374.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR13, (0, 7) res by AMR1, (0, 5) res by AMR8, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 41 (inbound_line path: (0, 10) -> (2, 18) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@9 by AMR3), ((0, 14)@11 by AMR7), ((0, 18)@15 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 10 (return path: (0, 14) -> (2, 16) at t=116.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 13 (return path: (0, 14) -> (2, 16) at t=220.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR7, (0, 15) res by AMR4, (0, 13) res by AMR3, (0, 14) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 16 (outbound_line path: (0, 6) -> (17, 2) at t=274.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@275 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 11 (return path: (0, 14) -> (2, 16) at t=129.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@131 by AMR4), ((1, 16)@132 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 71 (unload path: (0, 10) -> (19, 14) at t=240.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR3, (0, 11) res by AMR5, (0, 9) res by AMR11, (0, 10) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 58 (unload path: (0, 10) -> (19, 14) at t=92.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@96 by AMR16), ((1, 14)@97 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 7 (return path: (0, 10) -> (0, 8) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@9 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 29 (return path: (0, 10) -> (0, 4) at t=18.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@19 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 32 (return path: (0, 6) -> (1, 8) at t=174.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@176 by AMR3), ((1, 8)@177 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 45 (outbound_line path: (0, 10) -> (17, 6) at t=151.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@152 by AMR6), ((0, 7)@154 by AMR7), ((1, 6)@156 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 20 (unload path: (0, 6) -> (19, 10) at t=225.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@227 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 20 (return path: (0, 10) -> (1, 8) at t=8.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR8, (0, 9) res by AMR3, (0, 10) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 7 (inbound_line path: (0, 10) -> (3, 18) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@8 by AMR4), ((1, 18)@16 by AMR8), ((2, 18)@17 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 19 (unload path: (0, 10) -> (19, 18) at t=53.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR5, (0, 11) res by AMR7, (0, 9) res by AMR10, (0, 10) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 6 (unload path: (0, 6) -> (19, 14) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@43 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 6 (unload path: (0, 6) -> (19, 14) at t=36.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR4, (0, 7) res by AMR9, (0, 5) res by AMR12, (0, 6) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 2 (return path: (0, 10) -> (2, 16) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@25 by AMR6), ((1, 16)@31 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 65 (outbound_line path: (0, 10) -> (16, 6) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR15, (0, 11) res by AMR3, (0, 9) res by AMR2, (0, 10) res by AMR11
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 41 (unload path: (0, 6) -> (19, 14) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@61 by AMR2), ((0, 14)@68 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 32 (inbound_line path: (0, 10) -> (1, 10) at t=7.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 60 (inbound_line path: (0, 6) -> (2, 10) at t=61.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@66 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 43 (unload path: (0, 14) -> (19, 10) at t=65.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@69 by AMR15), ((1, 10)@70 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 63 (inbound_line path: (0, 6) -> (1, 18) at t=24.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 46 (outbound_line path: (0, 14) -> (17, 10) at t=203.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@207 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 61 (outbound_line path: (0, 6) -> (17, 18) at t=374.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR13, (0, 7) res by AMR1, (0, 5) res by AMR8, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 74 (inbound_line path: (0, 14) -> (3, 10) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@36 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 49 (inbound_line path: (0, 6) -> (1, 2) at t=210.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR4, (0, 7) res by AMR15, (0, 5) res by AMR3, (0, 6) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 40 (pickup path: (1, 14) -> (0, 14) at t=115.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@116 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 77 (unload path: (0, 10) -> (19, 14) at t=224.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@225 by AMR1), ((0, 14)@228 by AMR11), ((2, 14)@230 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 51 (unload path: (0, 10) -> (19, 2) at t=276.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@277 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 55 (return path: (0, 14) -> (0, 16) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 15)@26 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 1 (unload path: (0, 10) -> (19, 2) at t=201.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@202 by AMR4), ((0, 4)@207 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 3 (unload path: (0, 10) -> (19, 6) at t=209.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@210 by AMR7), ((0, 6)@213 by AMR14), ((2, 6)@215 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 39 (outbound_line path: (0, 14) -> (16, 2) at t=143.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@147 by AMR5), ((0, 8)@149 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 47 (outbound_line path: (0, 6) -> (18, 14) at t=141.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@142 by AMR13), ((0, 10)@145 by AMR12), ((3, 14)@152 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 41 (unload path: (0, 6) -> (19, 14) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@61 by AMR2), ((0, 14)@68 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 1 (outbound_line path: (0, 6) -> (18, 6) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR2, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 12 (outbound_line path: (0, 10) -> (18, 6) at t=268.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR6, (0, 11) res by AMR11, (0, 9) res by AMR1, (0, 10) res by AMR5
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 50 (inbound_line path: (0, 6) -> (1, 18) at t=167.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@174 by AMR3), ((0, 18)@179 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 20 (return path: (0, 14) -> (0, 12) at t=84.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@85 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 10 (return path: (0, 14) -> (3, 16) at t=15.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((2, 16)@19 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 39 (inbound_line path: (0, 6) -> (2, 6) at t=151.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 45 (inbound_line path: (0, 14) -> (3, 10) at t=154.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@155 by AMR5), ((2, 10)@160 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 15 (inbound_line path: (0, 10) -> (1, 10) at t=9.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 20 (inbound_line path: (0, 10) -> (1, 2) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@8 by AMR7), ((0, 2)@15 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 11 (pickup path: (0, 14) -> (0, 6) at t=154.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 51 (unload path: (0, 10) -> (19, 2) at t=212.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR14, (0, 11) res by AMR7, (0, 9) res by AMR6, (0, 10) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 36 (return path: (0, 14) -> (2, 12) at t=111.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 35 (inbound_line path: (0, 8) -> (2, 18) at t=26.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@27 by AMR14), ((0, 10)@28 by AMR14), ((0, 14)@32 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 3 (unload path: (0, 10) -> (19, 14) at t=41.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 95 (return path: (0, 14) -> (2, 16) at t=110.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR10, (0, 15) res by AMR13, (0, 13) res by AMR6, (0, 14) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 18 (unload path: (0, 10) -> (19, 2) at t=252.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@253 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 99 (unload path: (0, 10) -> (19, 6) at t=278.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR5, (0, 11) res by AMR16, (0, 9) res by AMR2, (0, 10) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 32 (inbound_line path: (0, 6) -> (1, 10) at t=57.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR1, (0, 7) res by AMR8, (0, 5) res by AMR2, (0, 6) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 37 (outbound_line path: (0, 6) -> (16, 2) at t=243.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@244 by AMR11), ((3, 2)@250 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 60 (return path: (0, 14) -> (2, 12) at t=162.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@163 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 62 (return path: (0, 14) -> (2, 16) at t=172.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 15)@173 by AMR5), ((0, 16)@174 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 46 (unload path: (0, 14) -> (19, 10) at t=187.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@188 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 14 (return path: (0, 10) -> (3, 12) at t=229.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 49 (unload path: (0, 10) -> (19, 14) at t=156.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@158 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 2 (outbound_line path: (0, 14) -> (16, 10) at t=91.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@92 by AMR11), ((0, 10)@95 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 21 (inbound_line path: (0, 14) -> (1, 10) at t=45.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@49 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 36 (unload path: (0, 6) -> (19, 6) at t=115.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@116 by AMR11), ((2, 6)@117 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 36 (unload path: (0, 6) -> (19, 10) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR15, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 8 (return path: (0, 14) -> (0, 16) at t=57.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@59 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 31 (inbound_line path: (0, 10) -> (1, 14) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@37 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 5 (outbound_line path: (0, 6) -> (16, 6) at t=214.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR3, (0, 7) res by AMR12, (0, 5) res by AMR10, (0, 6) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 21 (unload path: (0, 14) -> (19, 14) at t=216.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 12 (inbound_line path: (0, 14) -> (1, 10) at t=77.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR8, (0, 13) res by AMR16, (0, 14) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 41 (pickup path: (0, 6) -> (0, 18) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@26 by AMR2), ((0, 10)@28 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 57 (pickup path: (0, 6) -> (0, 10) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@26 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 39 (return path: (0, 10) -> (1, 16) at t=144.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 33 (unload path: (0, 14) -> (19, 10) at t=44.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR9, (0, 15) res by AMR8, (0, 13) res by AMR2, (0, 14) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 37 (inbound_line path: (0, 14) -> (2, 14) at t=19.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@20 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 26 (inbound_line path: (0, 6) -> (2, 10) at t=40.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@44 by AMR16), ((1, 10)@45 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 35 (inbound_line path: (0, 10) -> (1, 6) at t=10.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@11 by AMR11), ((0, 6)@14 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 15 (inbound_line path: (0, 14) -> (3, 6) at t=88.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR13, (0, 13) res by AMR9, (0, 14) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 66 (unload path: (0, 6) -> (19, 6) at t=83.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 61 (inbound_line path: (0, 10) -> (2, 14) at t=41.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR16, (0, 11) res by AMR9, (0, 9) res by AMR3, (0, 10) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 39 (inbound_line path: (0, 10) -> (2, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@8 by AMR6), ((1, 6)@12 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 77 (outbound_line path: (0, 2) -> (17, 10) at t=552.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 2) res by AMR8, (0, 3) res by AMR16, (0, 1) res by AMR13, (0, 2) res by AMR1
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 59 (return path: (0, 10) -> (1, 16) at t=71.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@73 by AMR3), ((0, 14)@75 by AMR5), ((0, 16)@77 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 55 (pickup path: (0, 14) -> (0, 6) at t=154.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@155 by AMR5), ((0, 10)@158 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 33 (outbound_line path: (0, 6) -> (16, 2) at t=291.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR3, (0, 7) res by AMR5, (0, 5) res by AMR11, (0, 6) res by AMR1
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 75 (inbound_line path: (0, 16) -> (2, 14) at t=82.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@84 by AMR11), ((1, 14)@85 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 11 (outbound_line path: (0, 10) -> (16, 6) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR6, (0, 11) res by AMR3, (0, 9) res by AMR11, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 4 (inbound_line path: (0, 6) -> (1, 2) at t=178.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR3, (0, 7) res by AMR13, (0, 5) res by AMR12, (0, 6) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 59 (pickup path: (0, 10) -> (0, 14) at t=165.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@167 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 59 (return path: (0, 14) -> (1, 12) at t=33.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@34 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 15 (unload path: (0, 10) -> (19, 2) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@10 by AMR14), ((0, 6)@13 by AMR3), ((0, 2)@17 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 1 (inbound_line path: (0, 10) -> (3, 2) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@10 by AMR14), ((0, 6)@13 by AMR3), ((0, 2)@17 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 24 (unload path: (0, 10) -> (19, 6) at t=26.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR14, (0, 9) res by AMR5, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 27 (inbound_line path: (0, 10) -> (1, 6) at t=30.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@31 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 44 (return path: (0, 6) -> (3, 4) at t=81.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@82 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 83 (pickup path: (0, 10) -> (0, 6) at t=42.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@43 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 36 (outbound_line path: (0, 6) -> (16, 18) at t=188.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR14, (0, 7) res by AMR16, (0, 5) res by AMR8, (0, 6) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 41 (unload path: (0, 6) -> (19, 14) at t=60.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@61 by AMR2), ((0, 14)@68 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 31 (outbound_line path: (0, 10) -> (16, 10) at t=293.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 24 (inbound_line path: (0, 10) -> (2, 14) at t=40.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR7, (0, 11) res by AMR13, (0, 9) res by AMR6, (0, 10) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 73 (pickup path: (0, 6) -> (0, 18) at t=35.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR1, (0, 7) res by AMR15, (0, 5) res by AMR4, (0, 6) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 67 (inbound_line path: (0, 14) -> (2, 14) at t=13.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@14 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 96 (outbound_line path: (0, 6) -> (16, 6) at t=137.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR9, (0, 7) res by AMR5, (0, 5) res by AMR8, (0, 6) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 48 (return path: (0, 14) -> (3, 16) at t=90.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 16)@93 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 91 (return path: (0, 6) -> (3, 4) at t=587.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@588 by AMR5), ((0, 4)@589 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 53 (unload path: (0, 6) -> (19, 10) at t=144.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@145 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 41 (return path: (0, 14) -> (0, 12) at t=124.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 15 (unload path: (0, 14) -> (19, 2) at t=74.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@75 by AMR12), ((0, 10)@78 by AMR16), ((0, 6)@82 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 71 (unload path: (0, 10) -> (19, 14) at t=240.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR3, (0, 11) res by AMR5, (0, 9) res by AMR11, (0, 10) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 41 (outbound_line path: (0, 10) -> (17, 2) at t=207.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 44 (outbound_line path: (0, 6) -> (17, 6) at t=134.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR9, (0, 7) res by AMR10, (0, 5) res by AMR3, (0, 6) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 29 (unload path: (0, 10) -> (19, 6) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@36 by AMR4), ((0, 8)@37 by AMR13), ((0, 6)@39 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 7 (inbound_line path: (0, 10) -> (3, 2) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@10 by AMR14), ((0, 6)@13 by AMR3), ((0, 2)@17 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 68 (inbound_line path: (0, 12) -> (1, 18) at t=46.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@48 by AMR15), ((0, 18)@52 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 16 (inbound_line path: (0, 10) -> (3, 14) at t=51.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@55 by AMR7), ((1, 14)@56 by AMR2), ((2, 14)@57 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 12 (inbound_line path: (0, 10) -> (2, 10) at t=41.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR15, (0, 11) res by AMR5, (0, 9) res by AMR2, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 68 (unload path: (0, 10) -> (19, 14) at t=98.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR16, (0, 11) res by AMR6, (0, 9) res by AMR7, (0, 10) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 28 (outbound_line path: (0, 10) -> (16, 10) at t=295.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR3, (0, 9) res by AMR11, (0, 10) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 50 (inbound_line path: (0, 6) -> (1, 2) at t=295.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 2)@299 by AMR1), ((1, 2)@300 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 84 (pickup path: (1, 14) -> (0, 14) at t=205.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@206 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 82 (outbound_line path: (0, 2) -> (16, 10) at t=727.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 2) res by AMR7, (0, 3) res by AMR3, (0, 1) res by AMR9, (0, 2) res by AMR11
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 56 (return path: (0, 14) -> (3, 8) at t=183.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@184 by AMR1), ((0, 12)@185 by AMR8), ((0, 8)@189 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 27 (outbound_line path: (0, 10) -> (17, 6) at t=238.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@239 by AMR10), ((0, 6)@242 by AMR1), ((1, 6)@243 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 77 (outbound_line path: (0, 10) -> (16, 2) at t=32.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@33 by AMR9), ((0, 6)@36 by AMR12), ((0, 5)@37 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 22 (return path: (0, 14) -> (3, 16) at t=15.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@17 by AMR4), ((1, 16)@18 by AMR8), ((2, 16)@19 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 37 (unload path: (0, 10) -> (19, 6) at t=121.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR12, (0, 9) res by AMR11, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 47 (unload path: (0, 14) -> (19, 2) at t=109.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 24 (unload path: (0, 10) -> (19, 6) at t=197.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@198 by AMR7), ((0, 6)@201 by AMR2), ((1, 6)@202 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 50 (inbound_line path: (0, 14) -> (3, 10) at t=82.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@83 by AMR11), ((0, 10)@86 by AMR12), ((2, 10)@88 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 0 (outbound_line path: (0, 10) -> (16, 2) at t=163.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR1, (0, 11) res by AMR5, (0, 9) res by AMR15, (0, 10) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 58 (unload path: (0, 14) -> (19, 6) at t=78.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR1, (0, 15) res by AMR13, (0, 13) res by AMR11, (0, 14) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 16 (inbound_line path: (0, 10) -> (2, 10) at t=12.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 11 (outbound_line path: (0, 6) -> (16, 6) at t=226.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR16, (0, 7) res by AMR11, (0, 5) res by AMR3, (0, 6) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 20 (inbound_line path: (0, 10) -> (1, 6) at t=51.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@52 by AMR16), ((0, 6)@55 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 20 (inbound_line path: (0, 10) -> (2, 6) at t=51.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@52 by AMR16), ((0, 6)@55 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 8 (pickup path: (1, 10) -> (0, 10) at t=42.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@43 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 0 (inbound_line path: (0, 10) -> (1, 2) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@25 by AMR5), ((0, 8)@26 by AMR10), ((0, 6)@28 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 18 (outbound_line path: (0, 10) -> (17, 10) at t=140.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@141 by AMR11), ((16, 10)@156 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 2 (inbound_line path: (0, 10) -> (1, 6) at t=52.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@53 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 11 (return path: (0, 6) -> (3, 4) at t=106.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@107 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 7 (unload path: (0, 6) -> (19, 18) at t=23.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@25 by AMR15), ((0, 14)@31 by AMR1), ((0, 18)@35 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 69 (outbound_line path: (0, 10) -> (16, 10) at t=480.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR13, (0, 9) res by AMR5, (0, 10) res by AMR9
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 33 (unload path: (0, 10) -> (19, 14) at t=190.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@194 by AMR13), ((3, 14)@197 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 51 (outbound_line path: (0, 10) -> (16, 14) at t=252.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@253 by AMR11), ((0, 14)@256 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 82 (outbound_line path: (0, 6) -> (16, 14) at t=490.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 94 (return path: (0, 10) -> (0, 4) at t=198.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@199 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 97 (outbound_line path: (0, 6) -> (16, 6) at t=500.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@501 by AMR10), ((3, 6)@503 by AMR12), ((10, 6)@510 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 31 (outbound_line path: (0, 2) -> (16, 10) at t=644.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@646 by AMR2), ((6, 10)@658 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 35 (outbound_line path: (0, 10) -> (17, 2) at t=216.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR11, (0, 11) res by AMR1, (0, 9) res by AMR2, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 77 (inbound_line path: (0, 10) -> (1, 14) at t=39.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@41 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 1 (inbound_line path: (0, 12) -> (2, 18) at t=34.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@36 by AMR15), ((0, 18)@40 by AMR14), ((1, 18)@41 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 46 (inbound_line path: (0, 10) -> (3, 14) at t=41.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR14, (0, 11) res by AMR5, (0, 9) res by AMR2, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 6 (return path: (0, 10) -> (0, 12) at t=9.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 57 (inbound_line path: (0, 10) -> (1, 18) at t=38.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR13, (0, 11) res by AMR1, (0, 9) res by AMR15, (0, 10) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 21 (inbound_line path: (0, 14) -> (3, 18) at t=31.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@33 by AMR4), ((1, 18)@36 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 24 (inbound_line path: (0, 6) -> (1, 10) at t=40.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@44 by AMR2), ((1, 10)@45 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 50 (unload path: (0, 10) -> (19, 18) at t=211.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 78 (return path: (0, 10) -> (2, 12) at t=161.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@162 by AMR1), ((0, 12)@163 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 34 (inbound_line path: (0, 14) -> (3, 10) at t=181.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@182 by AMR2), ((0, 12)@183 by AMR3), ((0, 11)@184 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 34 (inbound_line path: (0, 12) -> (3, 18) at t=315.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 18)@321 by AMR14), ((2, 18)@323 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 41 (pickup path: (0, 16) -> (0, 2) at t=330.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 56 (outbound_line path: (0, 10) -> (16, 6) at t=291.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@292 by AMR15), ((3, 6)@298 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 3 (unload path: (0, 2) -> (19, 18) at t=527.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@529 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 13 (inbound_line path: (0, 10) -> (2, 2) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@13 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 1 (outbound_line path: (0, 6) -> (16, 18) at t=219.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR15, (0, 7) res by AMR16, (0, 5) res by AMR6, (0, 6) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 18 (outbound_line path: (0, 10) -> (17, 10) at t=75.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((2, 10)@77 by AMR4), ((3, 10)@78 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 55 (unload path: (0, 10) -> (19, 6) at t=175.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@176 by AMR3), ((1, 6)@180 by AMR9), ((2, 6)@181 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 37 (outbound_line path: (0, 6) -> (17, 6) at t=270.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 49 (outbound_line path: (0, 10) -> (16, 6) at t=165.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@169 by AMR12), ((1, 6)@170 by AMR2), ((2, 6)@171 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 2 (unload path: (0, 14) -> (19, 18) at t=51.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR9, (0, 15) res by AMR1, (0, 13) res by AMR6, (0, 14) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 20 (unload path: (0, 14) -> (19, 6) at t=145.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@147 by AMR4), ((0, 10)@149 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 2 (unload path: (0, 10) -> (19, 18) at t=111.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@113 by AMR3), ((0, 14)@115 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 14 (outbound_line path: (0, 10) -> (16, 14) at t=76.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR14, (0, 11) res by AMR2, (0, 9) res by AMR12, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 15 (return path: (0, 10) -> (0, 16) at t=125.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 11 (inbound_line path: (0, 10) -> (3, 6) at t=14.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@15 by AMR8), ((0, 6)@18 by AMR11), ((2, 6)@20 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 16 (unload path: (0, 10) -> (19, 10) at t=12.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@13 by AMR7), ((3, 10)@15 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 13 (unload path: (0, 10) -> (19, 18) at t=501.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@502 by AMR9), ((0, 16)@507 by idle AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 9 (outbound_line path: (0, 10) -> (16, 14) at t=89.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR10, (0, 11) res by AMR3, (0, 9) res by AMR15, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 55 (return path: (0, 14) -> (0, 12) at t=78.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@79 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 87 (outbound_line path: (0, 10) -> (17, 6) at t=282.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@283 by AMR6), ((1, 6)@287 by AMR16), ((2, 6)@288 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 37 (inbound_line path: (0, 10) -> (1, 2) at t=33.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR13, (0, 11) res by AMR5, (0, 9) res by AMR2, (0, 10) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 35 (inbound_line path: (0, 14) -> (2, 14) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 14)@36 by AMR5)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 19 (inbound_line path: (0, 10) -> (1, 6) at t=43.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR13, (0, 9) res by AMR9, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 71 (inbound_line path: (0, 10) -> (2, 14) at t=33.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@34 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 2 (inbound_line path: (0, 10) -> (1, 18) at t=45.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR12, (0, 11) res by AMR15, (0, 9) res by AMR3, (0, 10) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 12 (unload path: (0, 14) -> (19, 18) at t=137.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR4, (0, 15) res by AMR7, (0, 13) res by AMR11, (0, 14) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 11 (outbound_line path: (0, 6) -> (16, 6) at t=226.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR16, (0, 7) res by AMR11, (0, 5) res by AMR3, (0, 6) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 41 (outbound_line path: (0, 6) -> (16, 6) at t=233.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR8, (0, 7) res by AMR11, (0, 5) res by AMR2, (0, 6) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 11 (outbound_line path: (0, 10) -> (16, 10) at t=86.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR14, (0, 9) res by AMR7, (0, 10) res by AMR13
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 20 (inbound_line path: (0, 10) -> (2, 14) at t=9.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@11 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 12 (outbound_line path: (0, 6) -> (16, 10) at t=97.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@98 by AMR9), ((0, 10)@101 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 2 (return path: (0, 10) -> (1, 4) at t=106.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@107 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 36 (unload path: (0, 6) -> (19, 10) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR15, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 36 (unload path: (0, 6) -> (19, 10) at t=228.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR15, (0, 7) res by AMR14, (0, 5) res by AMR12, (0, 6) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 36 (outbound_line path: (0, 6) -> (16, 18) at t=188.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR14, (0, 7) res by AMR16, (0, 5) res by AMR8, (0, 6) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 42 (unload path: (0, 6) -> (19, 18) at t=75.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@76 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 12 (return path: (0, 14) -> (1, 4) at t=189.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@190 by AMR12), ((0, 4)@199 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 31 (unload path: (0, 2) -> (19, 2) at t=750.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@751 by AMR12), ((3, 2)@753 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 4 (unload path: (0, 6) -> (19, 2) at t=479.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@480 by AMR1), ((0, 2)@483 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 99 (return path: (0, 14) -> (3, 16) at t=145.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@147 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 38 (outbound_line path: (0, 12) -> (16, 10) at t=344.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@345 by AMR10), ((2, 10)@348 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 8 (return path: (0, 10) -> (3, 16) at t=29.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@31 by AMR3), ((0, 14)@33 by AMR7), ((1, 16)@36 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 59 (outbound_line path: (0, 6) -> (16, 10) at t=470.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@471 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 3 (inbound_line path: (0, 14) -> (1, 10) at t=14.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR4, (0, 13) res by AMR9, (0, 14) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 73 (outbound_line path: (0, 2) -> (17, 10) at t=643.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 4)@645 by AMR5), ((0, 6)@647 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 33 (inbound_line path: (0, 10) -> (2, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR5, (0, 11) res by AMR16, (0, 9) res by AMR7, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 78 (inbound_line path: (0, 10) -> (1, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@9 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 19 (inbound_line path: (0, 10) -> (2, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@8 by AMR5), ((0, 8)@9 by AMR1), ((0, 6)@11 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 39 (unload path: (0, 6) -> (19, 6) at t=61.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@62 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 40 (pickup path: (0, 6) -> (0, 10) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@26 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 11 (inbound_line path: (0, 14) -> (2, 18) at t=50.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 61 (outbound_line path: (0, 18) -> (16, 14) at t=416.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 7 (unload path: (0, 6) -> (19, 18) at t=287.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR9, (0, 7) res by AMR13, (0, 5) res by AMR12, (0, 6) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 1 (outbound_line path: (0, 6) -> (16, 14) at t=337.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@339 by AMR2), ((6, 14)@351 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 15 (unload path: (0, 14) -> (19, 2) at t=109.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@110 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 50 (inbound_line path: (0, 10) -> (1, 6) at t=7.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 14 (inbound_line path: (0, 10) -> (2, 6) at t=57.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@58 by AMR12), ((0, 6)@61 by AMR7), ((1, 6)@62 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 26 (inbound_line path: (0, 14) -> (1, 2) at t=48.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@49 by AMR6), ((0, 10)@52 by AMR9), ((0, 6)@56 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 17 (inbound_line path: (0, 6) -> (2, 2) at t=128.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@129 by AMR2), ((1, 2)@133 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 50 (outbound_line path: (0, 6) -> (17, 2) at t=233.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 2)@237 by AMR3), ((1, 2)@238 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 30 (outbound_line path: (0, 10) -> (16, 6) at t=104.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR13, (0, 11) res by AMR12, (0, 9) res by AMR6, (0, 10) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 30 (outbound_line path: (0, 14) -> (16, 6) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR15, (0, 15) res by AMR4, (0, 13) res by AMR2, (0, 14) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 69 (outbound_line path: (0, 6) -> (17, 6) at t=227.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 73 (outbound_line path: (19, 10) -> (18, 6) at t=460.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (18, 10) res by AMR5, (19, 11) res by AMR14, (19, 9) res by AMR15, (19, 10) res by AMR11
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 66 (pickup path: (0, 10) -> (0, 18) at t=382.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@383 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 44 (outbound_line path: (0, 6) -> (16, 2) at t=17.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@18 by AMR13), ((0, 2)@21 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 94 (unload path: (0, 14) -> (19, 10) at t=197.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR6, (0, 15) res by AMR9, (0, 13) res by AMR1, (0, 14) res by AMR5
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 48 (inbound_line path: (0, 12) -> (1, 14) at t=249.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@251 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 69 (outbound_line path: (0, 10) -> (17, 10) at t=149.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((16, 10)@165 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 4 (return path: (0, 14) -> (1, 4) at t=72.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@73 by AMR13), ((0, 12)@74 by AMR3), ((0, 10)@76 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 11 (outbound_line path: (0, 14) -> (16, 10) at t=72.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@76 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 29 (unload path: (0, 2) -> (19, 6) at t=188.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((7, 6)@199 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 15 (unload path: (0, 10) -> (19, 2) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@8 by AMR1), ((1, 2)@16 by AMR5), ((2, 2)@17 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 62 (unload path: (0, 10) -> (19, 10) at t=500.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR4, (0, 11) res by AMR7, (0, 9) res by AMR11, (0, 10) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 30 (outbound_line path: (0, 14) -> (16, 6) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR15, (0, 15) res by AMR4, (0, 13) res by AMR2, (0, 14) res by AMR7
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 44 (inbound_line path: (0, 6) -> (1, 18) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 17)@35 by AMR15), ((0, 18)@36 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 67 (return path: (0, 14) -> (2, 12) at t=224.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@225 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 36 (inbound_line path: (0, 14) -> (1, 10) at t=199.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR4, (0, 13) res by AMR14, (0, 14) res by AMR1
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 91 (outbound_line path: (0, 10) -> (18, 10) at t=284.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@285 by AMR9), ((3, 10)@287 by AMR16), ((16, 10)@300 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 35 (outbound_line path: (0, 10) -> (17, 2) at t=216.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR11, (0, 11) res by AMR1, (0, 9) res by AMR2, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 72 (inbound_line path: (0, 10) -> (1, 2) at t=31.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR8, (0, 11) res by AMR9, (0, 9) res by AMR15, (0, 10) res by AMR13
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 44 (inbound_line path: (0, 12) -> (3, 18) at t=29.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@31 by AMR5), ((0, 18)@35 by AMR9), ((2, 18)@37 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 63 (inbound_line path: (0, 12) -> (3, 14) at t=34.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@36 by AMR14), ((1, 14)@37 by AMR6), ((2, 14)@38 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 25 (unload path: (0, 10) -> (19, 6) at t=178.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((7, 6)@189 by AMR6)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 25 (pickup path: (1, 10) -> (0, 10) at t=56.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@57 by AMR2)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 40 (inbound_line path: (0, 14) -> (2, 6) at t=16.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@18 by AMR4), ((0, 10)@20 by AMR9), ((0, 6)@24 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 55 (inbound_line path: (0, 6) -> (1, 10) at t=16.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@20 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 19 (pickup path: (1, 10) -> (0, 10) at t=73.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@74 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 55 (inbound_line path: (0, 14) -> (1, 6) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR15, (0, 15) res by AMR4, (0, 13) res by AMR3, (0, 14) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 55 (inbound_line path: (0, 14) -> (3, 6) at t=175.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR10, (0, 15) res by AMR14, (0, 13) res by AMR8, (0, 14) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 3 (return path: (0, 6) -> (3, 16) at t=319.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@321 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 37 (outbound_line path: (0, 6) -> (17, 6) at t=270.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 49 (outbound_line path: (0, 10) -> (16, 6) at t=165.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@169 by AMR12), ((1, 6)@170 by AMR2), ((2, 6)@171 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 24 (return path: (0, 6) -> (3, 8) at t=184.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR10, (0, 7) res by AMR2, (0, 5) res by AMR11, (0, 6) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 5 (unload path: (0, 10) -> (19, 10) at t=7.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@8 by AMR9), ((2, 10)@9 by AMR9), ((3, 10)@10 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 4 (outbound_line path: (0, 10) -> (16, 2) at t=53.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR10, (0, 11) res by AMR9, (0, 9) res by AMR1, (0, 10) res by AMR11
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 29 (unload path: (0, 10) -> (19, 2) at t=18.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@19 by AMR14), ((0, 5)@23 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 19 (pickup path: (0, 10) -> (0, 2) at t=119.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR3, (0, 11) res by AMR10, (0, 9) res by AMR4, (0, 10) res by AMR8
+  [WARNING] Pathfinding failed for AMR 'AMR1' on Job 44 (unload path: (0, 6) -> (19, 14) at t=100.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@102 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 73 (unload path: (0, 6) -> (19, 2) at t=231.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@232 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 75 (inbound_line path: (0, 10) -> (2, 10) at t=33.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@34 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 95 (pickup path: (0, 6) -> (0, 18) at t=24.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@28 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 10 (return path: (0, 14) -> (1, 16) at t=13.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@15 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 67 (outbound_line path: (0, 10) -> (16, 6) at t=290.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR15, (0, 11) res by AMR8, (0, 9) res by AMR16, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 43 (pickup path: (0, 10) -> (0, 6) at t=131.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 75 (outbound_line path: (0, 6) -> (16, 18) at t=190.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 73 (outbound_line path: (0, 2) -> (18, 2) at t=450.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@451 by AMR3), ((3, 2)@453 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 55 (unload path: (0, 10) -> (19, 14) at t=105.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@109 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 57 (unload path: (0, 10) -> (19, 6) at t=130.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@131 by AMR6), ((0, 8)@132 by AMR12), ((0, 7)@133 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 33 (outbound_line path: (0, 10) -> (16, 18) at t=99.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@102 by AMR11), ((1, 18)@108 by AMR12), ((2, 18)@109 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 23 (inbound_line path: (0, 10) -> (1, 18) at t=25.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@29 by AMR13), ((0, 18)@33 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 60 (inbound_line path: (0, 6) -> (1, 2) at t=26.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@27 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 79 (unload path: (0, 10) -> (19, 2) at t=19.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR3, (0, 9) res by AMR14, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 17 (unload path: (0, 10) -> (19, 2) at t=378.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR1, (0, 9) res by AMR15, (0, 10) res by AMR6
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 34 (outbound_line path: (0, 6) -> (16, 2) at t=166.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR10, (0, 7) res by AMR8, (0, 5) res by AMR1, (0, 6) res by AMR5
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 44 (unload path: (0, 10) -> (19, 10) at t=456.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@457 by AMR10), ((2, 10)@458 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 54 (inbound_line path: (0, 14) -> (2, 10) at t=69.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@70 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 28 (return path: (0, 14) -> (1, 12) at t=53.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@55 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 52 (unload path: (0, 6) -> (19, 2) at t=523.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@524 by AMR4), ((0, 2)@527 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 30 (unload path: (0, 14) -> (19, 18) at t=179.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@181 by AMR4), ((0, 18)@183 by AMR16), ((1, 18)@184 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 12 (inbound_line path: (0, 10) -> (2, 18) at t=56.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@59 by AMR13), ((0, 14)@60 by AMR13), ((1, 18)@65 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 69 (unload path: (0, 6) -> (19, 18) at t=148.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@150 by AMR16), ((0, 9)@151 by AMR16), ((0, 10)@152 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 45 (return path: (0, 14) -> (2, 16) at t=167.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@169 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 22 (return path: (0, 14) -> (1, 12) at t=170.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@171 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 7 (pickup path: (0, 14) -> (0, 6) at t=40.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR16, (0, 13) res by AMR14, (0, 14) res by AMR4
+  [WARNING] Pathfinding failed for AMR 'AMR7' on Job 6 (unload path: (0, 6) -> (19, 14) at t=35.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@43 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 58 (pickup path: (19, 10) -> (0, 18) at t=190.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@209 by AMR14)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 30 (outbound_line path: (0, 10) -> (16, 6) at t=104.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR13, (0, 11) res by AMR12, (0, 9) res by AMR6, (0, 10) res by AMR16
+done: 41500 rows -> experiments/full_benchmark/raw/rows.jsonl

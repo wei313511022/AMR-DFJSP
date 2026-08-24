@@ -1,0 +1,22 @@
+
+SURROGATE FIDELITY -- 12 candidate schedules per instance, m=16
+dropped 0 of 1080 schedules the executor could not route
+========================================================================================================
+
+VALUE ERROR  |predicted - executed| / executed
+      n  sched   C~ MAPE   C~ bias   Psi MAPE  Psi bias
+     20    360     12.3%    -12.3%      11.2%    -11.1%
+     60    360     15.3%    -15.3%       7.0%     -6.9%
+    100    360     13.7%    -13.7%       5.2%     -5.1%
+
+DECISION ERROR  within-instance ranking of the 12 candidates vs the executor
+      n  inst    C~ tau   Psi tau     C~ regret  Psi regret   C~ best  Psi best
+     20    30     0.335     0.723         9.40%       2.55%      9/30     13/30
+     60    30     0.454     0.736         4.96%       1.24%     13/30     16/30
+    100    30     0.655     0.858         2.06%       0.14%     16/30     27/30
+
+COST  seconds to score ONE complete schedule
+      n          C~     Psi-hat         Phi     Phi/Psi   Phi/C~
+     20    0.000097    0.000111    0.029184        263x     299x
+     60    0.000096    0.000294    0.085190        290x     888x
+    100    0.000149    0.000483    0.143005        296x     962x

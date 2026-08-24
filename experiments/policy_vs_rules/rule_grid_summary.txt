@@ -1,0 +1,102 @@
+
+COMPLETE DISPATCHING-RULE GRID -- test_60, 100 instances, m=16 (eta=3.2)
+60 combinations, ranked by executed makespan
+========================================================================================================
+  #                                combination  executed      sd    ideal   Lambda    Om_q    Om_r    nu  solve_s
+  1                milk_run+earliest_available     347.2    34.8    287.8   21.02%   37.0%    5.7%     0    0.307
+  2                            milk_run+random     348.7    31.2    291.7   19.83%   32.9%    5.6%     0    0.309
+  3                      milk_run+least_loaded     348.7    35.8    280.8   24.57%   36.0%    5.7%     0    0.309
+  4                    milk_run+material_match     349.6    34.3    300.7   16.30%   28.8%    5.5%     0    0.307
+  5               milk_run+earliest_completion     350.6    34.2    290.4   20.93%   39.2%    5.4%     0    0.307
+  6                       milk_run+nearest_amr     350.6    34.2    290.4   20.93%   39.2%    5.4%     0    0.306
+  7          material_match+earliest_available     353.5    19.9    311.1   13.71%    4.8%    5.0%     0    0.235
+  8                material_match+least_loaded     353.5    19.9    311.1   13.71%    4.8%    5.0%     0    0.236
+  9 earliest_completion_job+earliest_available     353.5    19.8    311.4   13.59%    4.9%    5.0%     0    0.234
+ 10       earliest_completion_job+least_loaded     353.5    19.8    311.4   13.59%    4.9%    5.0%     0    0.235
+ 11         material_match+earliest_completion     354.1    21.5    309.6   14.47%    5.2%    5.2%     0    0.236
+ 12                 material_match+nearest_amr     354.1    21.5    309.6   14.47%    5.2%    5.2%     0    0.234
+ 13                      material_match+random     354.1    20.2    312.6   13.35%    4.8%    5.0%     0    0.236
+ 14 earliest_completion_job+earliest_completion     354.2    21.2    309.8   14.47%    5.2%    5.2%     0    0.235
+ 15        earliest_completion_job+nearest_amr     354.2    21.2    309.8   14.47%    5.2%    5.2%     0    0.233
+ 16             earliest_completion_job+random     354.2    20.4    312.9   13.28%    4.8%    5.0%     0    0.235
+ 17     earliest_completion_job+material_match     355.4    20.7    316.4   12.40%    4.6%    5.0%     0    0.234
+ 18              material_match+material_match     355.4    20.9    316.3   12.42%    4.6%    5.0%     0    0.234
+ 19 most_congested_station+earliest_completion     370.0    23.9    315.0   17.69%   23.8%    5.1%     0    0.236
+ 20      most_congested_station+material_match     371.9    23.2    321.4   15.90%   22.0%    5.4%     1    0.235
+ 21  most_congested_station+earliest_available     376.9    18.5    326.3   15.74%   20.7%    5.0%     0    0.235
+ 22        most_congested_station+least_loaded     378.0    19.5    314.4   20.29%   21.4%    5.1%     1    0.237
+ 23                     lpt+earliest_available     380.3    18.0    324.2   17.49%   22.0%    5.2%     0    0.232
+ 24                    lpt+earliest_completion     381.2    24.4    316.5   20.64%   26.7%    5.5%     0    0.233
+ 25                           lpt+least_loaded     382.6    17.4    312.8   22.45%   22.7%    5.2%     0    0.234
+ 26                         lpt+material_match     384.2    23.1    326.3   17.91%   24.8%    5.6%     0    0.232
+ 27                    spt+earliest_completion     386.0    23.8    322.3   19.98%   17.2%    5.9%     0    0.233
+ 28                     spt+earliest_available     386.7    20.2    318.6   21.51%   17.1%    5.4%     0    0.233
+ 29                    fifo+earliest_available     386.8    18.5    325.6   18.95%   19.9%    5.5%     0    0.231
+ 30                           spt+least_loaded     387.5    21.4    317.6   22.12%   17.2%    5.4%     0    0.234
+ 31                   fifo+earliest_completion     388.1    23.0    320.7   21.13%   22.5%    5.8%     0    0.231
+ 32                         spt+material_match     388.3    25.3    328.6   18.37%   15.4%    5.6%     0    0.232
+ 33                          fifo+least_loaded     389.2    19.6    322.4   20.83%   20.6%    5.5%     1    0.233
+ 34                        fifo+material_match     389.7    23.6    329.4   18.44%   20.2%    5.8%     0    0.231
+ 35 least_congested_station+earliest_available     522.9    22.1    348.6   50.44%   45.2%    9.2%     1    0.230
+ 36                            lpt+nearest_amr     529.2    89.7    411.7   28.86%   51.2%    6.0%     0    0.233
+ 37       least_congested_station+least_loaded     545.1    24.4    321.8   69.52%   52.1%    9.3%     1    0.233
+ 38                           fifo+nearest_amr     557.2    98.2    436.4   28.45%   48.5%    6.1%     0    0.231
+ 39                            spt+nearest_amr     566.2    98.8    442.4   28.15%   44.5%    5.9%     0    0.232
+ 40         most_congested_station+nearest_amr     569.0   112.1    433.2   31.55%   57.4%    5.8%     0    0.235
+ 41 least_congested_station+earliest_completion     632.3    42.3    454.7   39.88%   65.7%    7.3%     0    0.232
+ 42     least_congested_station+material_match     635.4    43.5    494.9   28.69%   44.0%    6.7%     0    0.232
+ 43                              random+random     646.2    67.3    344.0   89.96%  161.2%   20.2%     0    0.109
+ 44                  random+earliest_available     652.2    62.6    357.4   85.45%  161.8%   20.3%     0    0.110
+ 45                 random+earliest_completion     652.2    62.6    357.4   85.45%  161.8%   20.3%     0    0.110
+ 46                        random+least_loaded     652.2    62.6    357.4   85.45%  161.8%   20.3%     0    0.111
+ 47                      random+material_match     652.2    62.6    357.4   85.45%  161.8%   20.3%     0    0.109
+ 48                         random+nearest_amr     652.2    62.6    357.4   85.45%  161.8%   20.3%     0    0.110
+ 49        least_congested_station+nearest_amr     684.7    70.6    449.8   54.10%   88.1%    8.5%     0    0.231
+ 50              most_congested_station+random     903.0   115.2    553.7   65.56%  148.8%    5.4%     0    0.237
+ 51                                 lpt+random     930.6   100.1    555.7   69.22%  154.2%    5.6%     0    0.234
+ 52                                fifo+random     936.2   102.3    538.0   76.50%  149.7%    5.6%     0    0.234
+ 53                                 spt+random     955.8   121.4    538.8   79.46%  144.6%    5.4%     0    0.235
+ 54         nearest_station+earliest_available     999.7   177.9    495.3  110.96%  334.1%   11.1%     0    0.117
+ 55             nearest_station+material_match    1002.0   172.0    503.8  107.84%  334.4%   11.0%     0    0.118
+ 56               nearest_station+least_loaded    1003.5   178.0    486.8  115.72%  338.6%   11.3%     0    0.119
+ 57        nearest_station+earliest_completion    1006.5   188.7    512.5  104.77%  336.6%   10.9%     0    0.118
+ 58                nearest_station+nearest_amr    1006.5   188.7    512.5  104.77%  336.6%   10.9%     0    0.118
+ 59                     nearest_station+random    1009.2   165.9    480.0  119.21%  341.1%   11.3%     0    0.119
+ 60             least_congested_station+random    1226.7   117.2    549.4  127.39%  226.2%    8.0%     0    0.233
+
+
+MARGINALS -- mean executed over the other axis
+--------------------------------------------------------------------------------------------------------
+                    job rule     mean     best    worst   spread
+                    milk_run    349.2    347.2    350.6      3.4
+              material_match    354.1    353.5    355.4      1.9
+     earliest_completion_job    354.2    353.5    355.4      1.9
+      most_congested_station    494.8    370.0    903.0    533.1
+                         lpt    498.0    380.3    930.6    550.3
+                        fifo    507.9    386.8    936.2    549.3
+                         spt    511.8    386.0    955.8    569.8
+                      random    651.2    646.2    652.2      6.1
+     least_congested_station    707.8    522.9   1226.7    703.8
+             nearest_station   1004.6    999.7   1009.2      9.5
+
+                    AMR rule     mean     best    worst   spread
+          earliest_available    476.0    347.2    999.7    652.6
+                least_loaded    479.4    348.7   1003.5    654.8
+         earliest_completion    487.5    350.6   1006.5    655.9
+              material_match    488.4    349.6   1002.0    652.4
+                 nearest_amr    562.4    350.6   1006.5    655.9
+                      random    766.5    348.7   1226.7    878.0
+
+  job-rule choice moves the mean by 655.4; AMR-rule choice by 290.5 -> the JOB rule is the bigger lever (2.3x)
+
+  excluding `random` on both axes (45 combinations): best milk_run+earliest_available 347.2, worst nearest_station+nearest_amr 1006.5 (189.9% spread)
+
+
+WHERE THE LEARNED POLICY LANDS
+--------------------------------------------------------------------------------------------------------
+  model ppo_gc1_s44_best (selected on val_60, not on test)
+                               configuration  executed             rank  solve_s   vs best rule
+                     ppo_gc1_s44_best greedy     331.3           1 / 61    0.581         -15.9
+                  ppo_gc1_s44_best best-of-8     318.9           1 / 61    4.823         -28.3
+                 ppo_gc1_s44_best best-of-16     315.2           1 / 61    9.608         -32.0
+      best rule: milk_run+earliest_available     347.2           1 / 61    0.358          +0.0

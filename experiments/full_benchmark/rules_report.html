@@ -1,0 +1,436 @@
+<title>Dispatching Rule Rankings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#F5F8F8; --card:#FFFFFF; --ink:#131A1D; --body:#2C383B;
+  --muted:#5C6B6E; --rule:#D6DEDF; --rule-soft:#E7EDED;
+  --accent:#0E646D; --accent-soft:#E2F0F1; --accent-line:#8FC4C9;
+  --warn:#A9521B; --warn-soft:#F7E9DE;
+  --alt:#5F5486; --alt-soft:#ECE9F3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+    --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+    --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+    --warn:#DC9257; --warn-soft:#2F2118;
+    --alt:#A79AD0; --alt-soft:#1E1B2B;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+  --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+  --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+  --warn:#DC9257; --warn-soft:#2F2118;
+  --alt:#A79AD0; --alt-soft:#1E1B2B;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--body);
+  font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.62;
+  margin:0;padding:0 24px 96px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,5vw,3.1rem);font-weight:700;letter-spacing:-.015em;line-height:1.06}
+h2{font-size:1.72rem;font-weight:600;letter-spacing:-.005em}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+strong{color:var(--ink);font-weight:600}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em;
+  background:var(--rule-soft);padding:.1em .36em;border-radius:3px;color:var(--ink)}
+header.mast{padding:72px 0 34px;border-bottom:2px solid var(--ink)}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.mast .lede{margin-top:20px;font-size:1.18rem;color:var(--muted);max-width:60ch}
+.key{display:flex;flex-wrap:wrap;gap:24px;margin-top:30px;
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--muted)}
+.key span b{display:inline-block;width:11px;height:11px;border-radius:2px;
+  vertical-align:-1px;margin-right:8px}
+section{padding:56px 0 0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  padding-left:13px;border-left:2px solid var(--accent);margin-bottom:12px}
+section > h2{margin-bottom:16px}
+.stack{display:flex;flex-direction:column;gap:17px}
+.scroll{overflow-x:auto;margin-top:24px;border:1px solid var(--rule);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",monospace;
+  font-size:.79rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+caption{caption-side:top;text-align:left;padding:14px 16px 12px;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:1.02rem;font-weight:600;
+  color:var(--ink);border-bottom:1px solid var(--rule)}
+.capnote{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:400;color:var(--muted)}
+th,td{padding:6px 13px;text-align:right;border-bottom:1px solid var(--rule-soft)}
+th{font-weight:600;color:var(--muted);font-size:.67rem;letter-spacing:.07em;
+  text-transform:uppercase;border-bottom:1px solid var(--rule);background:var(--card)}
+th:first-child,td:first-child{text-align:left}
+td.name{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:.88rem;
+  font-weight:500;color:var(--ink);text-align:left}
+td.rank{color:var(--muted);width:34px;font-size:.72rem}
+td.ms{font-weight:600;color:var(--ink)}
+td.ci,.dim{color:var(--muted)}
+tbody tr:last-child td{border-bottom:none}
+tr.fam-comp td.jr{color:var(--accent)}
+tr.fam-batch td.jr{color:var(--warn)}
+tr.fam-other td.jr{color:var(--alt)}
+tr.fam-comp td.rank{border-left:3px solid var(--accent)}
+tr.fam-batch td.rank{border-left:3px solid var(--warn)}
+tr.fam-other td.rank{border-left:3px solid var(--alt)}
+.nu{color:var(--warn);font-size:.85em}
+.win{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.bad{background:var(--warn-soft);color:var(--warn);font-weight:600}
+td.bar{font-family:"IBM Plex Mono",monospace;letter-spacing:-1px;text-align:left;font-size:.8rem}
+.bar-comp{color:var(--accent)}.bar-batch{color:var(--warn)}.bar-other{color:var(--alt)}
+td.bar .cnt{color:var(--muted);margin-left:8px;letter-spacing:0;font-size:.9em}
+.note{border-left:2px solid var(--accent-line);padding:2px 0 2px 20px;
+  color:var(--muted);font-size:.97rem;margin-top:18px}
+.finding{background:var(--card);border:1px solid var(--rule);padding:22px 24px;
+  display:flex;flex-direction:column;gap:9px;margin-top:26px}
+.finding h3{color:var(--accent)}
+.finding.flip h3{color:var(--warn)}
+ul{margin:0;padding-left:1.15rem}
+li{margin-bottom:.5rem}
+li::marker{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);line-height:1.8}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">Scenario v3 &middot; m = 16 &middot; 100 instances per size</div>
+  <h1>Which rule, at which workload</h1>
+  <p class="lede">The top fifteen of sixty dispatching-rule combinations, ranked separately at
+  each parcel count. The leaderboard turns over completely between n = 40 and n = 80.</p>
+  <div class="key">
+    <span><b style="background:var(--accent)"></b>completion family &mdash; earliest_completion_job, material_match</span>
+    <span><b style="background:var(--warn)"></b>batching &mdash; milk_run</span>
+    <span><b style="background:var(--alt)"></b>most_congested_station</span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">Rankings</div>
+  <h2>Top 15 at each parcel count</h2>
+  <div class="stack prose">
+    <p>Makespan is the collision-aware executor's, averaged over routable instances. <strong>Ideal</strong>
+    is the same schedule decoded with free-space travel and no interference; <strong>gap</strong> is the
+    distance between them. <strong>&Omega;<sub>q</sub></strong> is the share of robot-time spent waiting at
+    doors &mdash; the column that explains the turnover below.</p>
+  </div>
+
+  <div class="scroll" id="n20">
+    <table>
+      <caption>n = 20 &nbsp;<span class="capnote">best 166.2 &middot; worst 415.9 &middot; spread 2.5&times;</span></caption>
+      <thead><tr>
+        <th>#</th><th>Job rule</th><th>AMR rule</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Sec</th>
+      </tr></thead>
+      <tbody>
+        <tr class="fam-comp"><td class="rank">1</td><td class="name jr">earliest_completion_job</td><td class="name ar">material_match</td><td class="ms">166.2</td><td class="ci">2.8</td><td>151.5</td><td>9.7%</td><td>0.090</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">2</td><td class="name jr">material_match</td><td class="name ar">material_match</td><td class="ms">166.2</td><td class="ci">2.8</td><td>151.5</td><td>9.8%</td><td>0.090</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">3</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_completion</td><td class="ms">166.3</td><td class="ci">2.8</td><td>150.5</td><td>10.5%</td><td>0.105</td><td class="dim">0.027</td></tr>
+        <tr class="fam-comp"><td class="rank">4</td><td class="name jr">earliest_completion_job</td><td class="name ar">nearest_amr</td><td class="ms">166.3</td><td class="ci">2.8</td><td>150.5</td><td>10.5%</td><td>0.105</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">5</td><td class="name jr">material_match</td><td class="name ar">earliest_completion</td><td class="ms">166.4</td><td class="ci">2.9</td><td>150.6</td><td>10.5%</td><td>0.106</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">6</td><td class="name jr">material_match</td><td class="name ar">nearest_amr</td><td class="ms">166.4</td><td class="ci">2.9</td><td>150.6</td><td>10.5%</td><td>0.106</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">7</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_available</td><td class="ms">166.4</td><td class="ci">2.8</td><td>151.6</td><td>9.8%</td><td>0.093</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">8</td><td class="name jr">earliest_completion_job</td><td class="name ar">least_loaded</td><td class="ms">166.4</td><td class="ci">2.8</td><td>151.6</td><td>9.8%</td><td>0.093</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">9</td><td class="name jr">material_match</td><td class="name ar">earliest_available</td><td class="ms">166.6</td><td class="ci">2.8</td><td>151.7</td><td>9.8%</td><td>0.093</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">10</td><td class="name jr">material_match</td><td class="name ar">least_loaded</td><td class="ms">166.6</td><td class="ci">2.8</td><td>151.7</td><td>9.8%</td><td>0.093</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">11</td><td class="name jr">earliest_completion_job</td><td class="name ar">random</td><td class="ms">166.6</td><td class="ci">2.9</td><td>152.0</td><td>9.6%</td><td>0.092</td><td class="dim">0.025</td></tr>
+        <tr class="fam-comp"><td class="rank">12</td><td class="name jr">material_match</td><td class="name ar">random</td><td class="ms">166.8</td><td class="ci">2.9</td><td>152.0</td><td>9.8%</td><td>0.094</td><td class="dim">0.025</td></tr>
+        <tr class="fam-other"><td class="rank">13</td><td class="name jr">most_congested_station</td><td class="name ar">earliest_completion</td><td class="ms">167.0</td><td class="ci">3.2</td><td>150.1</td><td>11.3%</td><td>0.363</td><td class="dim">0.026</td></tr>
+        <tr class="fam-other"><td class="rank">14</td><td class="name jr">most_congested_station</td><td class="name ar">material_match</td><td class="ms">167.0</td><td class="ci">3.3</td><td>152.1</td><td>9.8%</td><td>0.322</td><td class="dim">0.025</td></tr>
+        <tr class="fam-other"><td class="rank">15</td><td class="name jr">most_congested_station</td><td class="name ar">earliest_available</td><td class="ms">167.1</td><td class="ci">2.9</td><td>151.9</td><td>10.2%</td><td>0.346</td><td class="dim">0.034</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll" id="n40">
+    <table>
+      <caption>n = 40 &nbsp;<span class="capnote">best 257.7 &middot; worst 816.0 &middot; spread 3.2&times;</span></caption>
+      <thead><tr>
+        <th>#</th><th>Job rule</th><th>AMR rule</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Sec</th>
+      </tr></thead>
+      <tbody>
+        <tr class="fam-comp"><td class="rank">1</td><td class="name jr">earliest_completion_job</td><td class="name ar">material_match</td><td class="ms">257.7</td><td class="ci">3.7</td><td>229.6</td><td>12.3%</td><td>0.055</td><td class="dim">0.111</td></tr>
+        <tr class="fam-comp"><td class="rank">2</td><td class="name jr">material_match</td><td class="name ar">random</td><td class="ms">257.8</td><td class="ci">3.7</td><td>228.3</td><td>12.9%</td><td>0.056</td><td class="dim">0.112</td></tr>
+        <tr class="fam-comp"><td class="rank">3</td><td class="name jr">earliest_completion_job</td><td class="name ar">random</td><td class="ms">257.9</td><td class="ci">3.7</td><td>228.4</td><td>12.9%</td><td>0.056</td><td class="dim">0.113</td></tr>
+        <tr class="fam-comp"><td class="rank">4</td><td class="name jr">material_match</td><td class="name ar">material_match</td><td class="ms">257.9</td><td class="ci">3.7</td><td>229.8</td><td>12.2%</td><td>0.055</td><td class="dim">0.103</td></tr>
+        <tr class="fam-comp"><td class="rank">5</td><td class="name jr">material_match</td><td class="name ar">earliest_available</td><td class="ms">258.0</td><td class="ci">3.9</td><td>229.1</td><td>12.5%</td><td>0.057</td><td class="dim">0.102</td></tr>
+        <tr class="fam-comp"><td class="rank">6</td><td class="name jr">material_match</td><td class="name ar">least_loaded</td><td class="ms">258.0</td><td class="ci">3.9</td><td>229.1</td><td>12.5%</td><td>0.057</td><td class="dim">0.102</td></tr>
+        <tr class="fam-comp"><td class="rank">7</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_available</td><td class="ms">258.1</td><td class="ci">3.9</td><td>229.3</td><td>12.5%</td><td>0.057</td><td class="dim">0.111</td></tr>
+        <tr class="fam-comp"><td class="rank">8</td><td class="name jr">earliest_completion_job</td><td class="name ar">least_loaded</td><td class="ms">258.1</td><td class="ci">3.9</td><td>229.3</td><td>12.5%</td><td>0.057</td><td class="dim">0.102</td></tr>
+        <tr class="fam-comp"><td class="rank">9</td><td class="name jr">material_match</td><td class="name ar">earliest_completion <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">258.2</td><td class="ci">3.7</td><td>226.9</td><td>13.8%</td><td>0.064</td><td class="dim">0.111</td></tr>
+        <tr class="fam-comp"><td class="rank">10</td><td class="name jr">material_match</td><td class="name ar">nearest_amr <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">258.2</td><td class="ci">3.7</td><td>226.9</td><td>13.8%</td><td>0.064</td><td class="dim">0.102</td></tr>
+        <tr class="fam-comp"><td class="rank">11</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_completion <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">258.4</td><td class="ci">3.8</td><td>227.1</td><td>13.7%</td><td>0.064</td><td class="dim">0.102</td></tr>
+        <tr class="fam-comp"><td class="rank">12</td><td class="name jr">earliest_completion_job</td><td class="name ar">nearest_amr <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">258.4</td><td class="ci">3.8</td><td>227.1</td><td>13.7%</td><td>0.064</td><td class="dim">0.101</td></tr>
+        <tr class="fam-other"><td class="rank">13</td><td class="name jr">most_congested_station</td><td class="name ar">earliest_completion</td><td class="ms">267.0</td><td class="ci">4.1</td><td>230.2</td><td>16.1%</td><td>0.273</td><td class="dim">0.103</td></tr>
+        <tr class="fam-other"><td class="rank">14</td><td class="name jr">most_congested_station</td><td class="name ar">material_match</td><td class="ms">269.2</td><td class="ci">4.3</td><td>233.7</td><td>15.3%</td><td>0.254</td><td class="dim">0.102</td></tr>
+        <tr class="fam-batch"><td class="rank">15</td><td class="name jr">milk_run</td><td class="name ar">random</td><td class="ms">270.8</td><td class="ci">6.3</td><td>220.9</td><td>22.9%</td><td>0.310</td><td class="dim">0.135</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll" id="n60">
+    <table>
+      <caption>n = 60 &nbsp;<span class="capnote">best 346.9 &middot; worst 1244.2 &middot; spread 3.6&times;</span></caption>
+      <thead><tr>
+        <th>#</th><th>Job rule</th><th>AMR rule</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Sec</th>
+      </tr></thead>
+      <tbody>
+        <tr class="fam-batch"><td class="rank">1</td><td class="name jr">milk_run</td><td class="name ar">least_loaded</td><td class="ms">346.9</td><td class="ci">6.5</td><td>282.8</td><td>22.9%</td><td>0.377</td><td class="dim">0.312</td></tr>
+        <tr class="fam-batch"><td class="rank">2</td><td class="name jr">milk_run</td><td class="name ar">earliest_available</td><td class="ms">347.4</td><td class="ci">6.5</td><td>288.8</td><td>20.4%</td><td>0.391</td><td class="dim">0.312</td></tr>
+        <tr class="fam-batch"><td class="rank">3</td><td class="name jr">milk_run</td><td class="name ar">earliest_completion</td><td class="ms">348.4</td><td class="ci">6.2</td><td>287.3</td><td>21.6%</td><td>0.402</td><td class="dim">0.311</td></tr>
+        <tr class="fam-batch"><td class="rank">4</td><td class="name jr">milk_run</td><td class="name ar">nearest_amr</td><td class="ms">348.4</td><td class="ci">6.2</td><td>287.3</td><td>21.6%</td><td>0.402</td><td class="dim">0.320</td></tr>
+        <tr class="fam-comp"><td class="rank">5</td><td class="name jr">material_match</td><td class="name ar">earliest_completion</td><td class="ms">349.3</td><td class="ci">3.6</td><td>305.4</td><td>14.4%</td><td>0.052</td><td class="dim">0.241</td></tr>
+        <tr class="fam-comp"><td class="rank">6</td><td class="name jr">material_match</td><td class="name ar">nearest_amr</td><td class="ms">349.3</td><td class="ci">3.6</td><td>305.4</td><td>14.4%</td><td>0.052</td><td class="dim">0.239</td></tr>
+        <tr class="fam-comp"><td class="rank">7</td><td class="name jr">material_match</td><td class="name ar">material_match</td><td class="ms">349.6</td><td class="ci">3.5</td><td>309.3</td><td>13.1%</td><td>0.046</td><td class="dim">0.231</td></tr>
+        <tr class="fam-comp"><td class="rank">8</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_completion</td><td class="ms">349.6</td><td class="ci">3.6</td><td>305.5</td><td>14.5%</td><td>0.052</td><td class="dim">0.231</td></tr>
+        <tr class="fam-comp"><td class="rank">9</td><td class="name jr">earliest_completion_job</td><td class="name ar">nearest_amr</td><td class="ms">349.6</td><td class="ci">3.6</td><td>305.5</td><td>14.5%</td><td>0.052</td><td class="dim">0.240</td></tr>
+        <tr class="fam-comp"><td class="rank">10</td><td class="name jr">earliest_completion_job</td><td class="name ar">material_match</td><td class="ms">349.6</td><td class="ci">3.5</td><td>309.6</td><td>13.0%</td><td>0.046</td><td class="dim">0.241</td></tr>
+        <tr class="fam-comp"><td class="rank">11</td><td class="name jr">earliest_completion_job</td><td class="name ar">random</td><td class="ms">350.1</td><td class="ci">3.6</td><td>309.1</td><td>13.3%</td><td>0.048</td><td class="dim">0.242</td></tr>
+        <tr class="fam-comp"><td class="rank">12</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_available</td><td class="ms">350.1</td><td class="ci">3.3</td><td>308.4</td><td>13.6%</td><td>0.049</td><td class="dim">0.248</td></tr>
+        <tr class="fam-comp"><td class="rank">13</td><td class="name jr">earliest_completion_job</td><td class="name ar">least_loaded</td><td class="ms">350.1</td><td class="ci">3.3</td><td>308.4</td><td>13.6%</td><td>0.049</td><td class="dim">0.241</td></tr>
+        <tr class="fam-comp"><td class="rank">14</td><td class="name jr">material_match</td><td class="name ar">random</td><td class="ms">350.2</td><td class="ci">3.7</td><td>309.4</td><td>13.2%</td><td>0.048</td><td class="dim">0.241</td></tr>
+        <tr class="fam-comp"><td class="rank">15</td><td class="name jr">material_match</td><td class="name ar">earliest_available</td><td class="ms">350.2</td><td class="ci">3.4</td><td>308.9</td><td>13.4%</td><td>0.048</td><td class="dim">0.241</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll" id="n80">
+    <table>
+      <caption>n = 80 &nbsp;<span class="capnote">best 426.2 &middot; worst 1655.3 &middot; spread 3.9&times;</span></caption>
+      <thead><tr>
+        <th>#</th><th>Job rule</th><th>AMR rule</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Sec</th>
+      </tr></thead>
+      <tbody>
+        <tr class="fam-batch"><td class="rank">1</td><td class="name jr">milk_run</td><td class="name ar">earliest_completion</td><td class="ms">426.2</td><td class="ci">7.2</td><td>354.6</td><td>20.4%</td><td>0.351</td><td class="dim">0.571</td></tr>
+        <tr class="fam-batch"><td class="rank">2</td><td class="name jr">milk_run</td><td class="name ar">nearest_amr</td><td class="ms">426.2</td><td class="ci">7.2</td><td>354.6</td><td>20.4%</td><td>0.351</td><td class="dim">0.560</td></tr>
+        <tr class="fam-batch"><td class="rank">3</td><td class="name jr">milk_run</td><td class="name ar">random</td><td class="ms">430.8</td><td class="ci">7.6</td><td>358.4</td><td>20.5%</td><td>0.345</td><td class="dim">0.563</td></tr>
+        <tr class="fam-batch"><td class="rank">4</td><td class="name jr">milk_run</td><td class="name ar">earliest_available</td><td class="ms">430.9</td><td class="ci">7.2</td><td>354.5</td><td>22.0%</td><td>0.351</td><td class="dim">0.571</td></tr>
+        <tr class="fam-batch"><td class="rank">5</td><td class="name jr">milk_run</td><td class="name ar">least_loaded</td><td class="ms">431.8</td><td class="ci">7.5</td><td>345.4</td><td>25.7%</td><td>0.342</td><td class="dim">0.571</td></tr>
+        <tr class="fam-batch"><td class="rank">6</td><td class="name jr">milk_run</td><td class="name ar">material_match</td><td class="ms">433.8</td><td class="ci">7.5</td><td>372.9</td><td>16.5%</td><td>0.318</td><td class="dim">0.558</td></tr>
+        <tr class="fam-comp"><td class="rank">7</td><td class="name jr">material_match</td><td class="name ar">random</td><td class="ms">445.6</td><td class="ci">4.9</td><td>400.6</td><td>11.3%</td><td>0.044</td><td class="dim">0.429</td></tr>
+        <tr class="fam-comp"><td class="rank">8</td><td class="name jr">earliest_completion_job</td><td class="name ar">random</td><td class="ms">445.7</td><td class="ci">4.9</td><td>400.6</td><td>11.3%</td><td>0.043</td><td class="dim">0.445</td></tr>
+        <tr class="fam-comp"><td class="rank">9</td><td class="name jr">material_match</td><td class="name ar">earliest_completion</td><td class="ms">446.8</td><td class="ci">4.8</td><td>400.8</td><td>11.5%</td><td>0.050</td><td class="dim">0.443</td></tr>
+        <tr class="fam-comp"><td class="rank">10</td><td class="name jr">material_match</td><td class="name ar">nearest_amr</td><td class="ms">446.8</td><td class="ci">4.8</td><td>400.8</td><td>11.5%</td><td>0.050</td><td class="dim">0.434</td></tr>
+        <tr class="fam-comp"><td class="rank">11</td><td class="name jr">material_match</td><td class="name ar">material_match</td><td class="ms">446.8</td><td class="ci">4.4</td><td>402.1</td><td>11.1%</td><td>0.044</td><td class="dim">0.444</td></tr>
+        <tr class="fam-comp"><td class="rank">12</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_completion</td><td class="ms">447.3</td><td class="ci">4.8</td><td>400.7</td><td>11.7%</td><td>0.050</td><td class="dim">0.442</td></tr>
+        <tr class="fam-comp"><td class="rank">13</td><td class="name jr">earliest_completion_job</td><td class="name ar">nearest_amr</td><td class="ms">447.3</td><td class="ci">4.8</td><td>400.7</td><td>11.7%</td><td>0.050</td><td class="dim">0.442</td></tr>
+        <tr class="fam-comp"><td class="rank">14</td><td class="name jr">earliest_completion_job</td><td class="name ar">material_match</td><td class="ms">447.9</td><td class="ci">4.5</td><td>402.9</td><td>11.2%</td><td>0.044</td><td class="dim">0.432</td></tr>
+        <tr class="fam-comp"><td class="rank">15</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_available</td><td class="ms">449.6</td><td class="ci">4.6</td><td>402.2</td><td>11.8%</td><td>0.047</td><td class="dim">0.440</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll" id="n100">
+    <table>
+      <caption>n = 100 &nbsp;<span class="capnote">best 501.5 &middot; worst 2073.1 &middot; spread 4.1&times;</span></caption>
+      <thead><tr>
+        <th>#</th><th>Job rule</th><th>AMR rule</th><th>Makespan</th><th>&plusmn;95%</th>
+        <th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Sec</th>
+      </tr></thead>
+      <tbody>
+        <tr class="fam-batch"><td class="rank">1</td><td class="name jr">milk_run</td><td class="name ar">earliest_available</td><td class="ms">501.5</td><td class="ci">7.5</td><td>409.0</td><td>22.9%</td><td>0.303</td><td class="dim">0.894</td></tr>
+        <tr class="fam-batch"><td class="rank">2</td><td class="name jr">milk_run</td><td class="name ar">least_loaded</td><td class="ms">505.3</td><td class="ci">7.2</td><td>396.2</td><td>27.9%</td><td>0.303</td><td class="dim">0.884</td></tr>
+        <tr class="fam-batch"><td class="rank">3</td><td class="name jr">milk_run</td><td class="name ar">earliest_completion</td><td class="ms">505.6</td><td class="ci">8.3</td><td>413.6</td><td>22.6%</td><td>0.325</td><td class="dim">0.889</td></tr>
+        <tr class="fam-batch"><td class="rank">4</td><td class="name jr">milk_run</td><td class="name ar">nearest_amr</td><td class="ms">505.6</td><td class="ci">8.3</td><td>413.6</td><td>22.6%</td><td>0.325</td><td class="dim">0.897</td></tr>
+        <tr class="fam-batch"><td class="rank">5</td><td class="name jr">milk_run</td><td class="name ar">material_match</td><td class="ms">506.0</td><td class="ci">8.0</td><td>435.0</td><td>16.4%</td><td>0.302</td><td class="dim">0.890</td></tr>
+        <tr class="fam-batch"><td class="rank">6</td><td class="name jr">milk_run</td><td class="name ar">random <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">511.9</td><td class="ci">8.5</td><td>421.7</td><td>21.7%</td><td>0.324</td><td class="dim">0.897</td></tr>
+        <tr class="fam-comp"><td class="rank">7</td><td class="name jr">earliest_completion_job</td><td class="name ar">material_match</td><td class="ms">532.7</td><td class="ci">4.6</td><td>483.9</td><td>10.1%</td><td>0.043</td><td class="dim">0.706</td></tr>
+        <tr class="fam-comp"><td class="rank">8</td><td class="name jr">material_match</td><td class="name ar">material_match</td><td class="ms">533.0</td><td class="ci">4.7</td><td>484.0</td><td>10.1%</td><td>0.042</td><td class="dim">0.686</td></tr>
+        <tr class="fam-comp"><td class="rank">9</td><td class="name jr">material_match</td><td class="name ar">random</td><td class="ms">534.6</td><td class="ci">4.7</td><td>484.8</td><td>10.2%</td><td>0.044</td><td class="dim">0.699</td></tr>
+        <tr class="fam-comp"><td class="rank">10</td><td class="name jr">earliest_completion_job</td><td class="name ar">random</td><td class="ms">535.2</td><td class="ci">4.5</td><td>485.2</td><td>10.3%</td><td>0.044</td><td class="dim">0.701</td></tr>
+        <tr class="fam-comp"><td class="rank">11</td><td class="name jr">earliest_completion_job</td><td class="name ar">earliest_completion</td><td class="ms">535.7</td><td class="ci">4.6</td><td>482.2</td><td>11.1%</td><td>0.048</td><td class="dim">0.697</td></tr>
+        <tr class="fam-comp"><td class="rank">12</td><td class="name jr">earliest_completion_job</td><td class="name ar">nearest_amr</td><td class="ms">535.7</td><td class="ci">4.6</td><td>482.2</td><td>11.1%</td><td>0.048</td><td class="dim">0.686</td></tr>
+        <tr class="fam-comp"><td class="rank">13</td><td class="name jr">material_match</td><td class="name ar">earliest_available <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">535.7</td><td class="ci">4.5</td><td>484.2</td><td>10.6%</td><td>0.045</td><td class="dim">0.695</td></tr>
+        <tr class="fam-comp"><td class="rank">14</td><td class="name jr">material_match</td><td class="name ar">least_loaded <span class="nu" title="1 unroutable instance(s)">&nu;1</span></td><td class="ms">535.7</td><td class="ci">4.5</td><td>484.2</td><td>10.6%</td><td>0.045</td><td class="dim">0.697</td></tr>
+        <tr class="fam-comp"><td class="rank">15</td><td class="name jr">material_match</td><td class="name ar">earliest_completion</td><td class="ms">535.7</td><td class="ci">4.5</td><td>482.2</td><td>11.1%</td><td>0.048</td><td class="dim">0.698</td></tr>
+      </tbody>
+    </table>
+  </div></section>
+
+<section>
+  <div class="eyebrow">Turnover</div>
+  <h2>The leaderboard flips at n = 60</h2>
+  <div class="stack prose">
+    <p>Counting how many of the fifteen slots each job rule holds makes the handover explicit.
+    <code>milk_run</code> holds none at n = 20 and six at n = 100; the completion family goes the
+    other way.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>Slots held in the top 15, by job rule</caption>
+      <thead><tr><th>Job rule</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th></tr></thead>
+      <tbody>
+        <tr><td class="name">earliest_completion_job</td><td class="bar bar-comp">██████<span class="cnt">6</span></td><td class="bar bar-comp">██████<span class="cnt">6</span></td><td class="bar bar-comp">██████<span class="cnt">6</span></td><td class="bar bar-comp">█████<span class="cnt">5</span></td><td class="bar bar-comp">████<span class="cnt">4</span></td></tr>
+        <tr><td class="name">material_match</td><td class="bar bar-comp">██████<span class="cnt">6</span></td><td class="bar bar-comp">██████<span class="cnt">6</span></td><td class="bar bar-comp">█████<span class="cnt">5</span></td><td class="bar bar-comp">████<span class="cnt">4</span></td><td class="bar bar-comp">█████<span class="cnt">5</span></td></tr>
+        <tr><td class="name">milk_run</td><td class="bar bar-batch">·<span class="cnt">0</span></td><td class="bar bar-batch">█<span class="cnt">1</span></td><td class="bar bar-batch">████<span class="cnt">4</span></td><td class="bar bar-batch">██████<span class="cnt">6</span></td><td class="bar bar-batch">██████<span class="cnt">6</span></td></tr>
+        <tr><td class="name">most_congested_station</td><td class="bar bar-other">███<span class="cnt">3</span></td><td class="bar bar-other">██<span class="cnt">2</span></td><td class="bar bar-other">·<span class="cnt">0</span></td><td class="bar bar-other">·<span class="cnt">0</span></td><td class="bar bar-other">·<span class="cnt">0</span></td></tr>      </tbody>
+    </table>
+  </div>
+  <p class="note">The other six job rules &mdash; <code>fifo</code>, <code>spt</code>, <code>lpt</code>,
+  <code>nearest_station</code>, <code>least_congested_station</code>, <code>random</code> &mdash; never
+  place a single combination in any top 15.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Head to head &middot; best pairing of each family</caption>
+      <thead><tr><th>n</th><th>Leader</th><th>Makespan</th><th>Ideal</th><th>Gap&nbsp;%</th><th>&Omega;<sub>q</sub></th><th>Paired &Delta; vs the other family</th></tr></thead>
+      <tbody>
+        <tr class="fam-batch"><td>20</td><td class="name jr">milk_run+random</td><td class="ms">185.6</td><td>154.6</td><td>22.0%</td><td>0.227</td><td class="bad">+19.4 ±4.7</td></tr>
+        <tr class="fam-comp"><td>20</td><td class="name jr">material_match+material_match</td><td class="ms">166.2</td><td>151.5</td><td>9.8%</td><td>0.090</td><td class="win">wins</td></tr>
+        <tr class="fam-batch"><td>40</td><td class="name jr">milk_run+random</td><td class="ms">270.8</td><td>220.9</td><td>22.9%</td><td>0.310</td><td class="bad">+13.1 ±5.7</td></tr>
+        <tr class="fam-comp"><td>40</td><td class="name jr">material_match+random</td><td class="ms">257.8</td><td>228.3</td><td>12.9%</td><td>0.056</td><td class="win">wins</td></tr>
+        <tr class="fam-batch"><td>60</td><td class="name jr">milk_run+least_loaded</td><td class="ms">346.9</td><td>282.8</td><td>22.9%</td><td>0.377</td><td>&minus;2.4 ±6.5 &nbsp;<span class="dim">tie</span></td></tr>
+        <tr class="fam-comp"><td>60</td><td class="name jr">material_match+earliest_completion</td><td class="ms">349.3</td><td>305.4</td><td>14.4%</td><td>0.052</td><td class="dim">not separated</td></tr>
+        <tr class="fam-batch"><td>80</td><td class="name jr">milk_run+earliest_completion</td><td class="ms">426.2</td><td>354.6</td><td>20.4%</td><td>0.351</td><td class="win">&minus;19.3 ±6.2</td></tr>
+        <tr class="fam-comp"><td>80</td><td class="name jr">material_match+random</td><td class="ms">445.6</td><td>400.6</td><td>11.3%</td><td>0.044</td><td class="dim">loses</td></tr>
+        <tr class="fam-batch"><td>100</td><td class="name jr">milk_run+earliest_available</td><td class="ms">501.5</td><td>409.0</td><td>22.9%</td><td>0.303</td><td class="win">&minus;31.2 ±6.9</td></tr>
+        <tr class="fam-comp"><td>100</td><td class="name jr">material_match+material_match</td><td class="ms">533.0</td><td>484.0</td><td>10.1%</td><td>0.042</td><td class="dim">loses</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding flip">
+    <h3>Batching buys a shorter plan and pays for it in door queues</h3>
+    <p><code>milk_run</code> holds parcels on the rack until it has a full load, which cuts travel:
+    at n = 100 its ideal is <strong>409.0</strong> against the completion family's <strong>484.0</strong>,
+    a 75-unit better plan. It then hands back most of a 23% gap to queueing &mdash;
+    &Omega;<sub>q</sub> of <strong>0.30</strong> against <strong>0.04</strong>, seven times the door contention.</p>
+    <p>Whether that trade pays depends entirely on how much travel there is to save. At n = 20 there
+    is almost none, so the queueing is pure loss and <code>milk_run</code> finishes 19 units behind.
+    By n = 100 the saved travel outweighs the queues and it wins by 31. The crossover lands at
+    n = 60, where the two are <strong>statistically indistinguishable</strong> &mdash; a paired difference of
+    2.4 against a confidence interval of 6.5.</p>
+    <p>This also explains the confidence intervals. <code>milk_run</code> carries &plusmn;6.5 to &plusmn;8.5
+    throughout while the completion family sits at &plusmn;3.5 to &plusmn;4.9: queueing outcomes depend on
+    which robots happen to converge on a door, so batching is the higher-variance strategy as well
+    as the higher-ceiling one.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Sensitivity</div>
+  <h2>The AMR rule only matters when the job rule is bad</h2>
+  <div class="stack prose">
+    <p>Spread between the best and worst of the six AMR rules, holding the job rule fixed, as a
+    percentage of that job rule's best result. For the three job rules that actually compete, the
+    AMR rule is worth at most 2%. For the six that don't, it swings the result by more than the
+    entire method comparison.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>AMR-rule spread within each job rule</caption>
+      <thead><tr><th>Job rule</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th><th>Best @ n=100</th></tr></thead>
+      <tbody>
+        <tr><td class="name">earliest_completion_job</td><td class="win">0%</td><td class="win">0%</td><td class="win">0%</td><td class="win">1%</td><td class="win">1%</td><td class="dim">533</td></tr>
+        <tr><td class="name">material_match</td><td class="win">0%</td><td class="win">0%</td><td class="win">0%</td><td class="win">1%</td><td class="win">1%</td><td class="dim">533</td></tr>
+        <tr><td class="name">milk_run</td><td class="win">1%</td><td class="win">1%</td><td class="win">1%</td><td class="win">2%</td><td class="win">2%</td><td class="dim">502</td></tr>
+        <tr><td class="name">nearest_station</td><td class="win">3%</td><td class="win">5%</td><td class="win">2%</td><td class="win">3%</td><td class="win">1%</td><td class="dim">2050</td></tr>
+        <tr><td class="name">random</td><td class="win">2%</td><td class="win">1%</td><td class="win">1%</td><td class="win">3%</td><td class="win">0%</td><td class="dim">1150</td></tr>
+        <tr><td class="name">spt</td><td class="bad">96%</td><td class="bad">129%</td><td class="bad">140%</td><td class="bad">146%</td><td class="bad">147%</td><td class="dim">606</td></tr>
+        <tr><td class="name">least_congested_station</td><td class="bad">111%</td><td class="bad">128%</td><td class="bad">136%</td><td class="bad">135%</td><td class="bad">132%</td><td class="dim">892</td></tr>
+        <tr><td class="name">fifo</td><td class="bad">119%</td><td class="bad">131%</td><td class="bad">145%</td><td class="bad">156%</td><td class="bad">144%</td><td class="dim">609</td></tr>
+        <tr><td class="name">most_congested_station</td><td class="bad">125%</td><td class="bad">134%</td><td class="bad">144%</td><td class="bad">143%</td><td class="bad">146%</td><td class="dim">578</td></tr>
+        <tr><td class="name">lpt</td><td class="bad">130%</td><td class="bad">133%</td><td class="bad">146%</td><td class="bad">153%</td><td class="bad">155%</td><td class="dim">600</td></tr>      </tbody>
+    </table>
+  </div>
+
+  <div class="finding">
+    <h3>A good job rule makes the robot-selection rule irrelevant</h3>
+    <p>Pair <code>earliest_completion_job</code> with any of the six AMR rules &mdash; including
+    <code>random</code> &mdash; and the result moves by under 1%. Pair <code>fifo</code> with them and
+    the result moves by 144%. The job rule decides which parcels get batched and when doors are hit;
+    once that is right there is little left for the robot choice to spoil, and once it is wrong no
+    robot choice can rescue it.</p>
+    <p>Practical consequence: tuning the AMR rule is not worth the search. Six of the sixty
+    combinations are just <code>milk_run</code> paired with six different AMR rules, and they occupy
+    the entire top six at n = 100 within a 10-unit band.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Stability</div>
+  <h2>Seven combinations never leave the top 15</h2>
+  <div class="stack prose">
+    <p>Of sixty, these seven place in the top fifteen at every parcel count from 20 to 100. All are
+    from the completion family &mdash; none is ever the outright winner at n = 80 or 100, but none
+    ever collapses either.</p>
+    <ul>
+      <li><code>earliest_completion_job + material_match</code> &mdash; the outright best at n = 20 and n = 40</li>
+      <li><code>earliest_completion_job + earliest_completion</code></li>
+      <li><code>earliest_completion_job + nearest_amr</code></li>
+      <li><code>earliest_completion_job + random</code></li>
+      <li><code>material_match + earliest_completion</code></li>
+      <li><code>material_match + material_match</code></li>
+      <li><code>material_match + random</code></li>
+    </ul>
+    <p>If a single rule has to be fixed across an unknown workload, one of these is the defensible
+    choice. If the workload is known and large, <code>milk_run</code> is worth 31 units at n = 100 &mdash;
+    but it is the wrong default below n = 60.</p>
+  </div>
+  <p class="note">Note that <code>milk_run+earliest_completion</code> is the baseline the policies were
+  trained against. It ranks 3rd at n = 60, 1st at n = 80, and 3rd at n = 100 &mdash; a strong
+  counterfactual at the sizes that matter, and a weak one at n = 20 where it does not place at all.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Worst</div>
+  <h2>What the spread costs</h2>
+  <div class="stack prose">
+    <p>The gap between the best and worst combination widens from 2.5&times; at n = 20 to 4.1&times; at
+    n = 100. <code>least_congested_station+random</code> is the worst at every size, reaching 2073.1
+    against the best 501.5 &mdash; choosing the rule badly costs more than every method difference in
+    this benchmark put together.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>Best and worst of the 60, by size</caption>
+      <thead><tr><th>n</th><th>Best</th><th>Worst</th><th>Worst combination</th><th>Spread</th></tr></thead>
+      <tbody>
+        <tr><td>20</td><td class="ms">166.2</td><td>415.9</td><td class="name dim">least_congested_station+random</td><td class="bad">2.5×</td></tr>
+        <tr><td>40</td><td class="ms">257.7</td><td>816.0</td><td class="name dim">least_congested_station+random</td><td class="bad">3.2×</td></tr>
+        <tr><td>60</td><td class="ms">346.9</td><td>1244.2</td><td class="name dim">least_congested_station+random</td><td class="bad">3.6×</td></tr>
+        <tr><td>80</td><td class="ms">426.2</td><td>1655.3</td><td class="name dim">least_congested_station+random</td><td class="bad">3.9×</td></tr>
+        <tr><td>100</td><td class="ms">501.5</td><td>2073.1</td><td class="name dim">least_congested_station+random</td><td class="bad">4.1×</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Method</div>
+  <h2>How to read these tables</h2>
+  <div class="stack prose">
+    <ul>
+      <li><strong>Instances.</strong> <code>test_case/v3/trend/full_{20,40,60,80,100}.jsonl</code>,
+      100 per size, m = 16. Rules are deterministic given seed 42, so each combination is one
+      schedule per instance.</li>
+      <li><strong>Scoring.</strong> Each schedule is built under the calibrated surrogate and scored
+      once by the collision-aware executor. Makespan, ideal, gap, and &Omega;<sub>q</sub> are averaged
+      over routable instances only; a &nu; marker flags any combination with unroutable instances
+      (never more than one).</li>
+      <li><strong>Confidence intervals.</strong> 1.96&nbsp;&times;&nbsp;sd&nbsp;/&nbsp;&radic;n across
+      instances. Head-to-head deltas are paired within instance, which is why they resolve differences
+      the overlapping intervals alone would not.</li>
+      <li><strong>Timing.</strong> Seconds per instance from a single-process pass on an idle machine,
+      not from the parallel sweep.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  60 combinations · 5 workloads · 30,000 schedules · scenario v3 · m = 16<br>
+  full per-instance data in results_per_instance.csv · experiments/full_benchmark/
+</footer>
+
+</div>

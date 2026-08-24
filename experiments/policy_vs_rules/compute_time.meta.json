@@ -1,0 +1,9 @@
+{
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 5080",
+  "torch": "2.11.0+cu128",
+  "num_amrs": 16,
+  "instances_per_point": 10,
+  "weights": "/home/wei/Desktop/AMR-DFJSP/checkpoints_v8/ppo_gc1_s42_best.pth",
+  "note": "solve_s excludes ie.evaluate, which both sides pay identically; CUDA synchronised before each stop-clock"
+}

@@ -1,0 +1,8 @@
+[
+  "milk_run+earliest_completion",
+  "milk_run+earliest_available",
+  "material_match+earliest_completion",
+  "milk_run+least_loaded",
+  "earliest_completion_job+earliest_completion",
+  "earliest_completion_job+material_match"
+]

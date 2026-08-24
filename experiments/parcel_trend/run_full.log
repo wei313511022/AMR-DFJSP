@@ -1,0 +1,283 @@
+=== STAGE 1/4: rules, 6 combos x 100 instances ===
+  n= 20 milk_run+earliest_completion  executed   186.38 | clean 100/100 |    4.8s
+  n= 20 milk_run+earliest_available   executed   187.38 | clean 100/100 |    4.7s
+  n= 20 material_match+earliest_completion  executed   166.37 | clean 100/100 |    5.4s
+  n= 20 milk_run+least_loaded         executed   187.06 | clean 100/100 |    4.9s
+  n= 20 earliest_completion_job+earliest_completion  executed   166.32 | clean 100/100 |    5.4s
+  n= 20 earliest_completion_job+material_match       executed   166.20 | clean 100/100 |    5.5s
+STAGE1 n=20 COMPLETE
+  n= 40 milk_run+earliest_completion  executed   272.33 | clean 100/100 |   16.2s
+  n= 40 milk_run+earliest_available   executed   271.51 | clean 100/100 |   16.2s
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  n= 40 material_match+earliest_completion  executed   258.24 | clean 99/100 |   15.7s
+  n= 40 milk_run+least_loaded         executed   271.04 | clean 100/100 |   16.3s
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 36 (unload path: (0, 6) -> (19, 14) at t=113.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR7, (0, 7) res by AMR16, (0, 5) res by AMR11, (0, 6) res by AMR15
+  n= 40 earliest_completion_job+earliest_completion  executed   258.38 | clean 99/100 |   15.6s
+  n= 40 earliest_completion_job+material_match       executed   257.74 | clean 100/100 |   15.9s
+STAGE1 n=40 COMPLETE
+  n= 60 milk_run+earliest_completion  executed   348.41 | clean 100/100 |   34.6s
+  n= 60 milk_run+earliest_available   executed   347.40 | clean 100/100 |   34.8s
+  n= 60 material_match+earliest_completion  executed   349.30 | clean 100/100 |   31.2s
+  n= 60 milk_run+least_loaded         executed   346.87 | clean 100/100 |   34.9s
+  n= 60 earliest_completion_job+earliest_completion  executed   349.61 | clean 100/100 |   31.2s
+  n= 60 earliest_completion_job+material_match       executed   349.65 | clean 100/100 |   31.5s
+STAGE1 n=60 COMPLETE
+  n= 80 milk_run+earliest_completion  executed   426.24 | clean 100/100 |   59.9s
+  n= 80 milk_run+earliest_available   executed   430.85 | clean 100/100 |   60.4s
+  n= 80 material_match+earliest_completion  executed   446.83 | clean 100/100 |   52.1s
+  n= 80 milk_run+least_loaded         executed   431.82 | clean 100/100 |   60.5s
+  n= 80 earliest_completion_job+earliest_completion  executed   447.27 | clean 100/100 |   52.1s
+  n= 80 earliest_completion_job+material_match       executed   447.91 | clean 100/100 |   52.3s
+STAGE1 n=80 COMPLETE
+  n=100 milk_run+earliest_completion  executed   505.64 | clean 100/100 |   92.4s
+  n=100 milk_run+earliest_available   executed   501.50 | clean 100/100 |   93.1s
+  n=100 material_match+earliest_completion  executed   535.72 | clean 100/100 |   78.5s
+  n=100 milk_run+least_loaded         executed   505.29 | clean 100/100 |   93.4s
+  n=100 earliest_completion_job+earliest_completion  executed   535.67 | clean 100/100 |   78.5s
+  n=100 earliest_completion_job+material_match       executed   532.73 | clean 100/100 |   79.0s
+STAGE1 n=100 COMPLETE
+=== STAGE 2/4: policy greedy, 3 seeds x 100 instances ===
+100 events x 20 jobs | m=16 (eta=3.2) | greedy | device cuda
+              ppo_gc1_s42_best: executed   172.99 | clean 100/100 |   11.2s total
+              ppo_gc1_s43_best: executed   170.22 | clean 100/100 |   11.0s total
+              ppo_gc1_s44_best: executed   164.36 | clean 100/100 |   11.4s total
+manifest -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/manifest_full_n20.json
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_greedy_n20.jsonl
+STAGE2 n=20 COMPLETE
+100 events x 40 jobs | m=16 (eta=3.2) | greedy | device cuda
+              ppo_gc1_s42_best: executed   257.77 | clean 100/100 |   29.5s total
+              ppo_gc1_s43_best: executed   258.47 | clean 100/100 |   29.4s total
+              ppo_gc1_s44_best: executed   248.76 | clean 100/100 |   30.2s total
+manifest -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/manifest_full_n40.json
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_greedy_n40.jsonl
+STAGE2 n=40 COMPLETE
+100 events x 60 jobs | m=16 (eta=3.2) | greedy | device cuda
+              ppo_gc1_s42_best: executed   345.06 | clean 100/100 |   57.2s total
+              ppo_gc1_s43_best: executed   344.65 | clean 100/100 |   57.5s total
+              ppo_gc1_s44_best: executed   333.71 | clean 100/100 |   58.5s total
+manifest -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/manifest_full_n60.json
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_greedy_n60.jsonl
+STAGE2 n=60 COMPLETE
+100 events x 80 jobs | m=16 (eta=3.2) | greedy | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 61 (outbound_line path: (0, 10) -> (16, 14) at t=116.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR14, (0, 11) res by AMR6, (0, 9) res by AMR7, (0, 10) res by AMR10
+              ppo_gc1_s42_best: executed   434.29 | clean 99/100 |   94.2s total
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 14 (outbound_line path: (0, 6) -> (16, 10) at t=190.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@192 by AMR8)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 65 (outbound_line path: (0, 14) -> (16, 10) at t=122.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR6, (0, 15) res by AMR15, (0, 13) res by AMR12, (0, 14) res by AMR3
+              ppo_gc1_s43_best: executed   438.11 | clean 98/100 |   95.1s total
+              ppo_gc1_s44_best: executed   420.86 | clean 100/100 |   96.9s total
+manifest -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/manifest_full_n80.json
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_greedy_n80.jsonl
+STAGE2 n=80 COMPLETE
+100 events x 100 jobs | m=16 (eta=3.2) | greedy | device cuda
+              ppo_gc1_s42_best: executed   530.36 | clean 100/100 |  143.6s total
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 35 (inbound_line path: (0, 10) -> (1, 6) at t=205.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+              ppo_gc1_s43_best: executed   529.57 | clean 99/100 |  144.9s total
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 41 (inbound_line path: (0, 10) -> (1, 10) at t=331.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+              ppo_gc1_s44_best: executed   511.93 | clean 99/100 |  147.5s total
+manifest -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/manifest_full_n100.json
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_greedy_n100.jsonl
+STAGE2 n=100 COMPLETE
+=== STAGE 3/4: policy best-of-8, seed 42 x 100 instances ===
+100 events x 20 jobs | m=16 (eta=3.2) | sample_k8 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 19 (unload path: (0, 10) -> (19, 2) at t=7.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR6, (0, 11) res by AMR12, (0, 9) res by AMR2, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 3 (unload path: (0, 14) -> (19, 18) at t=19.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 10 (inbound_line path: (0, 6) -> (2, 2) at t=45.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@46 by AMR2), ((0, 2)@49 by AMR5), ((1, 2)@50 by AMR13)
+              ppo_gc1_s42_best: executed   163.38 | clean 100/100 |   97.5s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k8_n20.jsonl
+STAGE3 n=20 COMPLETE
+100 events x 40 jobs | m=16 (eta=3.2) | sample_k8 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 6 (outbound_line path: (0, 10) -> (16, 10) at t=103.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR7, (0, 11) res by AMR6, (0, 9) res by AMR2, (0, 10) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 30 (outbound_line path: (0, 14) -> (16, 14) at t=97.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 9 (outbound_line path: (0, 6) -> (16, 10) at t=74.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@75 by AMR7), ((0, 10)@78 by AMR2), ((3, 10)@81 by AMR15)
+              ppo_gc1_s42_best: executed   245.70 | clean 100/100 |  248.9s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k8_n40.jsonl
+STAGE3 n=40 COMPLETE
+100 events x 60 jobs | m=16 (eta=3.2) | sample_k8 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 46 (outbound_line path: (0, 10) -> (16, 6) at t=62.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR1, (0, 11) res by AMR3, (0, 9) res by AMR4, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 4 (pickup path: (1, 10) -> (0, 10) at t=86.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@87 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 38 (outbound_line path: (0, 10) -> (16, 10) at t=26.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR3, (0, 9) res by AMR15, (0, 10) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 54 (unload path: (0, 10) -> (19, 18) at t=90.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@94 by AMR14)
+              ppo_gc1_s42_best: executed   330.10 | clean 100/100 |  483.3s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k8_n60.jsonl
+STAGE3 n=60 COMPLETE
+100 events x 80 jobs | m=16 (eta=3.2) | sample_k8 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 25 (unload path: (0, 6) -> (19, 6) at t=104.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR8, (0, 7) res by AMR4, (0, 5) res by AMR16, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 64 (unload path: (0, 10) -> (19, 10) at t=113.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@114 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 56 (unload path: (0, 14) -> (19, 18) at t=257.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@259 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 25 (unload path: (0, 6) -> (19, 10) at t=103.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@107 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 68 (inbound_line path: (0, 6) -> (1, 10) at t=79.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@80 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 62 (unload path: (0, 10) -> (19, 6) at t=119.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@120 by AMR6), ((0, 6)@123 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 28 (outbound_line path: (0, 10) -> (16, 14) at t=189.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 74 (inbound_line path: (0, 2) -> (1, 2) at t=265.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@266 by AMR12)
+              ppo_gc1_s42_best: executed   418.19 | clean 100/100 |  792.4s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k8_n80.jsonl
+STAGE3 n=80 COMPLETE
+100 events x 100 jobs | m=16 (eta=3.2) | sample_k8 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 93 (unload path: (0, 10) -> (19, 10) at t=101.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 84 (pickup path: (0, 14) -> (0, 18) at t=277.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR16, (0, 15) res by AMR9, (0, 13) res by AMR11, (0, 14) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 42 (unload path: (0, 14) -> (19, 6) at t=248.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@251 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 64 (inbound_line path: (0, 2) -> (2, 6) at t=422.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 3)@423 by AMR9), ((1, 6)@427 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 25 (unload path: (0, 10) -> (19, 14) at t=266.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@268 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 26 (inbound_line path: (0, 10) -> (1, 14) at t=62.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 61 (inbound_line path: (0, 6) -> (1, 2) at t=240.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR14, (0, 7) res by AMR13, (0, 5) res by AMR10, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 76 (outbound_line path: (0, 10) -> (16, 10) at t=178.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR16, (0, 11) res by AMR5, (0, 9) res by AMR6, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 81 (unload path: (0, 14) -> (19, 18) at t=154.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 15)@155 by AMR12)
+              ppo_gc1_s42_best: executed   509.03 | clean 100/100 | 1184.1s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k8_n100.jsonl
+STAGE3 n=100 COMPLETE
+=== STAGE 4/4: policy best-of-16, seed 42 x 100 instances ===
+100 events x 20 jobs | m=16 (eta=3.2) | sample_k16 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 19 (unload path: (0, 10) -> (19, 2) at t=7.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR6, (0, 11) res by AMR12, (0, 9) res by AMR2, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 3 (unload path: (0, 14) -> (19, 18) at t=19.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 10 (inbound_line path: (0, 6) -> (2, 2) at t=45.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@46 by AMR2), ((0, 2)@49 by AMR5), ((1, 2)@50 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 16 (inbound_line path: (0, 6) -> (2, 2) at t=46.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 5)@47 by AMR11), ((0, 2)@50 by AMR3)
+              ppo_gc1_s42_best: executed   160.67 | clean 100/100 |  193.3s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k16_n20.jsonl
+STAGE4 n=20 COMPLETE
+100 events x 40 jobs | m=16 (eta=3.2) | sample_k16 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 6 (outbound_line path: (0, 10) -> (16, 10) at t=103.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR7, (0, 11) res by AMR6, (0, 9) res by AMR2, (0, 10) res by AMR15
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 8 (outbound_line path: (0, 6) -> (17, 10) at t=74.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@78 by AMR11)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 13 (unload path: (0, 14) -> (19, 18) at t=67.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 18)@71 by AMR7), ((1, 18)@72 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 30 (outbound_line path: (0, 14) -> (16, 14) at t=97.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 17 (unload path: (0, 14) -> (19, 18) at t=18.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((2, 18)@24 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 7 (outbound_line path: (0, 14) -> (16, 10) at t=75.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@79 by AMR13)
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 5 (unload path: (0, 10) -> (19, 6) at t=99.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@100 by AMR13), ((0, 6)@103 by AMR8), ((3, 6)@106 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 9 (outbound_line path: (0, 6) -> (16, 10) at t=74.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@75 by AMR7), ((0, 10)@78 by AMR2), ((3, 10)@81 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 21 (pickup path: (1, 6) -> (0, 6) at t=83.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@84 by AMR10)
+              ppo_gc1_s42_best: executed   242.36 | clean 100/100 |  492.0s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k16_n40.jsonl
+STAGE4 n=40 COMPLETE
+100 events x 60 jobs | m=16 (eta=3.2) | sample_k16 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 46 (outbound_line path: (0, 10) -> (16, 6) at t=62.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR1, (0, 11) res by AMR3, (0, 9) res by AMR4, (0, 10) res by AMR10
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 23 (unload path: (0, 14) -> (19, 10) at t=80.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR3, (0, 15) res by AMR4, (0, 13) res by AMR10, (0, 14) res by AMR13
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 4 (pickup path: (1, 10) -> (0, 10) at t=86.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@87 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 36 (pickup path: (0, 12) -> (0, 14) at t=83.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 38 (outbound_line path: (0, 10) -> (16, 10) at t=26.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR3, (0, 9) res by AMR15, (0, 10) res by AMR16
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 54 (unload path: (0, 10) -> (19, 18) at t=90.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 14)@94 by AMR14)
+              ppo_gc1_s42_best: executed   325.08 | clean 100/100 |  955.0s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k16_n60.jsonl
+STAGE4 n=60 COMPLETE
+100 events x 80 jobs | m=16 (eta=3.2) | sample_k16 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 25 (unload path: (0, 6) -> (19, 6) at t=104.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR8, (0, 7) res by AMR4, (0, 5) res by AMR16, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 62 (inbound_line path: (0, 6) -> (1, 10) at t=178.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR10, (0, 7) res by AMR15, (0, 5) res by AMR16, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR4' on Job 64 (unload path: (0, 10) -> (19, 10) at t=113.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@114 by AMR1)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 20 (pickup path: (1, 10) -> (0, 10) at t=166.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@167 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 56 (unload path: (0, 14) -> (19, 18) at t=257.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 16)@259 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 25 (unload path: (0, 6) -> (19, 10) at t=103.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@107 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 20 (outbound_line path: (0, 6) -> (16, 6) at t=285.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 6)@286 by AMR10)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 42 (outbound_line path: (0, 14) -> (16, 10) at t=19.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 13)@20 by AMR11), ((0, 10)@23 by AMR16), ((1, 10)@24 by AMR3)
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 68 (inbound_line path: (0, 6) -> (1, 10) at t=79.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 7)@80 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR16' on Job 49 (pickup path: (1, 10) -> (0, 10) at t=237.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@238 by AMR7)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 62 (unload path: (0, 10) -> (19, 6) at t=119.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 9)@120 by AMR6), ((0, 6)@123 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR11' on Job 72 (outbound_line path: (0, 10) -> (16, 2) at t=221.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 8)@223 by AMR10), ((0, 6)@225 by AMR13), ((1, 2)@230 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 28 (outbound_line path: (0, 10) -> (16, 14) at t=189.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 31 (unload path: (0, 6) -> (19, 10) at t=302.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 74 (inbound_line path: (0, 2) -> (1, 2) at t=265.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 2)@266 by AMR12)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 3 (unload path: (0, 10) -> (19, 18) at t=120.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@122 by AMR2), ((0, 14)@124 by AMR16)
+  [WARNING] Pathfinding failed for AMR 'AMR8' on Job 27 (outbound_line path: (0, 10) -> (16, 2) at t=357.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR10' on Job 20 (outbound_line path: (0, 6) -> (16, 2) at t=175.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((6, 2)@185 by AMR8)
+              ppo_gc1_s42_best: executed   412.97 | clean 100/100 | 1552.8s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k16_n80.jsonl
+STAGE4 n=80 COMPLETE
+100 events x 100 jobs | m=16 (eta=3.2) | sample_k16 | device cuda
+  [WARNING] Pathfinding failed for AMR 'AMR15' on Job 93 (unload path: (0, 10) -> (19, 10) at t=101.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 84 (pickup path: (0, 14) -> (0, 18) at t=277.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 14) res by AMR16, (0, 15) res by AMR9, (0, 13) res by AMR11, (0, 14) res by AMR14
+  [WARNING] Pathfinding failed for AMR 'AMR9' on Job 42 (unload path: (0, 14) -> (19, 6) at t=248.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 11)@251 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 64 (inbound_line path: (0, 2) -> (2, 6) at t=422.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 3)@423 by AMR9), ((1, 6)@427 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR3' on Job 98 (outbound_line path: (0, 10) -> (16, 14) at t=82.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR2, (0, 11) res by AMR12, (0, 9) res by AMR15, (0, 10) res by AMR3
+  [WARNING] Pathfinding failed for AMR 'AMR13' on Job 39 (outbound_line path: (0, 10) -> (16, 6) at t=181.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 6)@185 by AMR4), ((1, 6)@186 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR5' on Job 25 (unload path: (0, 10) -> (19, 14) at t=266.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 12)@268 by AMR15)
+  [WARNING] Pathfinding failed for AMR 'AMR6' on Job 26 (inbound_line path: (0, 10) -> (1, 14) at t=62.0).
+  [DIAGNOSIS] Reason: Start not trapped, static path clear. Likely MAX_DEPTH(100) reached or dynamic loop.
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 92 (pickup path: (1, 10) -> (0, 10) at t=131.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 10)@132 by AMR9)
+  [WARNING] Pathfinding failed for AMR 'AMR12' on Job 61 (inbound_line path: (0, 6) -> (1, 2) at t=240.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 6) res by AMR14, (0, 7) res by AMR13, (0, 5) res by AMR10, (0, 6) res by AMR12
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 76 (outbound_line path: (0, 10) -> (16, 10) at t=178.0).
+  [DIAGNOSIS] Reason: Trapped at start. Surrounding: (1, 10) res by AMR16, (0, 11) res by AMR5, (0, 9) res by AMR6, (0, 10) res by AMR2
+  [WARNING] Pathfinding failed for AMR 'AMR2' on Job 31 (outbound_line path: (0, 10) -> (16, 10) at t=74.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((1, 10)@75 by AMR4)
+  [WARNING] Pathfinding failed for AMR 'AMR14' on Job 81 (unload path: (0, 14) -> (19, 18) at t=154.0).
+  [DIAGNOSIS] Reason: Static path blocked: ((0, 15)@155 by AMR12)
+              ppo_gc1_s42_best: executed   501.88 | clean 100/100 | 2345.9s total
+rows -> /home/wei/Desktop/AMR-DFJSP/experiments/parcel_trend/raw/full_k16_n100.jsonl
+STAGE4 n=100 COMPLETE
+ALL STAGES COMPLETE

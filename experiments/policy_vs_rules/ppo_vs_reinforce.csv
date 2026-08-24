@@ -1,0 +1,5 @@
+checkpoint,method,epochs,unroutable,n_pairs,policy_mean,rule_mean,delta,delta_ci95,delta_pct,boot_lo,boot_hi,wins,ties,losses,win_rate_pct,perm_p,better,significant
+v7_ppo_s42_best,ppo,2000,0,100,344.29,350.6,-6.31,6.18,-1.8,-12.47,-0.3,55,4,41,55.0,0.0512,policy,yes
+v8_ppo_gc1_s42_best (4000ep),ppo,4000,1,99,344.72,351.05,-6.33,6.04,-1.8,-12.32,-0.33,52,1,46,52.5,0.0436,policy,yes
+v7_clip50_s42_best,reinforce/multisample,2000,0,100,345.75,350.6,-4.85,6.42,-1.38,-11.29,1.45,51,0,49,51.0,0.1462,policy,no
+v7_episode_s42_best,reinforce/episode,2000,0,100,353.97,350.6,3.37,6.2,0.96,-2.86,9.47,45,0,55,45.0,0.2928,rule,no

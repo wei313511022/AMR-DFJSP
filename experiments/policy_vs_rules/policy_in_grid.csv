@@ -1,0 +1,4 @@
+configuration,k,executed,executed_sd,ideal,penalty_pct,omega_q_pct,omega_r_pct,clean,instances,unroutable,solve_s,eval_s,total_s,rank_in_grid
+ppo_gc1_s44_best greedy,1,331.28,21.15,276.36,20.04,19.99,7.19,99,100,1,0.5114,0.07,0.581,1
+ppo_gc1_s44_best best-of-8,8,318.88,15.58,271.12,17.83,19.03,7.62,100,100,0,4.2767,0.0683,4.823,1
+ppo_gc1_s44_best best-of-16,16,315.16,14.8,271.68,16.23,18.7,7.61,100,100,0,8.523,0.0678,9.608,1

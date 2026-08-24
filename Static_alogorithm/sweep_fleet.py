@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import statistics
+import time
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -30,6 +31,7 @@ if STATIC_DIR not in sys.path:
     sys.path.insert(0, STATIC_DIR)
 
 import GA.GA as GA  # noqa: E402
+import operation_policy  # noqa: E402
 import scenario_v3 as sc  # noqa: E402
 import ideal_evaluator as ie  # noqa: E402
 from GA.GA import load_dispatch_events  # noqa: E402
@@ -78,12 +80,21 @@ def summarise(path: Path, job_rule: str) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--inbox", type=str, default="../test_case/v3/instances_60.jsonl")
+    # test_60, NOT instances_60: all 30 instances of instances_60.jsonl are
+    # contained in train_60.jsonl (verified by comparing parcel tuples), so any
+    # sweep that also carries a learned policy would score that policy on its
+    # own training data. test_60 (100 instances) and val_60 (50) both have zero
+    # overlap with train_60.
+    ap.add_argument("--inbox", type=str, default="../test_case/v3/test_60.jsonl")
     ap.add_argument("--out", type=str, required=True)
     ap.add_argument("--amrs", type=int, default=16)
     ap.add_argument("--count", type=int, default=5)
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--job_rule", type=str, default="milk_run")
+    ap.add_argument("--congestion_blind", action="store_true",
+                    help="planner estimates zero dock wait; execution is unchanged")
+    ap.add_argument("--travel_blind", action="store_true",
+                    help="planner charges free-space Manhattan travel; execution is unchanged")
     ap.add_argument("--summarise", action="store_true")
     args = ap.parse_args()
 
@@ -99,11 +110,24 @@ def main() -> None:
         for ev in events:
             jobs = ev["jobs"]
             for amr_rule in AMR_RULES:
-                ind = complete_with_dispatch_rule(
-                    jobs, [], {}, baseline_rule=f"{args.job_rule}+{amr_rule}", seed=42)
+                # solve_s / eval_s so rule rows carry the same compute fields as the policy
+                # rows written by eval_extend_gnn.py. Without them there is no way to state
+                # what a learned policy's makespan advantage costs relative to a rule.
+                t0 = time.perf_counter()
+                with operation_policy.congestion_blind_planning(args.congestion_blind), \
+                        operation_policy.travel_blind_planning(args.travel_blind):
+                    ind = complete_with_dispatch_rule(
+                        jobs, [], {}, baseline_rule=f"{args.job_rule}+{amr_rule}", seed=42)
+                solve_s = time.perf_counter() - t0
+                t0 = time.perf_counter()
                 row = ie.evaluate(ind, jobs)
+                eval_s = time.perf_counter() - t0
                 row.update({"amrs": args.amrs, "instance": ev["index"],
-                            "job_rule": args.job_rule, "rule": amr_rule})
+                            "job_rule": args.job_rule, "rule": amr_rule,
+                            "family": "rule", "n_jobs": len(jobs),
+                            "congestion_blind": bool(args.congestion_blind),
+                            "travel_blind": bool(args.travel_blind),
+                            "solve_s": round(solve_s, 4), "eval_s": round(eval_s, 4)})
                 fh.write(json.dumps(row) + "\n")
     print(f"m={args.amrs} (eta={sc.contention_ratio(args.amrs):.1f}): "
           f"{len(events)} instances x {len(AMR_RULES)} AMR rules -> {out}")

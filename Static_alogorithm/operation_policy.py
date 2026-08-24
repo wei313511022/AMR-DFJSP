@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -105,10 +107,34 @@ def set_calibration(calibration: Optional[dict]) -> None:
     CALIBRATION = calibration if calibration is not None else load_calibration(None)
 
 
+# When True every planner that consults this function charges free-space Manhattan distance
+# and ignores the fitted correction, i.e. it believes a leg never detours around another
+# robot. Like IGNORE_QUEUEING this changes only the PLANNER's belief; the executor still
+# routes over the shared reservation table. The two flags together reproduce the fixed
+# travel-time matrix of the FJSP-T / PDPTW literature.
+#
+# Set through travel_blind_planning() rather than assigned directly.
+IGNORE_TRAVEL_CALIBRATION = False
+
+
+@contextlib.contextmanager
+def travel_blind_planning(enabled: bool = True):
+    """Scope in which planners charge free-space distance for every leg."""
+    global IGNORE_TRAVEL_CALIBRATION
+    previous = IGNORE_TRAVEL_CALIBRATION
+    IGNORE_TRAVEL_CALIBRATION = bool(enabled)
+    try:
+        yield
+    finally:
+        IGNORE_TRAVEL_CALIBRATION = previous
+
+
 def estimated_travel_time(origin: Tuple[int, int], destination: Tuple[int, int]) -> float:
     base = heuristic(origin, destination)
     if base <= 0.0:
         return 0.0
+    if IGNORE_TRAVEL_CALIBRATION:
+        return float(base)
     travel = CALIBRATION["travel"]
     # Real grid travel can never beat Manhattan distance.
     return max(float(base), travel["scale"] * base + travel["offset"])
@@ -128,12 +154,38 @@ def dock_queue_depth(
     return sum(1 for event in dock_service_events.get(dock_key, []) if event[1] > ready_time)
 
 
+# When True every planner that consults this function believes service points are never
+# busy: no residual occupancy and no queue-depth penalty. It changes only what the PLANNER
+# believes -- the executor is untouched, so a schedule built under this flag is still
+# executed with full dock exclusivity, waiting lines and collisions. That pairing is the
+# point: it reproduces the fixed-travel-time assumption of the FJSP-T / learned-dispatcher
+# literature and then charges it the real cost.
+#
+# Set through congestion_blind_planning() rather than assigned directly, so the flag cannot
+# be left on for a subsequent measurement.
+IGNORE_QUEUEING = False
+
+
+@contextlib.contextmanager
+def congestion_blind_planning(enabled: bool = True):
+    """Scope in which planners estimate zero waiting at every service point."""
+    global IGNORE_QUEUEING
+    previous = IGNORE_QUEUEING
+    IGNORE_QUEUEING = bool(enabled)
+    try:
+        yield
+    finally:
+        IGNORE_QUEUEING = previous
+
+
 def estimated_dock_wait(
     dock_key: str,
     ready_time: float,
     station_availabilities: Dict[str, float],
     dock_service_events: Optional[DockServiceEvents] = None,
 ) -> float:
+    if IGNORE_QUEUEING:
+        return 0.0
     base_wait = max(0.0, station_availabilities.get(dock_key, 0.0) - ready_time)
     penalties = CALIBRATION["dock_wait_penalty"]
     depth = dock_queue_depth(dock_service_events, dock_key, ready_time)

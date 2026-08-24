@@ -1,0 +1,9 @@
+rule,tag,dropped_seed,n,delta,ci95,perm_p,significant,median,p10,p90,win_mean,n_wins,loss_mean,n_losses
+milk_run+earliest_completion,val-selected (PRIMARY),ppo_gc1_s42_best,99,-13.39,6.71,0.0002,yes,,,,,,,
+milk_run+earliest_completion,val-selected (PRIMARY),ppo_gc1_s43_best,98,-12.91,6.14,0.0002,yes,,,,,,,
+milk_run+earliest_completion,val-selected (PRIMARY),ppo_gc1_s44_best,99,-7.17,6.18,0.026,yes,,,,,,,
+milk_run+earliest_completion,val-selected (PRIMARY),(none) distribution,98,-11.3,,,,-7.67,-58.67,30.67,-32.45,57,18.55,40
+milk_run+earliest_available,strongest on test,ppo_gc1_s42_best,99,-9.3,6.82,0.0086,yes,,,,,,,
+milk_run+earliest_available,strongest on test,ppo_gc1_s43_best,98,-8.55,6.14,0.0084,yes,,,,,,,
+milk_run+earliest_available,strongest on test,ppo_gc1_s44_best,99,-3.47,6.42,0.3018,no,,,,,,,
+milk_run+earliest_available,strongest on test,(none) distribution,98,-6.94,,,,-2.33,-53.67,33.33,-28.71,55,20.91,43

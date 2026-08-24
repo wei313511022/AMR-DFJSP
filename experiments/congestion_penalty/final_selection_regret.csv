@@ -1,0 +1,6 @@
+m,eta,ideal_pick,executed_pick,regret_pct,regret_ci95,n_paired,significant
+8,1.6,milk_run+least_loaded,milk_run+earliest_available,0.03,0.39,100,no
+12,2.4,milk_run+least_loaded,milk_run+earliest_available,0.09,0.41,100,no
+16,3.2,milk_run+least_loaded,milk_run+earliest_available,0.44,0.4,100,yes
+20,4.0,lpt+least_loaded,lpt+earliest_available,1.37,0.7,100,yes
+24,4.8,lpt+least_loaded,lpt+earliest_available,1.3,0.67,99,yes

@@ -1,0 +1,214 @@
+============================================================================================================
+FULL METHOD BENCHMARK -- scenario v3, m=16, 100 instances per size, dataset test_case/v3/trend/full_{n}.jsonl
+Planning under the calibrated surrogate; every schedule scored once by the collision-aware executor.
+Makespan/gap averaged over routable instances only (nu=0). Compute time from the serial pass, no contention.
+============================================================================================================
+
+HEADLINE -- best method in each family, per parcel count
+------------------------------------------------------------------------------------------------------------
+   n   family method                          makespan    ci95    ideal      gap    gap%   compute  nu>0
+  20     rule earliest_completion_job+material_match     166.2    2.83    151.5     14.7    9.7%     0.025     0
+  20   policy v9_only60_s42 [greedy]             166.2    3.21    128.0     38.3   32.5%     0.098     0
+  20   policy v10_C_s44 [best8]                  160.2    2.96    140.4     19.8   14.3%     1.096     0
+  20       ga GA                                 153.9    2.84    138.4     15.5   11.7%    15.725     0
+
+  40     rule earliest_completion_job+material_match     257.7    3.68    229.6     28.2   12.3%     0.111     0
+  40   policy v9_only60_s44 [greedy]             254.1    4.18    203.8     50.3   25.3%     0.337     0
+  40   policy v9_only60_s44 [best8]              242.2    3.08    202.1     40.0   20.3%     3.204     0
+  40       ga GA                                 246.3    3.00    220.6     25.7   11.7%    37.210     0
+
+  60     rule milk_run+least_loaded              346.9    6.49    282.8     64.0   22.9%     0.312     0
+  60   policy v9_only60_s42 [greedy]             338.9    4.54    263.1     75.8   29.1%     0.749     1
+  60   policy v9_only60_s44 [best8]              326.1    3.05    276.7     49.4   18.1%     6.747     0
+  60       ga GA                                 338.7    2.98    297.8     40.9   13.8%    65.850     0
+
+  80     rule milk_run+earliest_completion       426.2    7.22    354.6     71.7   20.4%     0.571     0
+  80   policy v9_only60_s43 [greedy]             432.3    4.43    354.0     78.2   22.3%     1.331     0
+  80   policy v9_only60_s43 [best8]              412.0    3.06    349.5     62.6   18.0%    11.636     0
+  80       ga GA                                 435.9    4.02    386.7     49.2   12.8%   101.859     0
+
+ 100     rule milk_run+earliest_available        501.5    7.49    409.0     92.5   22.9%     0.894     0
+ 100   policy v9_only60_s43 [greedy]             521.8    4.14    423.5     98.3   23.4%     2.050     0
+ 100   policy v9_only60_s43 [best8]              496.6    3.05    419.1     77.5   18.6%    17.576     0
+ 100       ga GA                                 525.9    4.07    477.5     48.4   10.1%   144.931     0
+
+
+ALL LEARNED MODELS -- makespan (routable instances)
+------------------------------------------------------------------------------------------------------------
+model                      mode         n=20         n=40         n=60         n=80        n=100
+------------------------------------------------------------------------------------------------------------
+v10_A_s44                greedy   196.9+-4.5    399.4+-7.9    671.6+-13.5   875.0+-12.5  1042.6+-14.5
+v10_A_s44_bestideal      greedy   214.2+-5.0    394.0+-8.2    584.0+-8.7    759.6+-9.8    945.0+-11.4
+v10_B_s44                greedy   236.1+-5.1    330.3+-6.4    407.5+-7.2    502.8+-6.2    607.9+-7.4 
+v10_B_s44_bestideal      greedy   236.1+-5.1    330.3+-6.4    407.5+-7.2    502.8+-6.2    607.9+-7.4 
+v10_C_s44                greedy   168.0+-3.2    260.7+-3.2    353.3+-3.8    460.2+-4.0    567.0+-4.4 
+v9_mix_s42               greedy   180.2+-3.5    286.9+-4.6    389.3+-4.2    490.5+-5.7    586.6+-5.7 
+v9_mix_s43               greedy   183.2+-4.2    306.8+-5.6    402.1+-6.4    498.2+-5.3    593.6+-5.4 
+v9_mix_s44               greedy   181.8+-3.6    284.2+-4.4    383.3+-4.3    493.8+-5.9    598.5+-5.3 
+v9_only60_s42            greedy   166.2+-3.2    254.5+-4.0    338.9+-4.5    433.8+-5.1    528.6+-5.8 
+v9_only60_s43            greedy   171.7+-3.4    257.6+-3.8    343.3+-4.2    432.3+-4.4    521.8+-4.1 
+v9_only60_s44            greedy   168.5+-3.6    254.1+-4.2    342.8+-4.2    440.6+-4.9    531.5+-5.6 
+
+v10_A_s44                 best8   192.7+-3.6    378.7+-6.0    603.0+-7.0    800.0+-6.3    968.2+-8.3 
+v10_A_s44_bestideal       best8   195.3+-3.7    377.9+-7.2    546.8+-6.9    722.9+-7.1    907.4+-9.1 
+v10_B_s44                 best8   222.7+-4.2    325.5+-4.4    419.6+-4.7    524.4+-4.5    630.1+-5.5 
+v10_B_s44_bestideal       best8   222.7+-4.2    325.5+-4.4    419.6+-4.7    524.4+-4.5    630.1+-5.5 
+v10_C_s44                 best8   160.2+-3.0    246.6+-2.6    338.5+-2.1    436.1+-2.6    534.5+-2.5 
+v9_mix_s42                best8   167.1+-3.0    266.4+-3.8    365.1+-3.5    461.5+-4.4    559.0+-4.4 
+v9_mix_s43                best8   172.7+-3.5    289.0+-4.6    379.9+-4.3    474.9+-4.5    568.0+-4.4 
+v9_mix_s44                best8   170.7+-3.0    264.8+-3.8    361.2+-4.0    465.1+-3.8    571.3+-4.3 
+v9_only60_s42             best8   160.3+-2.8    243.2+-3.2    326.6+-3.0    413.4+-3.5    500.9+-3.5 
+v9_only60_s43             best8   161.0+-2.9    243.1+-3.0    327.0+-2.7    412.0+-3.1    496.6+-3.0 
+v9_only60_s44             best8   161.1+-2.9    242.2+-3.1    326.1+-3.0    416.6+-3.2    504.3+-3.5 
+
+
+DISPATCHING RULES -- top 8 combinations at each size (of 60)
+------------------------------------------------------------------------------------------------------------
+  n=20
+    rank  combination                                   makespan    gap%   compute
+       1  earliest_completion_job+material_match           166.2    9.7%     0.025
+       2  material_match+material_match                    166.2    9.8%     0.025
+       3  earliest_completion_job+earliest_completion      166.3   10.5%     0.027
+       4  earliest_completion_job+nearest_amr              166.3   10.5%     0.025
+       5  material_match+earliest_completion               166.4   10.5%     0.025
+       6  material_match+nearest_amr                       166.4   10.5%     0.025
+       7  earliest_completion_job+earliest_available       166.4    9.8%     0.025
+       8  earliest_completion_job+least_loaded             166.4    9.8%     0.025
+    worst  least_congested_station+random                   415.9   60.3%
+
+  n=40
+    rank  combination                                   makespan    gap%   compute
+       1  earliest_completion_job+material_match           257.7   12.3%     0.111
+       2  material_match+random                            257.8   12.9%     0.112
+       3  earliest_completion_job+random                   257.9   12.9%     0.113
+       4  material_match+material_match                    257.9   12.2%     0.103
+       5  material_match+earliest_available                258.0   12.5%     0.102
+       6  material_match+least_loaded                      258.0   12.5%     0.102
+       7  earliest_completion_job+earliest_available       258.1   12.5%     0.111
+       8  earliest_completion_job+least_loaded             258.1   12.5%     0.102
+    worst  least_congested_station+random                   816.0  101.5%
+
+  n=60
+    rank  combination                                   makespan    gap%   compute
+       1  milk_run+least_loaded                            346.9   22.9%     0.312
+       2  milk_run+earliest_available                      347.4   20.4%     0.312
+       3  milk_run+earliest_completion                     348.4   21.6%     0.311
+       4  milk_run+nearest_amr                             348.4   21.6%     0.320
+       5  material_match+earliest_completion               349.3   14.4%     0.241
+       6  material_match+nearest_amr                       349.3   14.4%     0.239
+       7  material_match+material_match                    349.6   13.1%     0.231
+       8  earliest_completion_job+earliest_completion      349.6   14.5%     0.231
+    worst  least_congested_station+random                  1244.2  134.0%
+
+  n=80
+    rank  combination                                   makespan    gap%   compute
+       1  milk_run+earliest_completion                     426.2   20.4%     0.571
+       2  milk_run+nearest_amr                             426.2   20.4%     0.560
+       3  milk_run+random                                  430.8   20.5%     0.563
+       4  milk_run+earliest_available                      430.9   22.0%     0.571
+       5  milk_run+least_loaded                            431.8   25.7%     0.571
+       6  milk_run+material_match                          433.8   16.5%     0.558
+       7  material_match+random                            445.6   11.3%     0.429
+       8  earliest_completion_job+random                   445.7   11.3%     0.445
+    worst  least_congested_station+random                  1655.3  148.3%
+
+  n=100
+    rank  combination                                   makespan    gap%   compute
+       1  milk_run+earliest_available                      501.5   22.9%     0.894
+       2  milk_run+least_loaded                            505.3   27.9%     0.884
+       3  milk_run+earliest_completion                     505.6   22.6%     0.889
+       4  milk_run+nearest_amr                             505.6   22.6%     0.897
+       5  milk_run+material_match                          506.0   16.4%     0.890
+       6  milk_run+random                                  511.9   21.7%     0.897
+       7  earliest_completion_job+material_match           532.7   10.1%     0.706
+       8  material_match+material_match                    533.0   10.1%     0.686
+    worst  least_congested_station+random                  2073.1  160.7%
+
+
+COMPUTE TIME -- seconds per instance, single process, no contention
+------------------------------------------------------------------------------------------------------------
+method                                     n=20         n=40         n=60         n=80        n=100
+------------------------------------------------------------------------------------------------------------
+earliest_completion_job+earliest_available        0.025        0.111        0.248        0.440        0.706
+earliest_completion_job+earliest_completion        0.027        0.102        0.231        0.442        0.697
+earliest_completion_job+least_loaded        0.025        0.102        0.241        0.436        0.690
+earliest_completion_job+material_match        0.025        0.111        0.241        0.432        0.706
+earliest_completion_job+nearest_amr        0.025        0.101        0.240        0.442        0.686
+earliest_completion_job+random            0.025        0.113        0.242        0.445        0.701
+fifo+earliest_available                   0.025        0.100        0.237        0.437        0.688
+fifo+earliest_completion                  0.026        0.100        0.247        0.436        0.682
+fifo+least_loaded                         0.025        0.101        0.230        0.453        0.696
+fifo+material_match                       0.026        0.100        0.238        0.440        0.691
+fifo+nearest_amr                          0.026        0.110        0.246        0.430        0.683
+fifo+random                               0.025        0.111        0.240        0.447        0.698
+least_congested_station+earliest_available        0.025        0.110        0.236        0.407        0.683
+least_congested_station+earliest_completion        0.025        0.102        0.239        0.438        0.689
+least_congested_station+least_loaded        0.025        0.102        0.237        0.437        0.669
+least_congested_station+material_match        0.025        0.101        0.237        0.439        0.687
+least_congested_station+nearest_amr        0.025        0.101        0.247        0.428        0.682
+least_congested_station+random            0.025        0.102        0.239        0.440        0.691
+lpt+earliest_available                    0.025        0.110        0.238        0.442        0.693
+lpt+earliest_completion                   0.025        0.102        0.239        0.441        0.688
+lpt+least_loaded                          0.025        0.111        0.233        0.418        0.699
+lpt+material_match                        0.025        0.111        0.240        0.443        0.698
+lpt+nearest_amr                           0.025        0.101        0.249        0.434        0.703
+lpt+random                                0.025        0.103        0.244        0.431        0.696
+material_match+earliest_available         0.025        0.102        0.241        0.441        0.695
+material_match+earliest_completion        0.025        0.111        0.241        0.443        0.698
+material_match+least_loaded               0.025        0.102        0.241        0.443        0.697
+material_match+material_match             0.025        0.103        0.231        0.444        0.686
+material_match+nearest_amr                0.025        0.102        0.239        0.434        0.686
+material_match+random                     0.025        0.112        0.241        0.429        0.699
+milk_run+earliest_available               0.041        0.134        0.312        0.571        0.894
+milk_run+earliest_completion              0.032        0.134        0.311        0.571        0.889
+milk_run+least_loaded                     0.033        0.134        0.312        0.571        0.884
+milk_run+material_match                   0.032        0.133        0.311        0.558        0.890
+milk_run+nearest_amr                      0.032        0.143        0.320        0.560        0.897
+milk_run+random                           0.032        0.135        0.315        0.563        0.897
+most_congested_station+earliest_available        0.034        0.103        0.241        0.443        0.689
+most_congested_station+earliest_completion        0.026        0.103        0.242        0.445        0.703
+most_congested_station+least_loaded        0.025        0.103        0.243        0.447        0.705
+most_congested_station+material_match        0.025        0.102        0.249        0.443        0.698
+most_congested_station+nearest_amr        0.025        0.111        0.242        0.435        0.693
+most_congested_station+random             0.026        0.113        0.253        0.450        0.710
+nearest_station+earliest_available        0.014        0.062        0.124        0.208        0.315
+nearest_station+earliest_completion        0.015        0.053        0.112        0.209        0.315
+nearest_station+least_loaded              0.015        0.063        0.124        0.210        0.319
+nearest_station+material_match            0.014        0.053        0.119        0.211        0.306
+nearest_station+nearest_amr               0.014        0.053        0.111        0.208        0.315
+nearest_station+random                    0.015        0.053        0.124        0.222        0.323
+random+earliest_available                 0.014        0.052        0.115        0.190        0.249
+random+earliest_completion                0.014        0.052        0.115        0.174        0.249
+random+least_loaded                       0.014        0.061        0.107        0.185        0.252
+random+material_match                     0.014        0.052        0.115        0.182        0.249
+random+nearest_amr                        0.014        0.052        0.106        0.182        0.248
+random+random                             0.014        0.053        0.115        0.184        0.253
+spt+earliest_available                    0.025        0.101        0.239        0.441        0.681
+spt+earliest_completion                   0.025        0.109        0.238        0.435        0.682
+spt+least_loaded                          0.025        0.102        0.248        0.452        0.691
+spt+material_match                        0.025        0.101        0.238        0.438        0.683
+spt+nearest_amr                           0.025        0.110        0.238        0.442        0.701
+spt+random                                0.025        0.112        0.233        0.429        0.695
+v10_A_s44 [greedy]                        0.098        0.333        0.726        1.259        1.958
+v10_A_s44_bestideal [greedy]              0.102        0.332        0.723        1.257        1.957
+v10_B_s44 [greedy]                        0.098        0.338        0.733        1.279        2.022
+v10_B_s44_bestideal [greedy]              0.098        0.337        0.738        1.279        2.024
+v10_C_s44 [greedy]                        0.099        0.346        0.756        1.311        2.062
+v9_mix_s42 [greedy]                       0.099        0.338        0.729        1.298        1.979
+v9_mix_s43 [greedy]                       0.102        0.332        0.721        1.264        1.955
+v9_mix_s44 [greedy]                       0.103        0.333        0.721        1.277        1.995
+v9_only60_s42 [greedy]                    0.098        0.338        0.749        1.308        2.062
+v9_only60_s43 [greedy]                    0.099        0.348        0.756        1.331        2.050
+v9_only60_s44 [greedy]                    0.098        0.337        0.744        1.315        2.053
+v10_A_s44 [best8]                         1.050        3.121        6.398       11.108       16.768
+v10_A_s44_bestideal [best8]               1.034        3.116        6.516       10.941       16.895
+v10_B_s44 [best8]                         0.964        3.104        6.668       11.158       17.214
+v10_B_s44_bestideal [best8]               0.970        3.121        6.565       11.242       17.233
+v10_C_s44 [best8]                         1.096        3.273        6.702       11.545       17.781
+v9_mix_s42 [best8]                        1.085        3.137        6.527       11.285       17.553
+v9_mix_s43 [best8]                        1.012        3.083        6.464       11.187       17.063
+v9_mix_s44 [best8]                        1.077        3.125        6.571       11.258       17.149
+v9_only60_s42 [best8]                     1.041        3.185        6.667       11.584       17.409
+v9_only60_s43 [best8]                     1.066        3.241        6.722       11.636       17.576
+v9_only60_s44 [best8]                     1.050        3.204        6.747       11.503       17.547
+GA                                       15.725       37.210       65.850      101.859      144.931

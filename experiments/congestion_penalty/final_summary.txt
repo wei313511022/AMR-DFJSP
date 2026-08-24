@@ -1,0 +1,58 @@
+
+job rule: lpt   AMR rule: earliest_completion   (headline; 100 instances x 60 parcels)
+-----------------------------------------------------------------------------------
+  m   eta    ideal     exec           Lambda    Om_q    Om_r  q-shr  nu/ep    clean
+  8   1.6    568.1    599.9      5.63% +/-0.51    6.4%    2.7%    70%   0.00  100/100
+ 12   2.4    397.7    443.9     11.78% +/-0.97   14.1%    4.2%    77%   0.00  100/100
+ 16   3.2    316.5    381.2     20.64% +/-1.18   26.7%    5.5%    83%   0.00  100/100
+ 20   4.0    296.2    357.0     20.53% +/-1.06   45.7%    6.5%    88%   0.00  100/100
+ 24   4.8    284.6    351.9     23.95% +/-1.54   64.9%    7.0%    90%   0.00  100/100
+
+paired within-instance change in Lambda:
+  m  8 -> 12   +6.15 pp  +/-1.08  (n=100, moved: yes)
+  m 12 -> 16   +8.87 pp  +/-1.47  (n=100, moved: yes)
+  m 16 -> 20   -0.12 pp  +/-1.39  (n=100, moved: no)
+  m 20 -> 24   +3.42 pp  +/-1.54  (n=100, moved: yes)
+
+job rule: milk_run   AMR rule: earliest_completion   (headline; 100 instances x 60 parcels)
+-----------------------------------------------------------------------------------
+  m   eta    ideal     exec           Lambda    Om_q    Om_r  q-shr  nu/ep    clean
+  8   1.6    403.7    439.9      9.11% +/-1.06    6.3%    3.0%    68%   0.00  100/100
+ 12   2.4    308.1    362.3     17.82% +/-1.63   19.8%    4.8%    81%   0.00  100/100
+ 16   3.2    290.4    350.6     20.93% +/-1.90   39.2%    5.4%    88%   0.00  100/100
+ 20   4.0    283.6    350.2     24.03% +/-2.43   48.8%    5.4%    90%   0.00  100/100
+ 24   4.8    281.4    349.9     25.21% +/-2.80   50.1%    5.4%    90%   0.00  100/100
+
+paired within-instance change in Lambda:
+  m  8 -> 12   +8.72 pp  +/-1.86  (n=100, moved: yes)
+  m 12 -> 16   +3.10 pp  +/-1.77  (n=100, moved: yes)
+  m 16 -> 20   +3.11 pp  +/-1.95  (n=100, moved: yes)
+  m 20 -> 24   +1.18 pp  +/-1.51  (n=100, moved: no)
+
+
+marginal value of fleet, paired (negative = makespan improves):
+        rule       step            idealised             executed
+         lpt      8->12        -29.96% +/-0.74        -26.02% +/-0.39
+         lpt     12->16        -20.31% +/-1.09        -14.15% +/-0.71
+         lpt     16->20         -6.21% +/-1.03         -6.39% +/-0.50
+         lpt     20->24         -3.93% +/-1.18         -1.46% +/-0.50
+    milk_run      8->12        -23.49% +/-1.18        -17.50% +/-1.23
+    milk_run     12->16         -5.53% +/-1.37         -3.22% +/-1.12
+    milk_run     16->20         -2.15% +/-1.49         -0.01% +/-0.92
+    milk_run     20->24         -0.79% +/-0.95         -0.10% +/-0.24
+
+ranking consistency between the two evaluators (12 rule combinations):
+    m   eta     tau  disc                      best by ideal                   best by executed
+    8   1.6   0.785     7              milk_run+least_loaded        milk_run+earliest_available
+   12   2.4   0.785     7              milk_run+least_loaded        milk_run+earliest_available
+   16   3.2   0.723     9              milk_run+least_loaded        milk_run+earliest_available
+   20   4.0   0.385    20                   lpt+least_loaded             lpt+earliest_available
+   24   4.8   0.600    13                   lpt+least_loaded             lpt+earliest_available
+
+selection regret -- executed makespan lost by taking the idealised model's favourite combination:
+    m   eta             regret   moved
+    8   1.6        0.03% +/-0.39      no
+   12   2.4        0.09% +/-0.41      no
+   16   3.2        0.44% +/-0.40     yes
+   20   4.0        1.37% +/-0.70     yes
+   24   4.8        1.30% +/-0.67     yes
