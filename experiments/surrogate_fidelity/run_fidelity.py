@@ -44,23 +44,13 @@ for p in (REPO / "Static_alogorithm", REPO / "Static_alogorithm" / "extend_GNN")
 import ideal_evaluator as ie          # noqa: E402
 import operation_policy as op         # noqa: E402
 import scenario_v3 as sc              # noqa: E402
+from surrogate_evaluator import surrogate_makespan  # noqa: E402
 from GA.GA import load_dispatch_events                      # noqa: E402
 from reinforce_baseline import complete_with_dispatch_rule  # noqa: E402
 
 COMBOS = [f"{j}+{a}" for j in ("fifo", "spt", "lpt", "milk_run",
                                "material_match", "earliest_completion_job")
           for a in ("earliest_available", "earliest_completion")]
-
-
-def surrogate_makespan(individual, jobs) -> float:
-    """Replay a complete schedule through Psi-hat exactly as the rollout advances state."""
-    pos, avail, stat, inv = op.initial_operation_state(None)
-    picked, done, carrier = set(), set(), {}
-    events = op.empty_dock_service_events()
-    for action_id in op.operation_sequence_from_individual(individual, jobs):
-        op.apply_fast_action(op.decode_action_id(action_id, jobs), jobs, picked, done,
-                             carrier, pos, avail, stat, inv, dock_service_events=events)
-    return max(avail.values()) if avail else 0.0
 
 
 def kendall_tau(pairs) -> float:

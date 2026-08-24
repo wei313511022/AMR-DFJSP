@@ -28,6 +28,7 @@ from GA.GA import (  # noqa: E402
     routing_iters,
 )
 from ideal_evaluator import per_robot_ideal as ideal_per_robot  # noqa: E402
+from surrogate_evaluator import surrogate_makespan  # noqa: E402
 from operation_policy import (  # noqa: E402
     action_mask,
     apply_fast_action as apply_operation_action,
@@ -87,7 +88,7 @@ REINFORCE_FIELDS = (
 PPO_FIELDS = (
     "epoch", "elapsed_s", "lr", "makespan", "actor_loss", "critic_loss",
     "grad_norm", "clipped_updates", "val_makespan", "val_invalid", "val_score",
-    "val_ideal",
+    "val_ideal", "val_surrogate",
 )
 
 
@@ -274,6 +275,29 @@ def ideal_validation_score(individual, jobs) -> float:
     """C~ of eq. (5) for one schedule -- the idealised paradigm's own yardstick."""
     per_robot = ideal_per_robot(individual, jobs)
     return max(per_robot.values()) if per_robot else 0.0
+
+
+# Every validation decode is scored under all three evaluators. The executor score is the
+# primary one and selects `_best.pth` in EVERY cell, so the factorial changes one thing per
+# axis; these two are free riders on the same decoded schedules (0.1-0.5 ms against ~1 s to
+# decode) and cost no extra training run.
+VALIDATION_EXTRAS = {
+    "ideal": ideal_validation_score,
+    "surrogate": surrogate_makespan,
+}
+
+# SECOND CHECKPOINT PROTOCOL. An arm trained on a cheap evaluator is also selected inside
+# its own paradigm: a practitioner who never calls the executor cannot select on it either,
+# and cannot even SEE a routing failure -- hence the native selection carries no invalid
+# penalty. Saving both from one run lets the factorial be reported either with selection
+# held fixed (executor everywhere, one factor changed) or with each cheap arm run end to
+# end inside its own paradigm. The executor arm has no entry: for it the two protocols are
+# the same checkpoint.
+#   --train_evaluator  ->  (validation extra it selects on, checkpoint suffix, log label)
+NATIVE_SELECTION = {
+    "ideal": ("ideal", "_bestideal.pth", "Val C~"),
+    "surrogate": ("surrogate", "_bestsurr.pth", "Val Psi-hat"),
+}
 
 
 def install_train_feature_mask(level: str):
@@ -594,9 +618,14 @@ def train_ppo(args):
     run.log("Starting hybrid dock-aware extend_GNN PPO training with critic-based advantage.")
 
     selector = SmoothedBestSelector(window=args.val_window)
-    selector_ideal = SmoothedBestSelector(window=args.val_window)
-    ideal_best_path = (args.best_model_path or LEGACY_BEST_MODEL_PATH).replace(
-        "_best.pth", "_bestideal.pth")
+    native = NATIVE_SELECTION.get(args.train_evaluator)
+    selector_native = SmoothedBestSelector(window=args.val_window) if native else None
+    native_best_path = ""
+    if native:
+        native_key, native_suffix, native_label = native
+        native_best_path = (args.best_model_path or LEGACY_BEST_MODEL_PATH).replace(
+            "_best.pth", native_suffix)
+        run.log(f"Second checkpoint protocol: {native_label} selects {native_best_path}")
     best_makespan = float("inf")
     losses_actor = []
     losses_critic = []
@@ -642,6 +671,16 @@ def train_ppo(args):
                 # cell is still SELECTED and REPORTED on the deployment objective.
                 per_robot = ideal_per_robot(individual, jobs)
                 stochastic_makespan = max(per_robot.values()) if per_robot else 0.0
+                invalid = 0
+            elif args.train_evaluator == "surrogate":
+                # Train against Psi-hat: the calibrated fast model the rollout already
+                # advances, replayed over the finished schedule. C~ is the WEAK cheap
+                # opponent -- 15.3% value error and tau 0.454 against the executor at n=60,
+                # against Psi-hat's 7.0% and 0.736 (experiments/surrogate_fidelity). An arm
+                # that loses to C~ may only be losing to a strawman, so this is the cheap
+                # pipeline a deployment would really build. Like C~ it does no routing, so
+                # again there is no invalid count.
+                stochastic_makespan = surrogate_makespan(individual, jobs)
                 invalid = 0
             else:
                 stochastic_makespan, invalid = evaluate_makespan(individual, jobs)
@@ -764,7 +803,7 @@ def train_ppo(args):
                 model,
                 solve_with_extend_gnn,
                 evaluate_makespan,
-                secondary_fn=ideal_validation_score,
+                extra_fns=VALIDATION_EXTRAS,
             )
             validation_score = validation_checkpoint_score(validation, args.validation_invalid_penalty)
             run.log(
@@ -777,7 +816,8 @@ def train_ppo(args):
                 val_makespan=round(float(validation["makespan"]), 4),
                 val_invalid=round(float(validation["invalid_jobs"]), 4),
                 val_score=round(float(validation_score), 4),
-                val_ideal=round(float(validation["secondary"]), 4),
+                val_ideal=round(float(validation["extras"]["ideal"]), 4),
+                val_surrogate=round(float(validation["extras"]["surrogate"]), 4),
             )
             best_makespan = selector.update(
                 model=model,
@@ -786,19 +826,16 @@ def train_ppo(args):
                 fallback_model_path=LEGACY_BEST_MODEL_PATH,
                 metric_label="Val Score",
             )
-            # Second checkpoint, selected on C~ alone. A practitioner working entirely
-            # inside the fixed-travel-time paradigm has no executor, so they can neither
-            # score with Phi nor even SEE a routing failure -- hence no invalid penalty
-            # here. Saving both from one run means the factorial can be reported either
-            # with selection held fixed (executor everywhere, one factor changed) or with
-            # the idealised arms selected faithfully inside their own paradigm.
-            selector_ideal.update(
-                model=model,
-                current_metric=float(validation["secondary"]),
-                best_model_path=ideal_best_path,
-                fallback_model_path=ideal_best_path,
-                metric_label="Val C~",
-            )
+            # Second checkpoint, selected on the arm's own cheap evaluator alone and
+            # with no invalid penalty -- see NATIVE_SELECTION.
+            if selector_native is not None:
+                selector_native.update(
+                    model=model,
+                    current_metric=float(validation["extras"][native_key]),
+                    best_model_path=native_best_path,
+                    fallback_model_path=native_best_path,
+                    metric_label=native_label,
+                )
         elif not validation_events:
             best_makespan = selector.update(
                 model=model,
@@ -837,12 +874,13 @@ def train(args):
         raise ValueError("--train_invalid_penalty must be non-negative")
     if args.train_mask not in TRAIN_MASKS:
         raise ValueError(f"--train_mask must be one of {sorted(TRAIN_MASKS)}")
-    if args.train_evaluator == "ideal" and args.rl_method != "ppo":
+    if args.train_evaluator != "executor" and args.rl_method != "ppo":
         # score_instance_group in the REINFORCE path computes its dispatch baseline with
         # the executor too; swapping only the policy's return there would compare a
-        # C~-scored rollout against a Phi-scored baseline. Refuse rather than train a
+        # cheaply scored rollout against a Phi-scored baseline. Refuse rather than train a
         # meaningless advantage for four thousand epochs.
-        raise ValueError("--train_evaluator ideal is implemented for --rl_method ppo only")
+        raise ValueError(
+            f"--train_evaluator {args.train_evaluator} is implemented for --rl_method ppo only")
     # Installed before any rollout so the network never sees the masked channels.
     install_train_feature_mask(args.train_mask)
     if args.rl_method == "ppo":
@@ -909,7 +947,7 @@ def build_parser():
     parser.add_argument("--ppo_epochs", type=int, default=4)
     parser.add_argument("--clip_eps", type=float, default=0.2)
     parser.add_argument("--value_loss_coef", type=float, default=0.5)
-    # --- A/B/C/D factorial axes -----------------------------------------------------
+    # --- A/B/C/D/E/F factorial axes -----------------------------------------------------
     # observability x training evaluator, holding architecture, action space and
     # parameter count fixed. Cell D is (none, executor), which is the default, so an
     # existing run is reproduced by omitting both flags.
@@ -917,10 +955,13 @@ def build_parser():
                         help="congestion channels zeroed for the whole run: "
                              "none|L1|L2|L3|control (see TRAIN_MASKS)")
     parser.add_argument("--train_evaluator", type=str, default="executor",
-                        choices=("executor", "ideal"),
+                        choices=("executor", "ideal", "surrogate"),
                         help="what prices the training return: the collision-aware "
-                             "executor Phi, or the idealised decode C~ of eq. (5). "
-                             "Validation stays executor-relative either way.")
+                             "executor Phi, the idealised decode C~ of eq. (5), or the "
+                             "calibrated surrogate Psi-hat. Validation stays "
+                             "executor-relative in every case; the two cheap arms "
+                             "additionally save a checkpoint selected inside their own "
+                             "paradigm (see NATIVE_SELECTION).")
     return parser
 
 

@@ -95,19 +95,29 @@ def save_model_weights(model, model_path: str) -> None:
 
 
 def evaluate_validation_events(events, model, solve_fn, evaluate_makespan_fn,
-                               secondary_fn=None) -> dict[str, float]:
+                               secondary_fn=None, extra_fns=None) -> dict:
     """Greedy-decode every validation instance once and score it.
 
-    `secondary_fn(individual, jobs) -> float` scores the SAME decoded schedules under a
-    second evaluator, returned as "secondary". Decoding dominates the cost (~1 s per
-    instance) while the idealised decode C~ costs ~0.1 ms, so a second criterion is
-    effectively free and does not require a second training run.
+    The PRIMARY score is always `evaluate_makespan_fn`, i.e. the executor, so every arm of
+    an experiment is selected and reported on the deployment objective.
+
+    `secondary_fn(individual, jobs) -> float` and `extra_fns` -- a `{name: fn}` mapping --
+    score the SAME decoded schedules under further evaluators, returned as "secondary" and
+    under `extras[name]`. Decoding dominates the cost (~1 s per instance) while the cheap
+    evaluators cost 0.1-0.5 ms, so each extra criterion is effectively free and does not
+    require a second training run. `secondary_fn` is the one-evaluator shorthand and is
+    reported in `extras` as well.
     """
+    scorers = dict(extra_fns or {})
+    if secondary_fn is not None:
+        scorers["secondary"] = secondary_fn
+
     if not events:
         return {
             "makespan": float("nan"),
             "invalid_jobs": float("nan"),
             "secondary": float("nan"),
+            "extras": {name: float("nan") for name in scorers},
             "samples": 0,
         }
 
@@ -115,7 +125,7 @@ def evaluate_validation_events(events, model, solve_fn, evaluate_makespan_fn,
     model.eval()
     makespans = []
     invalid_counts = []
-    secondary = []
+    extras: dict[str, list] = {name: [] for name in scorers}
     try:
         with torch.no_grad():
             for event in events:
@@ -123,15 +133,18 @@ def evaluate_validation_events(events, model, solve_fn, evaluate_makespan_fn,
                 makespan, invalid_count = evaluate_makespan_fn(individual, event["jobs"])
                 makespans.append(float(makespan))
                 invalid_counts.append(float(invalid_count))
-                if secondary_fn is not None:
-                    secondary.append(float(secondary_fn(individual, event["jobs"])))
+                for name, fn in scorers.items():
+                    extras[name].append(float(fn(individual, event["jobs"])))
     finally:
         model.train(was_training)
 
+    means = {name: (sum(vals) / len(vals) if vals else float("nan"))
+             for name, vals in extras.items()}
     return {
         "makespan": sum(makespans) / len(makespans),
         "invalid_jobs": sum(invalid_counts) / len(invalid_counts),
-        "secondary": (sum(secondary) / len(secondary)) if secondary else float("nan"),
+        "secondary": means.get("secondary", float("nan")),
+        "extras": means,
         "samples": len(makespans),
     }
 
