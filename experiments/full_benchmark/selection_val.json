@@ -1,0 +1,3789 @@
+{
+  "split": "val",
+  "dataset": "test_case/v3/mix/val_mix_{n}.jsonl",
+  "rule_tie_band": 0.5,
+  "sizes": [
+    20,
+    40,
+    60,
+    80,
+    100
+  ],
+  "by_size": {
+    "20": {
+      "rule": {
+        "combo": "material_match+material_match",
+        "val_executed": 165.9,
+        "tie_band": 0.5,
+        "tied_with": [
+          "material_match+material_match"
+        ],
+        "runner_up_gap": 0.53,
+        "n_candidates": 60
+      },
+      "rule_ranking": [
+        {
+          "combo": "material_match+material_match",
+          "val_executed": 165.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+material_match",
+          "val_executed": 166.43,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_available",
+          "val_executed": 167.32,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+least_loaded",
+          "val_executed": 167.32,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_completion",
+          "val_executed": 167.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+nearest_amr",
+          "val_executed": 167.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_available",
+          "val_executed": 167.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+least_loaded",
+          "val_executed": 167.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_completion",
+          "val_executed": 167.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+nearest_amr",
+          "val_executed": 167.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_completion",
+          "val_executed": 167.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+material_match",
+          "val_executed": 168.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+random",
+          "val_executed": 168.47,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+random",
+          "val_executed": 168.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_available",
+          "val_executed": 169.26,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "most_congested_station+least_loaded",
+          "val_executed": 169.26,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "lpt+earliest_completion",
+          "val_executed": 173.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_available",
+          "val_executed": 173.2,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+least_loaded",
+          "val_executed": 173.2,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_available",
+          "val_executed": 173.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+least_loaded",
+          "val_executed": 173.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_completion",
+          "val_executed": 174.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+material_match",
+          "val_executed": 174.05,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_completion",
+          "val_executed": 175.47,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+material_match",
+          "val_executed": 175.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_available",
+          "val_executed": 176.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+least_loaded",
+          "val_executed": 176.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+material_match",
+          "val_executed": 176.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+nearest_amr",
+          "val_executed": 177.57,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+nearest_amr",
+          "val_executed": 179.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+nearest_amr",
+          "val_executed": 183.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+random",
+          "val_executed": 183.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_completion",
+          "val_executed": 184.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+nearest_amr",
+          "val_executed": 184.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+least_loaded",
+          "val_executed": 185.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+nearest_amr",
+          "val_executed": 185.72,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_available",
+          "val_executed": 185.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+material_match",
+          "val_executed": 185.97,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_available",
+          "val_executed": 196.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+least_loaded",
+          "val_executed": 196.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_completion",
+          "val_executed": 205.85,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+material_match",
+          "val_executed": 207.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+nearest_amr",
+          "val_executed": 208.53,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_available",
+          "val_executed": 248.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_completion",
+          "val_executed": 248.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+least_loaded",
+          "val_executed": 248.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+material_match",
+          "val_executed": 248.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+nearest_amr",
+          "val_executed": 248.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+random",
+          "val_executed": 257.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+least_loaded",
+          "val_executed": 274.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_available",
+          "val_executed": 277.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_completion",
+          "val_executed": 279.68,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+nearest_amr",
+          "val_executed": 279.68,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+material_match",
+          "val_executed": 286.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+random",
+          "val_executed": 293.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+random",
+          "val_executed": 341.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+random",
+          "val_executed": 369.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+random",
+          "val_executed": 394.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+random",
+          "val_executed": 402.85,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+random",
+          "val_executed": 428.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        }
+      ],
+      "policy": {
+        "greedy": {
+          "ranking": [
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 166.28,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 167.72,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 168.46,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 170.45,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 177.68,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 181.5,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 185.0,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 196.12,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 212.0,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 231.18,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 231.18,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s42",
+          "best_val_executed": 166.28,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s42": 166.28,
+                "v9_only60_s44": 167.72,
+                "v9_only60_s43": 170.45
+              },
+              "picked": "v9_only60_s42",
+              "val_executed": 166.28,
+              "between_seed_sd": 2.12,
+              "gap_to_runner_up": 1.44
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 177.68,
+                "v9_mix_s44": 181.5,
+                "v9_mix_s43": 185.0
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 177.68,
+              "between_seed_sd": 3.66,
+              "gap_to_runner_up": 3.82
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 196.12
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 196.12,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 231.18
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 231.18,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 168.46
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 168.46,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 212.0
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 212.0,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 231.18
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 231.18,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        },
+        "best8": {
+          "ranking": [
+            {
+              "model": "v10_C_s44",
+              "val_executed": 159.8,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 160.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 160.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 162.15,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 165.53,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 168.1,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 173.72,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 193.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 196.0,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 221.53,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 221.53,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v10_C_s44",
+          "best_val_executed": 159.8,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s44": 160.25,
+                "v9_only60_s42": 160.3,
+                "v9_only60_s43": 162.15
+              },
+              "picked": "v9_only60_s44",
+              "val_executed": 160.25,
+              "between_seed_sd": 1.08,
+              "gap_to_runner_up": 0.05
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 165.53,
+                "v9_mix_s44": 168.1,
+                "v9_mix_s43": 173.72
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 165.53,
+              "between_seed_sd": 4.19,
+              "gap_to_runner_up": 2.57
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 196.0
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 196.0,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 221.53
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 221.53,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 159.8
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 159.8,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 193.25
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 193.25,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 221.53
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 221.53,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        }
+      }
+    },
+    "40": {
+      "rule": {
+        "combo": "earliest_completion_job+earliest_completion",
+        "val_executed": 257.07,
+        "tie_band": 0.5,
+        "tied_with": [
+          "earliest_completion_job+earliest_completion",
+          "earliest_completion_job+nearest_amr"
+        ],
+        "runner_up_gap": 0.0,
+        "n_candidates": 60
+      },
+      "rule_ranking": [
+        {
+          "combo": "earliest_completion_job+earliest_completion",
+          "val_executed": 257.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+nearest_amr",
+          "val_executed": 257.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_completion",
+          "val_executed": 258.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+nearest_amr",
+          "val_executed": 258.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+random",
+          "val_executed": 259.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+random",
+          "val_executed": 259.38,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_available",
+          "val_executed": 259.57,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+least_loaded",
+          "val_executed": 259.57,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_available",
+          "val_executed": 259.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+least_loaded",
+          "val_executed": 259.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+material_match",
+          "val_executed": 260.05,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+material_match",
+          "val_executed": 260.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_completion",
+          "val_executed": 264.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_available",
+          "val_executed": 264.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+least_loaded",
+          "val_executed": 264.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+material_match",
+          "val_executed": 266.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+material_match",
+          "val_executed": 267.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_completion",
+          "val_executed": 268.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+nearest_amr",
+          "val_executed": 268.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+random",
+          "val_executed": 269.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_available",
+          "val_executed": 270.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+least_loaded",
+          "val_executed": 270.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_completion",
+          "val_executed": 274.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_available",
+          "val_executed": 274.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+material_match",
+          "val_executed": 275.85,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+least_loaded",
+          "val_executed": 276.68,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_available",
+          "val_executed": 278.98,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+material_match",
+          "val_executed": 279.23,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+least_loaded",
+          "val_executed": 279.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_completion",
+          "val_executed": 280.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_completion",
+          "val_executed": 280.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_available",
+          "val_executed": 281.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+material_match",
+          "val_executed": 282.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+least_loaded",
+          "val_executed": 282.43,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+nearest_amr",
+          "val_executed": 345.82,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_available",
+          "val_executed": 353.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+nearest_amr",
+          "val_executed": 357.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+least_loaded",
+          "val_executed": 359.98,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+nearest_amr",
+          "val_executed": 367.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+nearest_amr",
+          "val_executed": 367.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_completion",
+          "val_executed": 393.98,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+material_match",
+          "val_executed": 400.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+random",
+          "val_executed": 422.05,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+nearest_amr",
+          "val_executed": 439.73,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_available",
+          "val_executed": 440.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_completion",
+          "val_executed": 440.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+least_loaded",
+          "val_executed": 440.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+material_match",
+          "val_executed": 440.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+nearest_amr",
+          "val_executed": 440.93,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_available",
+          "val_executed": 563.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_completion",
+          "val_executed": 576.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+nearest_amr",
+          "val_executed": 576.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+material_match",
+          "val_executed": 578.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+least_loaded",
+          "val_executed": 585.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+random",
+          "val_executed": 587.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+random",
+          "val_executed": 627.77,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+random",
+          "val_executed": 634.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+random",
+          "val_executed": 648.42,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+random",
+          "val_executed": 664.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+random",
+          "val_executed": 824.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        }
+      ],
+      "policy": {
+        "greedy": {
+          "ranking": [
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 253.97,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 256.57,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 256.77,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 258.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 276.95,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 281.75,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 296.38,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 323.57,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 323.57,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 402.56,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 405.18,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s42",
+          "best_val_executed": 253.97,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s42": 253.97,
+                "v9_only60_s43": 256.57,
+                "v9_only60_s44": 256.77
+              },
+              "picked": "v9_only60_s42",
+              "val_executed": 253.97,
+              "between_seed_sd": 1.56,
+              "gap_to_runner_up": 2.6
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s44": 276.95,
+                "v9_mix_s42": 281.75,
+                "v9_mix_s43": 296.38
+              },
+              "picked": "v9_mix_s44",
+              "val_executed": 276.95,
+              "between_seed_sd": 10.12,
+              "gap_to_runner_up": 4.8
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 402.56
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 402.56,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 323.57
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 323.57,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 258.25
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 258.25,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 405.18
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 405.18,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 323.57
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 323.57,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        },
+        "best8": {
+          "ranking": [
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 239.4,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 241.62,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 241.72,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 244.43,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 257.27,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 263.7,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 283.62,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 325.75,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 325.75,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 370.12,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 371.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s44",
+          "best_val_executed": 239.4,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s44": 239.4,
+                "v9_only60_s42": 241.62,
+                "v9_only60_s43": 241.72
+              },
+              "picked": "v9_only60_s44",
+              "val_executed": 239.4,
+              "between_seed_sd": 1.31,
+              "gap_to_runner_up": 2.22
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s44": 257.27,
+                "v9_mix_s42": 263.7,
+                "v9_mix_s43": 283.62
+              },
+              "picked": "v9_mix_s44",
+              "val_executed": 257.27,
+              "between_seed_sd": 13.74,
+              "gap_to_runner_up": 6.43
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 370.12
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 370.12,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 325.75
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 325.75,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 244.43
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 244.43,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 371.3
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 371.3,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 325.75
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 325.75,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        }
+      }
+    },
+    "60": {
+      "rule": {
+        "combo": "earliest_completion_job+earliest_completion",
+        "val_executed": 348.18,
+        "tie_band": 0.5,
+        "tied_with": [
+          "earliest_completion_job+earliest_completion",
+          "earliest_completion_job+nearest_amr",
+          "material_match+earliest_completion",
+          "material_match+nearest_amr"
+        ],
+        "runner_up_gap": 0.0,
+        "n_candidates": 60
+      },
+      "rule_ranking": [
+        {
+          "combo": "earliest_completion_job+earliest_completion",
+          "val_executed": 348.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+nearest_amr",
+          "val_executed": 348.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_completion",
+          "val_executed": 348.43,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+nearest_amr",
+          "val_executed": 348.43,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+material_match",
+          "val_executed": 350.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_available",
+          "val_executed": 350.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+least_loaded",
+          "val_executed": 350.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_completion",
+          "val_executed": 351.02,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+nearest_amr",
+          "val_executed": 351.02,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+material_match",
+          "val_executed": 351.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_available",
+          "val_executed": 351.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+least_loaded",
+          "val_executed": 351.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+random",
+          "val_executed": 352.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+random",
+          "val_executed": 352.85,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+random",
+          "val_executed": 353.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+least_loaded",
+          "val_executed": 354.82,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_available",
+          "val_executed": 355.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+material_match",
+          "val_executed": 358.52,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_completion",
+          "val_executed": 372.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_available",
+          "val_executed": 375.43,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+material_match",
+          "val_executed": 375.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+least_loaded",
+          "val_executed": 376.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_completion",
+          "val_executed": 378.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_available",
+          "val_executed": 380.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+material_match",
+          "val_executed": 380.44,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "lpt+least_loaded",
+          "val_executed": 381.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_available",
+          "val_executed": 384.18,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "spt+least_loaded",
+          "val_executed": 385.03,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "fifo+least_loaded",
+          "val_executed": 386.68,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_completion",
+          "val_executed": 386.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_available",
+          "val_executed": 387.2,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_completion",
+          "val_executed": 387.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+material_match",
+          "val_executed": 389.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+material_match",
+          "val_executed": 390.11,
+          "unroutable": 2,
+          "instances": 40,
+          "clean": 38
+        },
+        {
+          "combo": "least_congested_station+earliest_available",
+          "val_executed": 527.51,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "lpt+nearest_amr",
+          "val_executed": 529.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+least_loaded",
+          "val_executed": 545.67,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+nearest_amr",
+          "val_executed": 553.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+nearest_amr",
+          "val_executed": 553.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+nearest_amr",
+          "val_executed": 592.08,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_completion",
+          "val_executed": 636.48,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+material_match",
+          "val_executed": 644.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+random",
+          "val_executed": 648.85,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "random+earliest_available",
+          "val_executed": 660.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_completion",
+          "val_executed": 660.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+least_loaded",
+          "val_executed": 660.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+material_match",
+          "val_executed": 660.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+nearest_amr",
+          "val_executed": 660.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+nearest_amr",
+          "val_executed": 700.08,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+random",
+          "val_executed": 877.08,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+random",
+          "val_executed": 914.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+random",
+          "val_executed": 922.33,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+random",
+          "val_executed": 941.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+random",
+          "val_executed": 945.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+material_match",
+          "val_executed": 954.27,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_completion",
+          "val_executed": 963.77,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+nearest_amr",
+          "val_executed": 963.77,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+least_loaded",
+          "val_executed": 985.95,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_available",
+          "val_executed": 991.42,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+random",
+          "val_executed": 1222.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        }
+      ],
+      "policy": {
+        "greedy": {
+          "ranking": [
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 341.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 345.9,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 346.65,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 354.88,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 382.9,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 387.31,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 403.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 406.85,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 406.85,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 587.82,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 665.98,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s42",
+          "best_val_executed": 341.3,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s42": 341.3,
+                "v9_only60_s44": 345.9,
+                "v9_only60_s43": 346.65
+              },
+              "picked": "v9_only60_s42",
+              "val_executed": 341.3,
+              "between_seed_sd": 2.9,
+              "gap_to_runner_up": 4.6
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s44": 382.9,
+                "v9_mix_s42": 387.31,
+                "v9_mix_s43": 403.25
+              },
+              "picked": "v9_mix_s44",
+              "val_executed": 382.9,
+              "between_seed_sd": 10.71,
+              "gap_to_runner_up": 4.41
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 665.98
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 665.98,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 406.85
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 406.85,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 354.88
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 354.88,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 587.82
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 587.82,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 406.85
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 406.85,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        },
+        "best8": {
+          "ranking": [
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 325.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 326.02,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 328.85,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 337.88,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 362.6,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 363.45,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 381.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 426.62,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 426.62,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 547.48,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 605.35,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s42",
+          "best_val_executed": 325.25,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s42": 325.25,
+                "v9_only60_s44": 326.02,
+                "v9_only60_s43": 328.85
+              },
+              "picked": "v9_only60_s42",
+              "val_executed": 325.25,
+              "between_seed_sd": 1.9,
+              "gap_to_runner_up": 0.77
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s44": 362.6,
+                "v9_mix_s42": 363.45,
+                "v9_mix_s43": 381.25
+              },
+              "picked": "v9_mix_s44",
+              "val_executed": 362.6,
+              "between_seed_sd": 10.53,
+              "gap_to_runner_up": 0.85
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 605.35
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 605.35,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 426.62
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 426.62,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 337.88
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 337.88,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 547.48
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 547.48,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 426.62
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 426.62,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        }
+      }
+    },
+    "80": {
+      "rule": {
+        "combo": "milk_run+earliest_completion",
+        "val_executed": 420.12,
+        "tie_band": 0.5,
+        "tied_with": [
+          "milk_run+earliest_completion",
+          "milk_run+nearest_amr"
+        ],
+        "runner_up_gap": 0.0,
+        "n_candidates": 60
+      },
+      "rule_ranking": [
+        {
+          "combo": "milk_run+earliest_completion",
+          "val_executed": 420.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+nearest_amr",
+          "val_executed": 420.12,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_available",
+          "val_executed": 427.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+least_loaded",
+          "val_executed": 427.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+random",
+          "val_executed": 432.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+material_match",
+          "val_executed": 433.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+material_match",
+          "val_executed": 437.38,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_completion",
+          "val_executed": 438.02,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+nearest_amr",
+          "val_executed": 438.02,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+material_match",
+          "val_executed": 438.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_completion",
+          "val_executed": 438.52,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+nearest_amr",
+          "val_executed": 438.52,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_available",
+          "val_executed": 439.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+least_loaded",
+          "val_executed": 439.07,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_available",
+          "val_executed": 439.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+least_loaded",
+          "val_executed": 439.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+random",
+          "val_executed": 439.48,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+random",
+          "val_executed": 439.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_completion",
+          "val_executed": 471.77,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+material_match",
+          "val_executed": 473.23,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_available",
+          "val_executed": 476.95,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+least_loaded",
+          "val_executed": 483.32,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_available",
+          "val_executed": 485.23,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_completion",
+          "val_executed": 485.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+material_match",
+          "val_executed": 488.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+least_loaded",
+          "val_executed": 490.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_completion",
+          "val_executed": 491.02,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_available",
+          "val_executed": 491.4,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+least_loaded",
+          "val_executed": 493.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+material_match",
+          "val_executed": 494.95,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_available",
+          "val_executed": 497.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_completion",
+          "val_executed": 497.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+least_loaded",
+          "val_executed": 501.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+material_match",
+          "val_executed": 502.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_available",
+          "val_executed": 698.73,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+nearest_amr",
+          "val_executed": 722.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+least_loaded",
+          "val_executed": 734.4,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+nearest_amr",
+          "val_executed": 754.38,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+nearest_amr",
+          "val_executed": 757.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+nearest_amr",
+          "val_executed": 782.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_available",
+          "val_executed": 874.17,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_completion",
+          "val_executed": 874.17,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+least_loaded",
+          "val_executed": 874.17,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+material_match",
+          "val_executed": 874.17,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+nearest_amr",
+          "val_executed": 874.17,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_completion",
+          "val_executed": 891.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+material_match",
+          "val_executed": 895.73,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+random",
+          "val_executed": 911.92,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+nearest_amr",
+          "val_executed": 981.67,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+random",
+          "val_executed": 1175.6,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+random",
+          "val_executed": 1223.92,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+random",
+          "val_executed": 1227.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+random",
+          "val_executed": 1230.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_completion",
+          "val_executed": 1391.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+nearest_amr",
+          "val_executed": 1391.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+material_match",
+          "val_executed": 1401.9,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+random",
+          "val_executed": 1407.95,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_available",
+          "val_executed": 1421.97,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+least_loaded",
+          "val_executed": 1441.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+random",
+          "val_executed": 1717.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        }
+      ],
+      "policy": {
+        "greedy": {
+          "ranking": [
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 428.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 430.8,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 433.48,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 456.8,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 477.89,
+              "unroutable": 3,
+              "instances": 40,
+              "clean": 37
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 486.56,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 492.18,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 494.23,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 494.23,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 754.05,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 865.21,
+              "unroutable": 2,
+              "instances": 40,
+              "clean": 38
+            }
+          ],
+          "best_model": "v9_only60_s42",
+          "best_val_executed": 428.3,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s42": 428.3,
+                "v9_only60_s43": 430.8,
+                "v9_only60_s44": 433.48
+              },
+              "picked": "v9_only60_s42",
+              "val_executed": 428.3,
+              "between_seed_sd": 2.59,
+              "gap_to_runner_up": 2.5
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 477.89,
+                "v9_mix_s44": 486.56,
+                "v9_mix_s43": 492.18
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 477.89,
+              "between_seed_sd": 7.2,
+              "gap_to_runner_up": 8.67
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 865.21
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 865.21,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 494.23
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 494.23,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 456.8
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 456.8,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 754.05
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 754.05,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 494.23
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 494.23,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        },
+        "best8": {
+          "ranking": [
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 411.45,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 412.2,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 413.1,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 433.45,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 458.2,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 462.98,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 468.73,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 516.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 516.3,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 720.35,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 798.9,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s43",
+          "best_val_executed": 411.45,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s43": 411.45,
+                "v9_only60_s42": 412.2,
+                "v9_only60_s44": 413.1
+              },
+              "picked": "v9_only60_s43",
+              "val_executed": 411.45,
+              "between_seed_sd": 0.83,
+              "gap_to_runner_up": 0.75
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 458.2,
+                "v9_mix_s44": 462.98,
+                "v9_mix_s43": 468.73
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 458.2,
+              "between_seed_sd": 5.27,
+              "gap_to_runner_up": 4.78
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 798.9
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 798.9,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 516.3
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 516.3,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 433.45
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 433.45,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 720.35
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 720.35,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 516.3
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 516.3,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        }
+      }
+    },
+    "100": {
+      "rule": {
+        "combo": "milk_run+material_match",
+        "val_executed": 481.88,
+        "tie_band": 0.5,
+        "tied_with": [
+          "milk_run+material_match"
+        ],
+        "runner_up_gap": 1.3,
+        "n_candidates": 60
+      },
+      "rule_ranking": [
+        {
+          "combo": "milk_run+material_match",
+          "val_executed": 481.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+least_loaded",
+          "val_executed": 483.18,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_available",
+          "val_executed": 488.15,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+random",
+          "val_executed": 489.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+earliest_completion",
+          "val_executed": 490.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "milk_run+nearest_amr",
+          "val_executed": 490.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+earliest_available",
+          "val_executed": 526.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+least_loaded",
+          "val_executed": 526.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_completion",
+          "val_executed": 526.59,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "earliest_completion_job+nearest_amr",
+          "val_executed": 526.59,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "material_match+earliest_completion",
+          "val_executed": 527.05,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "material_match+material_match",
+          "val_executed": 527.05,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+nearest_amr",
+          "val_executed": 527.05,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "earliest_completion_job+random",
+          "val_executed": 527.4,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+material_match",
+          "val_executed": 527.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+earliest_available",
+          "val_executed": 527.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "earliest_completion_job+least_loaded",
+          "val_executed": 527.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "material_match+random",
+          "val_executed": 528.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_completion",
+          "val_executed": 565.83,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+material_match",
+          "val_executed": 571.42,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+earliest_available",
+          "val_executed": 575.88,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+least_loaded",
+          "val_executed": 579.48,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_completion",
+          "val_executed": 588.52,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+earliest_available",
+          "val_executed": 591.98,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+material_match",
+          "val_executed": 594.7,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+least_loaded",
+          "val_executed": 595.45,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_available",
+          "val_executed": 595.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+least_loaded",
+          "val_executed": 597.48,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+earliest_completion",
+          "val_executed": 598.4,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+material_match",
+          "val_executed": 604.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+earliest_completion",
+          "val_executed": 605.75,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+material_match",
+          "val_executed": 606.64,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "fifo+earliest_available",
+          "val_executed": 608.55,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+least_loaded",
+          "val_executed": 613.3,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_available",
+          "val_executed": 889.31,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "least_congested_station+least_loaded",
+          "val_executed": 928.0,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+nearest_amr",
+          "val_executed": 933.23,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+nearest_amr",
+          "val_executed": 939.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+nearest_amr",
+          "val_executed": 939.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+nearest_amr",
+          "val_executed": 940.73,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_available",
+          "val_executed": 1115.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+earliest_completion",
+          "val_executed": 1115.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+least_loaded",
+          "val_executed": 1115.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+material_match",
+          "val_executed": 1115.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+nearest_amr",
+          "val_executed": 1115.1,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+earliest_completion",
+          "val_executed": 1145.28,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+material_match",
+          "val_executed": 1147.25,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "random+random",
+          "val_executed": 1154.36,
+          "unroutable": 1,
+          "instances": 40,
+          "clean": 39
+        },
+        {
+          "combo": "least_congested_station+nearest_amr",
+          "val_executed": 1261.8,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "spt+random",
+          "val_executed": 1451.38,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "most_congested_station+random",
+          "val_executed": 1454.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "lpt+random",
+          "val_executed": 1480.35,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "fifo+random",
+          "val_executed": 1504.97,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+material_match",
+          "val_executed": 1942.5,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_completion",
+          "val_executed": 1952.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+nearest_amr",
+          "val_executed": 1952.65,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+random",
+          "val_executed": 1954.08,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+least_loaded",
+          "val_executed": 1991.62,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "nearest_station+earliest_available",
+          "val_executed": 2003.72,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        },
+        {
+          "combo": "least_congested_station+random",
+          "val_executed": 2098.78,
+          "unroutable": 0,
+          "instances": 40,
+          "clean": 40
+        }
+      ],
+      "policy": {
+        "greedy": {
+          "ranking": [
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 518.62,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 523.25,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 528.15,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 561.83,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 574.62,
+              "unroutable": 1,
+              "instances": 40,
+              "clean": 39
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 580.12,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 588.52,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 597.83,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 597.83,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 933.55,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 1032.37,
+              "unroutable": 2,
+              "instances": 40,
+              "clean": 38
+            }
+          ],
+          "best_model": "v9_only60_s43",
+          "best_val_executed": 518.62,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s43": 518.62,
+                "v9_only60_s42": 523.25,
+                "v9_only60_s44": 528.15
+              },
+              "picked": "v9_only60_s43",
+              "val_executed": 518.62,
+              "between_seed_sd": 4.77,
+              "gap_to_runner_up": 4.63
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 574.62,
+                "v9_mix_s43": 580.12,
+                "v9_mix_s44": 588.52
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 574.62,
+              "between_seed_sd": 7.0,
+              "gap_to_runner_up": 5.5
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 1032.37
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 1032.37,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 597.83
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 597.83,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 561.83
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 561.83,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 933.55
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 933.55,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 597.83
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 597.83,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        },
+        "best8": {
+          "ranking": [
+            {
+              "model": "v9_only60_s43",
+              "val_executed": 491.07,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s42",
+              "val_executed": 497.43,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_only60_s44",
+              "val_executed": 498.48,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_C_s44",
+              "val_executed": 532.2,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s42",
+              "val_executed": 546.27,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s43",
+              "val_executed": 560.58,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v9_mix_s44",
+              "val_executed": 563.67,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44",
+              "val_executed": 624.27,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_B_s44_bestideal",
+              "val_executed": 624.27,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44_bestideal",
+              "val_executed": 904.17,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            },
+            {
+              "model": "v10_A_s44",
+              "val_executed": 964.15,
+              "unroutable": 0,
+              "instances": 40,
+              "clean": 40
+            }
+          ],
+          "best_model": "v9_only60_s43",
+          "best_val_executed": 491.07,
+          "by_recipe": {
+            "v9_only60": {
+              "recipe": "v9_only60",
+              "seeds": {
+                "v9_only60_s43": 491.07,
+                "v9_only60_s42": 497.43,
+                "v9_only60_s44": 498.48
+              },
+              "picked": "v9_only60_s43",
+              "val_executed": 491.07,
+              "between_seed_sd": 4.01,
+              "gap_to_runner_up": 6.36
+            },
+            "v9_mix": {
+              "recipe": "v9_mix",
+              "seeds": {
+                "v9_mix_s42": 546.27,
+                "v9_mix_s43": 560.58,
+                "v9_mix_s44": 563.67
+              },
+              "picked": "v9_mix_s42",
+              "val_executed": 546.27,
+              "between_seed_sd": 9.28,
+              "gap_to_runner_up": 14.31
+            },
+            "v10_A_s44": {
+              "recipe": "v10_A_s44",
+              "seeds": {
+                "v10_A_s44": 964.15
+              },
+              "picked": "v10_A_s44",
+              "val_executed": 964.15,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44": {
+              "recipe": "v10_B_s44",
+              "seeds": {
+                "v10_B_s44": 624.27
+              },
+              "picked": "v10_B_s44",
+              "val_executed": 624.27,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_C_s44": {
+              "recipe": "v10_C_s44",
+              "seeds": {
+                "v10_C_s44": 532.2
+              },
+              "picked": "v10_C_s44",
+              "val_executed": 532.2,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_A_s44_bestideal": {
+              "recipe": "v10_A_s44_bestideal",
+              "seeds": {
+                "v10_A_s44_bestideal": 904.17
+              },
+              "picked": "v10_A_s44_bestideal",
+              "val_executed": 904.17,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            },
+            "v10_B_s44_bestideal": {
+              "recipe": "v10_B_s44_bestideal",
+              "seeds": {
+                "v10_B_s44_bestideal": 624.27
+              },
+              "picked": "v10_B_s44_bestideal",
+              "val_executed": 624.27,
+              "between_seed_sd": 0.0,
+              "gap_to_runner_up": null
+            }
+          }
+        }
+      }
+    }
+  }
+}

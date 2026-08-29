@@ -1,0 +1,5 @@
+[slot 3] 2026-08-25 01:38:02 starting v10_F_s43 on GPU1 cores 6-7
+[slot 3] 2026-08-27 08:44:24 finished v10_F_s43 (exit 0)
+[slot 3] 2026-08-27 08:44:24 starting v10_B_s42 on GPU1 cores 6-7
+[slot 3] 2026-08-29 14:13:23 finished v10_B_s42 (exit 0)
+[slot 3] 2026-08-29 14:13:23 slot done

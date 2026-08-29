@@ -1,0 +1,120 @@
+======================================================================================================================
+VAL-SELECTED BASELINE vs POLICY -- reported on test_case/v3/trend/full_{n}.jsonl, 100 instances/size, m=16
+Rule and seed both chosen on val_mix (40 instances/size, disjoint). selection_val.json is the frozen choice.
+======================================================================================================================
+
+
+### policy mode = greedy
+
+n=20   val-selected rule = material_match+material_match   (val 165.9, chosen from 60)
+      val-selected model = v9_only60_s42   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         168.8    166.2       2.59 +/-2.31 [    0.35,    4.86]   39.0   0.0294  100     0
+      DEPLOYED        166.2    166.2       0.00 +/-2.59 [   -2.56,    2.57]   51.0   1.0000  100     0
+      -> +1.56% of rule makespan, SIGNIFICANT  (39W/0T/61L)
+      seeds on test: s42=166.2  s43=171.7  s44=168.5
+      ORACLE (summarise.py headline): best-seed v9_only60_s42 166.2 vs best-on-test rule earliest_completion_job+material_match 166.2  -> delta +0.02
+      picking on test would buy: rule 0.02 units (val-selection regret), policy 2.59 units (seed cherry-pick)  | PRIMARY delta is 2.59
+
+n=40   val-selected rule = earliest_completion_job+earliest_completion   (val 257.1, chosen from 60)
+      val-selected model = v9_only60_s42   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         255.4    258.4      -3.02 +/-2.88 [   -5.88,   -0.08]   57.6   0.0471   99     1
+      DEPLOYED        254.7    258.4      -3.67 +/-3.71 [   -7.36,    0.11]   61.6   0.0611   99     1
+      -> -1.17% of rule makespan, SIGNIFICANT  (57W/0T/42L)
+      seeds on test: s42=254.5  s43=257.6  s44=254.1
+      ORACLE (summarise.py headline): best-seed v9_only60_s44 254.1 vs best-on-test rule earliest_completion_job+material_match 257.7  -> delta -3.65
+      picking on test would buy: rule 0.64 units (val-selection regret), policy 1.28 units (seed cherry-pick)  | PRIMARY delta is 3.02
+
+n=60   val-selected rule = earliest_completion_job+earliest_completion   (val 348.2, chosen from 60)
+      val-selected model = v9_only60_s42   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         341.5    349.8      -8.21 +/-4.06 [  -12.24,   -4.17]   69.7   0.0001   99     1
+      DEPLOYED        338.9    349.8     -10.85 +/-4.91 [  -15.54,   -5.87]   71.7   0.0001   99     1
+      -> -2.35% of rule makespan, SIGNIFICANT  (69W/4T/26L)
+      seeds on test: s42=338.9  s43=343.3  s44=342.8
+      ORACLE (summarise.py headline): best-seed v9_only60_s42 338.9 vs best-on-test rule milk_run+least_loaded 346.9  -> delta -8.20
+      picking on test would buy: rule 2.88 units (val-selection regret), policy 2.64 units (seed cherry-pick)  | PRIMARY delta is 8.21
+
+n=80   val-selected rule = milk_run+earliest_completion   (val 420.1, chosen from 60)
+      val-selected model = v9_only60_s42   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         435.3    426.2       9.07 +/-6.06 [    2.98,   14.97]   33.3   0.0044   99     1
+      DEPLOYED        433.8    426.2       7.53 +/-6.69 [    0.88,   14.18]   39.4   0.0317   99     1
+      -> +2.13% of rule makespan, SIGNIFICANT  (33W/0T/66L)
+      seeds on test: s42=433.8  s43=432.3  s44=440.6
+      ORACLE (summarise.py headline): best-seed v9_only60_s43 432.3 vs best-on-test rule milk_run+earliest_completion 426.2  -> delta +6.03
+      picking on test would buy: rule 0.01 units (val-selection regret), policy 3.05 units (seed cherry-pick)  | PRIMARY delta is 9.07
+
+n=100  val-selected rule = milk_run+material_match   (val 481.9, chosen from 60)
+      val-selected model = v9_only60_s43   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         527.3    506.0      21.30 +/-7.01 [   14.30,   28.16]   27.0   0.0001  100     0
+      DEPLOYED        521.8    506.0      15.82 +/-7.74 [    8.04,   23.52]   39.0   0.0002  100     0
+      -> +4.21% of rule makespan, SIGNIFICANT  (27W/0T/73L)
+      seeds on test: s42=528.6  s43=521.8  s44=531.5
+      ORACLE (summarise.py headline): best-seed v9_only60_s43 521.8 vs best-on-test rule milk_run+earliest_available 501.5  -> delta +20.30
+      picking on test would buy: rule 4.48 units (val-selection regret), policy 5.48 units (seed cherry-pick)  | PRIMARY delta is 21.30
+
+
+### policy mode = best8
+
+n=20   val-selected rule = material_match+material_match   (val 165.9, chosen from 60)
+      val-selected model = v10_C_s44   (single seed)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         160.2    166.2      -6.04 +/-2.09 [   -8.09,   -3.96]   66.0   0.0001  100     0
+      DEPLOYED        160.2    166.2      -6.04 +/-2.09 [   -8.09,   -3.96]   66.0   0.0001  100     0
+      -> -3.63% of rule makespan, SIGNIFICANT  (66W/3T/31L)
+      seeds on test: s44=160.2
+      ORACLE (summarise.py headline): best-seed v10_C_s44 160.2 vs best-on-test rule earliest_completion_job+material_match 166.2  -> delta -6.02
+      picking on test would buy: rule 0.02 units (val-selection regret), policy 0.00 units (seed cherry-pick)  | PRIMARY delta is 6.04
+
+n=40   val-selected rule = earliest_completion_job+earliest_completion   (val 257.1, chosen from 60)
+      val-selected model = v9_only60_s44   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         242.9    258.4     -15.45 +/-2.54 [  -18.02,  -12.92]   90.9   0.0001   99     1
+      DEPLOYED        242.3    258.4     -16.04 +/-2.76 [  -18.82,  -13.29]   87.9   0.0001   99     1
+      -> -5.98% of rule makespan, SIGNIFICANT  (90W/1T/8L)
+      seeds on test: s42=243.2  s43=243.1  s44=242.2
+      ORACLE (summarise.py headline): best-seed v9_only60_s44 242.2 vs best-on-test rule earliest_completion_job+material_match 257.7  -> delta -15.59
+      picking on test would buy: rule 0.64 units (val-selection regret), policy 0.78 units (seed cherry-pick)  | PRIMARY delta is 15.45
+
+n=60   val-selected rule = earliest_completion_job+earliest_completion   (val 348.2, chosen from 60)
+      val-selected model = v9_only60_s42   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         326.6    349.6     -23.05 +/-3.31 [  -26.39,  -19.75]   90.0   0.0001  100     0
+      DEPLOYED        326.6    349.6     -22.98 +/-3.70 [  -26.70,  -19.27]   87.0   0.0001  100     0
+      -> -6.59% of rule makespan, SIGNIFICANT  (90W/0T/10L)
+      seeds on test: s42=326.6  s43=327.0  s44=326.1
+      ORACLE (summarise.py headline): best-seed v9_only60_s44 326.1 vs best-on-test rule milk_run+least_loaded 346.9  -> delta -20.80
+      picking on test would buy: rule 2.74 units (val-selection regret), policy 0.49 units (seed cherry-pick)  | PRIMARY delta is 23.05
+
+n=80   val-selected rule = milk_run+earliest_completion   (val 420.1, chosen from 60)
+      val-selected model = v9_only60_s43   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         414.0    426.2     -12.26 +/-5.60 [  -17.96,   -6.69]   65.0   0.0001  100     0
+      DEPLOYED        412.0    426.2     -14.22 +/-5.66 [  -19.96,   -8.62]   68.0   0.0001  100     0
+      -> -2.88% of rule makespan, SIGNIFICANT  (65W/0T/35L)
+      seeds on test: s42=413.4  s43=412.0  s44=416.6
+      ORACLE (summarise.py headline): best-seed v9_only60_s43 412.0 vs best-on-test rule milk_run+earliest_completion 426.2  -> delta -14.22
+      picking on test would buy: rule 0.00 units (val-selection regret), policy 1.96 units (seed cherry-pick)  | PRIMARY delta is 12.26
+
+n=100  val-selected rule = milk_run+material_match   (val 481.9, chosen from 60)
+      val-selected model = v9_only60_s43   recipe = v9_only60 (3 seeds)
+----------------------------------------------------------------------------------------------------------------------
+      row            policy     rule              delta      bootstrap 95%   win%   perm p    n  drop
+      PRIMARY         500.6    506.0      -5.37 +/-6.64 [  -12.08,    1.16]   51.0   0.1164  100     0
+      DEPLOYED        496.6    506.0      -9.40 +/-6.84 [  -16.29,   -2.59]   54.0   0.0085  100     0
+      -> -1.06% of rule makespan, not significant  (51W/0T/49L)
+      seeds on test: s42=500.9  s43=496.6  s44=504.3
+      ORACLE (summarise.py headline): best-seed v9_only60_s43 496.6 vs best-on-test rule milk_run+earliest_available 501.5  -> delta -4.92
+      picking on test would buy: rule 4.48 units (val-selection regret), policy 4.03 units (seed cherry-pick)  | PRIMARY delta is 5.37

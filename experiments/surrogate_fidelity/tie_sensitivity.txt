@@ -1,0 +1,22 @@
+
+TIE SENSITIVITY OF THE SELECTION REGRET
+========================================================================================================
+
+WHERE THE TIES ARE  M_i = argmin C~ over the candidates of instance i
+      n  inst   C~ tie  Phi tie   both  |M| avg   benign   conseq  distinct/12
+     20    30    56.7%    50.0%  26.7%     1.87     4/30    13/30         9.70
+     60    30    16.7%    33.3%   6.7%     1.33     1/30     4/30        10.17
+    100    30     0.0%    10.0%   0.0%     1.00     0/30     0/30        10.47
+
+WHAT THE TIE-BREAK COSTS  C~ selection regret under three tie-break rules
+      n     best  as-coded     mean    worst   spread    hit best hit as-coded hit pess
+     20    7.63%     9.40%    9.35%   11.35%    3.71%       12/30         9/30     6/30
+     60    3.73%     4.96%    4.29%    4.98%    1.26%       16/30        13/30    12/30
+    100    2.06%     2.06%    2.06%    2.06%    0.00%       16/30        16/30    16/30
+
+RANK CORRELATION UNDER TWO TIE CONVENTIONS
+  gamma = (C-D)/(C+D), what the summary reports as 'tau'; tau_b keeps ties in the denominator
+      n   C~ gamma  C~ tau_b  Psi gamma Psi tau_b    C~ P+D/66  Psi P+D/66
+     20      0.335     0.289      0.723     0.654         54.9        57.5
+     60      0.454     0.433      0.736     0.709         61.7        63.0
+    100      0.655     0.634      0.858     0.835         63.5        64.1

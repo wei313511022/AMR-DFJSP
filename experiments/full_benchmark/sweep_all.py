@@ -25,7 +25,19 @@ for p in (STATIC, STATIC / "extend_GNN"):
 
 SIZES = (20, 40, 60, 80, 100)
 AMRS = 16
-DATASET = lambda n: REPO / f"test_case/v3/trend/full_{n}.jsonl"
+
+# Two splits over the same generator. `test` is the reporting set; `val` is the model-
+# selection set every v9/v10 run was validated against (launch_v9.sh:23, launch_v10_2x3.sh:46)
+# and which no dispatching rule has ever seen. The three families of file are disjoint --
+# asserted by run_val_selection.sh before anything is swept.
+SPLITS = {
+    "test": (lambda n: REPO / f"test_case/v3/trend/full_{n}.jsonl", 100),
+    "val":  (lambda n: REPO / f"test_case/v3/mix/val_mix_{n}.jsonl", 40),
+}
+SPLIT = os.environ.get("FB_SPLIT", "test")
+if SPLIT not in SPLITS:
+    raise SystemExit(f"FB_SPLIT={SPLIT!r} not in {sorted(SPLITS)}")
+DATASET, N_INSTANCES = SPLITS[SPLIT]
 
 # name -> (checkpoint, inference mask)
 MODELS = {
@@ -40,12 +52,19 @@ MODELS = {
     "v10_C_s44":           ("checkpoints_v10/v10_C_s44_best.pth",       "L3"),
     "v10_A_s44_bestideal": ("checkpoints_v10/v10_A_s44_bestideal.pth",  "L3"),
     "v10_B_s44_bestideal": ("checkpoints_v10/v10_B_s44_bestideal.pth",  "none"),
+    "v10_E_s42":           ("checkpoints_v10/v10_E_s42_best.pth",       "L3"),
+    "v10_E_s43":           ("checkpoints_v10/v10_E_s43_best.pth",       "L3"),
+    "v10_E_s44":           ("checkpoints_v10/v10_E_s44_best.pth",       "L3"),
+    "v10_F_s42":           ("checkpoints_v10/v10_F_s42_best.pth",       "none"),
+    "v10_F_s43":           ("checkpoints_v10/v10_F_s43_best.pth",       "none"),
+    "v10_F_s44":           ("checkpoints_v10/v10_F_s44_best.pth",       "none"),
 }
 MASKS = {
     "none": {},
     "L3": {"amr": (9,), "dock": (2, 3, 4, 5, 6), "action": (2,)},
 }
 SAMPLE_SEED = 1000
+MODES = ["greedy", "best8"]
 
 _G = {}
 
@@ -103,7 +122,8 @@ def get_model(name):
 
 def base_row(n, inst, family, method, mode):
     return {"n_jobs": n, "instance": inst, "amrs": AMRS, "family": family,
-            "method": method, "mode": mode, "dataset": f"full_{n}"}
+            "method": method, "mode": mode, "split": SPLIT,
+            "dataset": DATASET(n).name}
 
 
 def run_task(task):
@@ -170,21 +190,27 @@ def run_task(task):
 def build_tasks(what):
     from dispatching_rules.dispatching_rules import JOB_RULES, AMR_RULES
     tasks = []
+    N = N_INSTANCES
+    rule_chunk = max(1, N // 4)
+    greedy_chunk = max(1, N // 5)
+    best8_chunk = max(1, N // 20)
     for n in SIZES:
         if "ga" in what:
-            for i in range(0, 100):
+            for i in range(0, N):
                 tasks.append(("ga", None, n, i, i + 1))
         if "rules" in what:
             for jr in JOB_RULES:
                 for ar in AMR_RULES:
-                    for i in range(0, 100, 25):
-                        tasks.append(("rule", f"{jr}+{ar}", n, i, i + 25))
+                    for i in range(0, N, rule_chunk):
+                        tasks.append(("rule", f"{jr}+{ar}", n, i, i + rule_chunk))
         if "models" in what:
             for name in MODELS:
-                for i in range(0, 100, 20):
-                    tasks.append(("model", (name, "greedy"), n, i, i + 20))
-                for i in range(0, 100, 5):
-                    tasks.append(("model", (name, "best8"), n, i, i + 5))
+                for mode in MODES:
+                    # Sampling K costs ~K rollouts, so shrink the chunk as K grows to keep
+                    # one task in the seconds-to-minutes range and the pool load-balanced.
+                    chunk = greedy_chunk if mode == "greedy" else max(1, (best8_chunk * 8) // int(mode[4:]))
+                    for i in range(0, N, chunk):
+                        tasks.append(("model", (name, mode), n, i, i + chunk))
     # Longest first so the tail does not strand a core.
     order = {"ga": 0, "model": 1, "rule": 2}
     tasks.sort(key=lambda t: (order[t[0]], -t[2]))
@@ -195,13 +221,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=22)
     ap.add_argument("--what", default="ga,models,rules")
+    ap.add_argument("--models", default="", help="comma-separated subset of MODELS")
+    ap.add_argument("--modes", default="greedy,best8", help="greedy and/or bestK, e.g. best16")
     ap.add_argument("--out", default=str(REPO / "experiments/full_benchmark/raw/rows.jsonl"))
     args = ap.parse_args()
 
+    global MODES
+    MODES = [m for m in args.modes.split(",") if m.strip()]
     what = set(args.what.split(","))
     tasks = build_tasks(what)
+    if args.models:
+        keep = set(args.models.split(","))
+        tasks = [t for t in tasks if t[0] != "model" or t[1][0] in keep]
     out = Path(args.out); out.parent.mkdir(parents=True, exist_ok=True)
-    print(f"{len(tasks)} tasks -> {args.workers} workers -> {out}", flush=True)
+    print(f"split={SPLIT} ({N_INSTANCES} instances/size) | {len(tasks)} tasks "
+          f"-> {args.workers} workers -> {out}", flush=True)
 
     import multiprocessing as mp
     ctx = mp.get_context("spawn")

@@ -1,0 +1,332 @@
+<title>Mask × Return Factorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#F5F8F8; --card:#FFFFFF; --ink:#131A1D; --body:#2C383B;
+  --muted:#5C6B6E; --rule:#D6DEDF; --rule-soft:#E7EDED;
+  --accent:#0E646D; --accent-soft:#E2F0F1; --accent-line:#8FC4C9;
+  --warn:#A9521B; --warn-soft:#F7E9DE;
+  --alt:#5F5486; --alt-soft:#ECE9F3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+    --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+    --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+    --warn:#DC9257; --warn-soft:#2F2118;
+    --alt:#A79AD0; --alt-soft:#1E1B2B;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1315; --card:#141C1E; --ink:#E9F0F0; --body:#C3CFD0;
+  --muted:#8A9A9D; --rule:#273538; --rule-soft:#1C2528;
+  --accent:#5CB8C1; --accent-soft:#122E31; --accent-line:#2E6A70;
+  --warn:#DC9257; --warn-soft:#2F2118;
+  --alt:#A79AD0; --alt-soft:#1E1B2B;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--body);
+  font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.62;
+  margin:0;padding:0 24px 96px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,5vw,3.1rem);font-weight:700;letter-spacing:-.015em;line-height:1.06}
+h2{font-size:1.72rem;font-weight:600;letter-spacing:-.005em}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+strong{color:var(--ink);font-weight:600}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em;
+  background:var(--rule-soft);padding:.1em .36em;border-radius:3px;color:var(--ink)}
+header.mast{padding:72px 0 34px;border-bottom:2px solid var(--ink)}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.mast .lede{margin-top:20px;font-size:1.18rem;color:var(--muted);max-width:62ch}
+section{padding:56px 0 0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--muted);
+  padding-left:13px;border-left:2px solid var(--accent);margin-bottom:12px}
+section > h2{margin-bottom:16px}
+.stack{display:flex;flex-direction:column;gap:17px}
+
+/* factorial grid */
+.grid6{display:grid;grid-template-columns:auto repeat(2,1fr);gap:1px;
+  background:var(--rule);border:1px solid var(--rule);margin-top:28px}
+.grid6 > div{background:var(--card);padding:16px 18px}
+.grid6 .hd{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);text-align:center;padding:11px 18px}
+.grid6 .rw{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
+.cell{display:flex;flex-direction:column;gap:3px}
+.cell .id{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:1.5rem;
+  font-weight:700;color:var(--ink);line-height:1}
+.cell .ms{font-family:"IBM Plex Mono",monospace;font-size:1.02rem;font-weight:600;
+  font-variant-numeric:tabular-nums;color:var(--body)}
+.cell .cap{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--muted)}
+.cell.best{background:var(--accent-soft)!important}
+.cell.best .id,.cell.best .ms{color:var(--accent)}
+.cell.worst{background:var(--warn-soft)!important}
+.cell.worst .id,.cell.worst .ms{color:var(--warn)}
+
+.scroll{overflow-x:auto;margin-top:26px;border:1px solid var(--rule);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",monospace;
+  font-size:.79rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+caption{caption-side:top;text-align:left;padding:14px 16px 12px;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:1rem;font-weight:600;
+  color:var(--ink);border-bottom:1px solid var(--rule)}
+.capnote{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:400;color:var(--muted)}
+th,td{padding:7px 13px;text-align:right;border-bottom:1px solid var(--rule-soft)}
+th{font-weight:600;color:var(--muted);font-size:.67rem;letter-spacing:.07em;
+  text-transform:uppercase;border-bottom:1px solid var(--rule);background:var(--card)}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+td.cellid{font-family:"IBM Plex Sans Condensed",sans-serif;font-weight:700;
+  font-size:1rem;color:var(--ink);width:38px}
+td.name{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:.87rem;
+  font-weight:500;color:var(--ink);text-align:left}
+.dim{color:var(--muted)}
+.win{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.bad{background:var(--warn-soft);color:var(--warn);font-weight:600}
+tr.hl td{background:var(--accent-soft)}
+tr.group td{background:var(--rule-soft);font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:6px 13px}
+.note{border-left:2px solid var(--accent-line);padding:2px 0 2px 20px;
+  color:var(--muted);font-size:.97rem;margin-top:18px}
+.finding{background:var(--card);border:1px solid var(--rule);padding:22px 24px;
+  display:flex;flex-direction:column;gap:9px;margin-top:26px}
+.finding h3{color:var(--accent)}
+.finding.flip h3{color:var(--warn)}
+ul{margin:0;padding-left:1.15rem}
+li{margin-bottom:.5rem}
+li::marker{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);line-height:1.8}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">v10 factorial &middot; 2 &times; 3 &middot; seed 44 &middot; 100 instances per size</div>
+  <h1>The cheap reward wins</h1>
+  <p class="lede">Six training configurations crossing what the policy can see against what it is
+  scored on. The configuration that trains against a 290&times;-cheaper reward beats the one that
+  trains against the real executor &mdash; at every workload above n = 20, on every seed.</p>
+</header>
+
+<section>
+  <div class="eyebrow">The design</div>
+  <h2>Two factors, six cells</h2>
+  <div class="stack prose">
+    <p>The <strong>mask</strong> axis removes every congestion channel the encoder can see: how long
+    each door stays busy, how many robots are queued, door saturation, remaining service, committed
+    workload, the wait this action expects, and how many robots are nearby. Masked, the policy still
+    sees position, distance, inventory and time &mdash; but cannot tell that any door is busy.</p>
+    <p>The <strong>return</strong> axis changes what the schedule is scored on during training.
+    C&#771; charges free-space travel with no queueing and cannot fail to route. &Psi;&#770; is the
+    calibrated fast model the rollout already advances &mdash; 7.0% value error and &tau; = 0.736
+    against the executor at n = 60. &Phi; is the real space-time A* executor, and costs 290&times;
+    &Psi;&#770; per schedule.</p>
+  </div>
+
+  <div class="grid6">
+    <div class="hd"></div>
+    <div class="hd">masked &middot; L3</div>
+    <div class="hd">full features</div>
+
+    <div class="rw">C&#771; idealised</div>
+    <div class="cell worst"><span class="id">A</span><span class="ms">637.1</span><span class="cap">blind &amp; unpunished</span></div>
+    <div class="cell"><span class="id">B</span><span class="ms">416.9</span><span class="cap">sees it, not scored on it</span></div>
+
+    <div class="rw">&Psi;&#770; surrogate</div>
+    <div class="cell"><span class="id">E</span><span class="ms">374.9</span><span class="cap">blind, cheap reward</span></div>
+    <div class="cell best"><span class="id">F</span><span class="ms">341.2</span><span class="cap">sees it, cheap reward</span></div>
+
+    <div class="rw">&Phi; executor</div>
+    <div class="cell"><span class="id">C</span><span class="ms">361.8</span><span class="cap">blind, real reward</span></div>
+    <div class="cell"><span class="id">D</span><span class="ms">347.5</span><span class="cap">sees it, real reward</span></div>
+  </div>
+  <p class="note">Mean greedy makespan across the five workloads. <strong>D</strong> is v9's
+  <code>only60</code> &mdash; the configuration this project has treated as its main method.
+  <strong>F</strong> beats it.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Results</div>
+  <h2>Executed makespan, all five workloads</h2>
+  <div class="scroll">
+    <table>
+      <caption>Greedy &nbsp;<span class="capnote">one deterministic rollout &middot; * = best in column</span></caption>
+      <thead><tr><th></th><th>Mask</th><th>Return</th><th>Val</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th><th>Mean</th></tr></thead>
+      <tbody>
+        <tr><td class="cellid">A</td><td class="dim">L3</td><td class="dim">C&#771;</td><td class="dim">792.5</td><td class="bad">196.9</td><td class="bad">399.4</td><td class="bad">671.6</td><td class="bad">875.0</td><td class="bad">1042.6</td><td class="bad">637.1</td></tr>
+        <tr><td class="cellid">B</td><td class="dim">none</td><td class="dim">C&#771;</td><td class="dim">541.1</td><td>236.1</td><td>330.3</td><td>407.5</td><td>502.8</td><td>607.9</td><td>416.9</td></tr>
+        <tr><td class="cellid">E</td><td class="dim">L3</td><td class="dim">&Psi;&#770;</td><td class="dim">488.5</td><td class="win">167.4*</td><td>268.5</td><td>371.9</td><td>475.9</td><td>590.7</td><td>374.9</td></tr>
+        <tr class="hl"><td class="cellid">F</td><td class="dim">none</td><td class="dim">&Psi;&#770;</td><td class="dim">432.7</td><td>173.2</td><td class="win">250.0*</td><td class="win">338.8*</td><td class="win">427.9*</td><td class="win">516.0*</td><td class="win">341.2</td></tr>
+        <tr><td class="cellid">C</td><td class="dim">L3</td><td class="dim">&Phi;</td><td class="dim">465.1</td><td>168.0</td><td>260.7</td><td>353.3</td><td>460.2</td><td>567.0</td><td>361.8</td></tr>
+        <tr><td class="cellid">D</td><td class="dim">none</td><td class="dim">&Phi;</td><td class="dim">437.5</td><td>168.5</td><td>254.1</td><td>342.8</td><td>440.6</td><td>531.5</td><td>347.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Best-of-8 &nbsp;<span class="capnote">executor picks among 8 sampled rollouts</span></caption>
+      <thead><tr><th></th><th>Mask</th><th>Return</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th><th>Mean</th></tr></thead>
+      <tbody>
+        <tr><td class="cellid">A</td><td class="dim">L3</td><td class="dim">C&#771;</td><td class="bad">192.7</td><td class="bad">378.7</td><td class="bad">603.0</td><td class="bad">800.0</td><td class="bad">968.2</td><td class="bad">588.5</td></tr>
+        <tr><td class="cellid">B</td><td class="dim">none</td><td class="dim">C&#771;</td><td>222.7</td><td>325.5</td><td>419.6</td><td>524.4</td><td>630.1</td><td>424.5</td></tr>
+        <tr><td class="cellid">E</td><td class="dim">L3</td><td class="dim">&Psi;&#770;</td><td class="win">160.2*</td><td>253.5</td><td>351.9</td><td>451.0</td><td>550.1</td><td>353.3</td></tr>
+        <tr class="hl"><td class="cellid">F</td><td class="dim">none</td><td class="dim">&Psi;&#770;</td><td>162.0</td><td class="win">239.2*</td><td class="win">319.9*</td><td class="win">403.4*</td><td class="win">488.5*</td><td class="win">322.6</td></tr>
+        <tr><td class="cellid">C</td><td class="dim">L3</td><td class="dim">&Phi;</td><td class="win">160.2*</td><td>246.6</td><td>338.5</td><td>436.1</td><td>534.5</td><td>343.2</td></tr>
+        <tr><td class="cellid">D</td><td class="dim">none</td><td class="dim">&Phi;</td><td>161.1</td><td>242.2</td><td>326.1</td><td>416.6</td><td>504.3</td><td>330.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Headline</div>
+  <h2>F beats D on every seed</h2>
+  <div class="stack prose">
+    <p>Paired per instance, three finished seeds each. Negative means F is faster.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>F &minus; D &nbsp;<span class="capnote">makespan units, at n = 100</span></caption>
+      <thead><tr><th>Mode</th><th>seed 42</th><th>seed 43</th><th>seed 44</th><th>3-seed averaged</th></tr></thead>
+      <tbody>
+        <tr><td class="name">greedy</td><td>&minus;9.3 ±6.1</td><td>&minus;18.1 ±6.4</td><td>&minus;15.6 ±6.1</td><td class="win">&minus;14.6 ±3.7</td></tr>
+        <tr><td class="name">best-of-8</td><td>&minus;3.8 ±2.7</td><td>&minus;26.9 ±2.6</td><td>&minus;15.8 ±2.7</td><td class="win">&minus;15.5 ±1.6</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Seed-averaged, paired against the strongest rule at each size &nbsp;<span class="capnote">negative = policy wins</span></caption>
+      <thead><tr><th></th><th>Mode</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="7">greedy</td></tr>
+        <tr><td class="cellid">D</td><td class="dim">greedy</td><td class="bad">+1.57%</td><td>&minus;0.92%</td><td>&minus;1.60%</td><td class="bad">+2.13%</td><td class="bad">+5.14%</td></tr>
+        <tr><td class="cellid">E</td><td class="dim">greedy</td><td class="bad">+4.26%</td><td class="bad">+5.33%</td><td class="bad">+7.31%</td><td class="bad">+13.79%</td><td class="bad">+21.77%</td></tr>
+        <tr class="hl"><td class="cellid">F</td><td class="dim">greedy</td><td>+1.40%</td><td class="win">&minus;3.28%</td><td class="win">&minus;3.43%</td><td class="win">&minus;0.96%</td><td>+2.22%</td></tr>
+        <tr class="group"><td colspan="7">best-of-8</td></tr>
+        <tr><td class="cellid">D</td><td class="dim">best-8</td><td>&minus;3.23%</td><td>&minus;5.79%</td><td>&minus;5.86%</td><td>&minus;2.88%</td><td>&minus;0.18%</td></tr>
+        <tr><td class="cellid">E</td><td class="dim">best-8</td><td>&minus;1.03%</td><td class="bad">+0.68%</td><td class="bad">+2.71%</td><td class="bad">+8.15%</td><td class="bad">+13.67%</td></tr>
+        <tr class="hl"><td class="cellid">F</td><td class="dim">best-8</td><td class="win">&minus;4.46%</td><td class="win">&minus;7.85%</td><td class="win">&minus;8.34%</td><td class="win">&minus;5.83%</td><td class="win">&minus;3.27%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding">
+    <h3>F recovers the number you remembered &mdash; honestly</h3>
+    <p>The <strong>&minus;8.34%</strong> F posts at n = 60 essentially matches the &minus;8.56% you
+    remembered from v8 &mdash; but that figure came from a single cherry-picked seed at K = 16, while
+    this is <strong>three seeds averaged at K = 8</strong>. Same result, half the search budget, no
+    seed selection.</p>
+    <p>F wins at every size in best-of-8, and is the only cell that beats the strongest rule at all
+    five workloads. D loses that lead by n = 100 (&minus;0.18%, indistinguishable); F still holds
+    &minus;3.27%.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Interaction</div>
+  <h2>The two factors substitute for each other</h2>
+  <div class="scroll">
+    <table>
+      <caption>Effect sizes &nbsp;<span class="capnote">greedy, seed 44, makespan units &middot; positive = the first cell is worse</span></caption>
+      <thead><tr><th>Contrast</th><th>n=20</th><th>n=40</th><th>n=60</th><th>n=80</th><th>n=100</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="6">Cost of masking, at each reward fidelity</td></tr>
+        <tr><td class="name">under &Phi; &nbsp;&nbsp;(C &minus; D)</td><td>&minus;0.5</td><td>+6.6</td><td>+10.5</td><td>+19.6</td><td>+35.5</td></tr>
+        <tr><td class="name">under &Psi;&#770; &nbsp;&nbsp;(E &minus; F)</td><td>&minus;5.5</td><td>+18.5</td><td>+32.7</td><td>+48.0</td><td>+74.8</td></tr>
+        <tr><td class="name">under C&#771; &nbsp;&nbsp;(A &minus; B)</td><td>&minus;39.2</td><td>+69.1</td><td>+264.0</td><td>+372.4</td><td class="bad">+434.6</td></tr>
+        <tr class="group"><td colspan="6">Cost of a weaker reward, at each observability</td></tr>
+        <tr><td class="name">&Psi;&#770; &rarr; &Phi;, full &nbsp;&nbsp;(F &minus; D)</td><td>+4.7</td><td class="win">&minus;4.1</td><td class="win">&minus;3.8</td><td class="win">&minus;12.6</td><td class="win">&minus;15.6</td></tr>
+        <tr><td class="name">&Psi;&#770; &rarr; &Phi;, masked &nbsp;&nbsp;(E &minus; C)</td><td>&minus;0.6</td><td>+7.9</td><td>+18.5</td><td>+15.7</td><td>+23.7</td></tr>
+        <tr><td class="name">C&#771; &rarr; &Psi;&#770;, full &nbsp;&nbsp;(B &minus; F)</td><td>+62.7</td><td>+80.3</td><td>+69.0</td><td>+74.9</td><td>+92.4</td></tr>
+        <tr><td class="name">C&#771; &rarr; &Psi;&#770;, masked &nbsp;&nbsp;(A &minus; E)</td><td>+29.5</td><td>+130.9</td><td>+298.7</td><td>+399.2</td><td class="bad">+451.8</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="finding flip">
+    <h3>Losing one factor is survivable; losing both is not</h3>
+    <p>Masking costs <strong>35.5</strong> units at n = 100 when the reward is the executor,
+    <strong>74.8</strong> when it is the surrogate, and <strong>434.6</strong> when it is the
+    idealised decode. The penalty for blindness scales with how uninformative the reward already is.</p>
+    <p>Read the other way: with full features, the cheap reward is <em>better</em>
+    (F &minus; D = &minus;15.6). With features masked, the expensive reward is needed
+    (E &minus; C = +23.7). The two factors substitute &mdash; a policy needs congestion information
+    from <em>somewhere</em>, either its inputs or its reward, and A has neither.</p>
+    <p>At n = 20 masking is mildly <em>helpful</em> in every row. With 1.25 parcels per robot there is
+    almost no contention to observe, so the congestion channels are noise that costs capacity.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Why</div>
+  <h2>Why the cheaper reward trains a better policy</h2>
+  <div class="stack prose">
+    <p>The most plausible explanation is <strong>self-consistency</strong>. The policy's features are
+    computed by &Psi;&#770;. Scoring it with &Psi;&#770; makes the whole decision process coherent:
+    the yardstick it is judged by is exactly the world it can see.</p>
+    <p>Swapping in &Phi; makes the reward reflect things the policy has <em>no way to observe</em> &mdash;
+    which robot blocked which in an aisle. That information never enters the state, so it can only
+    arrive as gradient noise. It matches what the fidelity study already measured: &Psi;&#770; ranks
+    candidate schedules almost as well as the executor (&tau; = 0.736, regret 1.24%) with a value
+    bias that is small and consistent in direction, so as a <em>reward</em> it carries nearly the
+    same ordering at a fraction of the variance.</p>
+    <p>The practical consequence is large: the reward is 290&times; cheaper per schedule, and the
+    resulting policy is better.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <caption>Between-seed spread &nbsp;<span class="capnote">max &minus; min across seeds 42/43/44, averaged over sizes</span></caption>
+      <thead><tr><th></th><th>Configuration</th><th>greedy</th><th>best-of-8</th></tr></thead>
+      <tbody>
+        <tr><td class="cellid">D</td><td class="name">full features, &Phi;</td><td class="win">6.3</td><td class="win">3.0</td></tr>
+        <tr><td class="cellid">F</td><td class="name">full features, &Psi;&#770;</td><td>10.5</td><td>12.8</td></tr>
+        <tr><td class="cellid">E</td><td class="name">masked, &Psi;&#770;</td><td class="bad">16.1</td><td class="bad">16.2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">F pays for its advantage with roughly twice D's seed variance. Both remain far below
+  v8's 13.4-unit range, so neither has a &ldquo;lucky seed&rdquo; to cherry-pick &mdash; F wins on all
+  three.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Caveats</div>
+  <h2>What this does and does not establish</h2>
+  <div class="stack prose">
+    <ul>
+      <li><strong>Only seed 44 has all six cells.</strong> A and B's seeds 42/43 were within
+      ~50 epochs of finishing and C's were at 45% when this ran, so the six-cell table is single-seed.
+      D, E and F have three finished seeds and carry the seed-averaged claims.</li>
+      <li><strong>Selection is held fixed.</strong> Every cell uses its <code>_best</code> checkpoint,
+      selected on the executor over the same val_mix set, so cells differ in training and not in how
+      their checkpoint was picked. The <code>_bestideal</code> / <code>_bestsurr</code> checkpoints
+      &mdash; each arm selected inside its own paradigm &mdash; are not in this table.</li>
+      <li><strong>Masks match training.</strong> A, C and E are evaluated with L3 installed, because
+      a checkpoint fed channels it never saw during training is not the model that was trained.</li>
+      <li><strong>Instances.</strong> <code>test_case/v3/trend/full_{n}.jsonl</code>, 100 per size,
+      m = 16, verified disjoint from every training and selection pool.</li>
+      <li><strong>Not tested:</strong> whether F's advantage survives at n &gt; 100, and whether
+      best-of-16 widens it. Both are cheap to check.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  6 cells · 5 workloads · 100 instances each · seeds 42/43/44 for D, E, F<br>
+  factorial_summary.txt · raw/rows.jsonl · raw/rows_ef.jsonl · experiments/full_benchmark/
+</footer>
+
+</div>

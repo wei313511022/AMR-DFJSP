@@ -1,0 +1,32 @@
+================================================================================================
+SELECTION ON val_mix -- 40 instances/size, m=16. NOT RESULTS.
+================================================================================================
+
+   n  val-selected rule                                 val  gap to #2  tied   of
+------------------------------------------------------------------------------------------------
+  20  material_match+material_match                   165.9       0.53     1   60
+  40  earliest_completion_job+earliest_completion     257.1       0.00     2   60
+  60  earliest_completion_job+earliest_completion     348.2       0.00     4   60
+  80  milk_run+earliest_completion                    420.1       0.00     2   60
+ 100  milk_run+material_match                         481.9       1.30     1   60
+
+
+val-selected policy -- greedy
+------------------------------------------------------------------------------------------------
+   n  best model on val                 val   v9_only60 seed pick                         seeds on val     sd
+  20  v9_only60_s42                   166.3   v9_only60_s42              s42=166.3 s44=167.7 s43=170.4   2.12
+  40  v9_only60_s42                   254.0   v9_only60_s42              s42=254.0 s43=256.6 s44=256.8   1.56
+  60  v9_only60_s42                   341.3   v9_only60_s42              s42=341.3 s44=345.9 s43=346.6   2.90
+  80  v9_only60_s42                   428.3   v9_only60_s42              s42=428.3 s43=430.8 s44=433.5   2.59
+ 100  v9_only60_s43                   518.6   v9_only60_s43              s43=518.6 s42=523.2 s44=528.1   4.77
+
+val-selected policy -- best8
+------------------------------------------------------------------------------------------------
+   n  best model on val                 val   v9_only60 seed pick                         seeds on val     sd
+  20  v10_C_s44                       159.8   v9_only60_s44              s44=160.2 s42=160.3 s43=162.2   1.08
+  40  v9_only60_s44                   239.4   v9_only60_s44              s44=239.4 s42=241.6 s43=241.7   1.31
+  60  v9_only60_s42                   325.2   v9_only60_s42              s42=325.2 s44=326.0 s43=328.9   1.90
+  80  v9_only60_s43                   411.4   v9_only60_s43              s43=411.4 s42=412.2 s44=413.1   0.83
+ 100  v9_only60_s43                   491.1   v9_only60_s43              s43=491.1 s42=497.4 s44=498.5   4.01
+
+frozen -> /home/wei/Desktop/AMR-DFJSP/experiments/full_benchmark/selection_val.json
