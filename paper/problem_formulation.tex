@@ -1,0 +1,292 @@
+% =========================================================================
+% Section III -- Problem formulation.
+% The two evaluators act on the same complete schedule. Reported execution
+% metrics exclude decoder failures; failure rate is reported separately.
+% =========================================================================
+
+\section{Problem Formulation}
+\label{sec:problem}
+
+\begin{table*}[t]
+\caption{Notation.}
+\label{tab:notation}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.13\textwidth}
+                    >{\raggedright\arraybackslash}p{0.34\textwidth}
+                    >{\raggedright\arraybackslash}p{0.13\textwidth}
+                    >{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+\toprule
+Symbol & Meaning and value/domain & Symbol & Meaning and value/domain \\
+\midrule
+\multicolumn{2}{@{}l}{\itshape System, jobs, and schedules} &
+\multicolumn{2}{l}{\itshape Evaluation and error measures} \\
+$d,k,j,s,\varsigma,t,i$ & station, AMR, job, size-class, class-threshold, time/epoch, and event/instance indices &
+$\widetilde\Phi,\Phi$ & idealized evaluator and collision-aware deployment executor \\
+$\mathcal W$ & four-connected workspace, $\{0,\ldots,19\}\!\times\!\{1,\ldots,19\}$ &
+$\pi^k,u_i^k,n_k$ & event subsequence of AMR $k$, its $i$th event, and number of events \\
+$\Delta(u,v)$ & Manhattan distance between cells $u$ and $v$ &
+$\ell(u),j(u)$ & station and job associated with event $u$ \\
+$\mathcal Y$ & station rows, $\{2,6,10,14,18\}$ &
+$\widetilde C_k,\widetilde C$ & idealized completion time of AMR $k$ and idealized makespan \\
+$\mathcal D^{\rm in},\mathcal D^{\rm out},\mathcal D$ & inbound stations, outbound stations, and their union &
+$H$ & space--time A* search horizon, $100$ ticks \\
+$\bm u_d,W_d,L$ & inward wall normal, waiting cells of station $d$, and queue length $L=3$ &
+$\nu_\Phi(x)$ & routing or operation events that $\Phi$ cannot decode \\
+$\mathcal M,m$ & AMR set and fleet size, $m=16$ &
+$\mathcal F_\Phi$ & schedules routable by the fixed executor, i.e., $\nu_\Phi(x)=0$ \\
+$\mathcal B,b_k$ & set of dedicated bays and the bay assigned to AMR $k$ &
+$F_k^\Phi,C_{\max}^\Phi$ & executed completion time of AMR $k$ and executed makespan \\
+$\mathcal J,n$ & job set and number of jobs &
+$x^*$ & executor-relative makespan-minimizing schedule \\
+$\mathcal S,\sigma_j$ & size classes $\{A,B,C\}$, $A\prec B\prec C$, and class of job $j$ &
+$\Lambda(x)$ & relative value error (execution penalty) of $\widetilde\Phi$ \\
+$o_j,g_j$ & inbound origin and outbound destination of job $j$ &
+$\mathcal C_i$ & common executor-routable candidate set for test instance $i$ \\
+$p_j=p(\sigma_j)$ & pickup/delivery service time; $p(A),p(B),p(C)=5,10,15$ &
+$P_i,D_i$ & concordant and discordant schedule-pair counts \\
+$\rho_j,\delta_j$ & pickup and delivery events of job $j$ &
+$T_i^{\widetilde\Phi},T_i^\Phi$ & pair counts tied only by the indicated evaluator \\
+$Q_s,N_s^k(t)$ & class-$s$ rack positions ($Q_s=1$) and onboard class-$s$ jobs &
+$\tau_{b,i},{\rm Inv}_i$ & tie-corrected Kendall coefficient and inversion rate \\
+$x=(\bm a,\pi)$ & complete schedule: assignment vector and global event-priority list &
+$\widetilde x_i,x_i^\Phi,{\rm Reg}_i$ & selections of the two evaluators and executor-relative selection regret \\
+$\bm a,\pi$ & job-to-AMR assignments and a precedence-feasible list of $2n$ events &
+& \\
+$\mathcal X$ & schedules satisfying assignment, precedence, and rack constraints &
+& \\
+\multicolumn{2}{@{}l}{\itshape Constructive decision process} &
+& \\
+$s_t$ & state at construction epoch $t$ & & \\
+$\bm X_t^A,\bm X_t^J$ & projected AMR and job states & & \\
+$\bm E_t,\pi_{1:t}$ & committed station-service windows and current event-list prefix & & \\
+$a_t=(\omega,k,j)$ & composite action selecting operation, AMR, and job & & \\
+$\omega$ & operation type, $\textsc{pick}$ or $\textsc{del}$ & & \\
+$\widehat\Psi$ & calibrated event-based surrogate transition & & \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{System, Jobs, and Schedules}
+\label{sec:system}
+
+Table~\ref{tab:notation} provides a consolidated reference for the notation
+used in this section. The workspace is the obstacle-free, four-connected grid
+$\mathcal W=\{0,\ldots,19\}\times\{1,\ldots,19\}$ with unit-time moves and
+Manhattan distance $\Delta$. Five inbound stations and five outbound stations
+occupy the left and right boundaries at rows
+$\mathcal Y=\{2,6,10,14,18\}$:
+\begin{equation}
+ \mathcal D^{\mathrm{in}}=\{(0,y):y\in\mathcal Y\},\qquad
+ \mathcal D^{\mathrm{out}}=\{(19,y):y\in\mathcal Y\}.
+ \label{eq:stations}
+\end{equation}
+Let $\mathcal D=\mathcal D^{\mathrm{in}}\cup\mathcal D^{\mathrm{out}}$.
+Each station is an exclusive, non-preemptive server. For a station $d$, let
+$\bm u_d$ be the inward wall normal. Its finite single-file waiting set is
+\begin{equation}
+ W_d=\{d+r\bm u_d\in\mathcal W\setminus\mathcal D:
+ r\in\{1,\ldots,L\}\},\qquad L=3.
+ \label{eq:waitset}
+\end{equation}
+Thus, each queue extends three cells inward from its station and leaves the
+two lateral departure cells free; each waiting cell holds at most one AMR.
+The fleet is fixed at $m=16$. Its dedicated bays occupy four aisle rows
+between station rows,
+\begin{equation}
+ \mathcal B=\{0,1,2,3\}\times\{4,8,12,16\},
+ \label{eq:bays}
+\end{equation}
+with a one-to-one assignment $b_k\in\mathcal B$ for each AMR
+$k\in\mathcal M$. An idle AMR occupies its bay, and every AMR returns to its
+bay after completing its assigned work. Figure~\ref{fig:layout} shows this
+fixed geometry.
+
+An instance contains jobs $\mathcal J=\{1,\ldots,n\}$, where each job
+represents one parcel transfer. Job $j$ has size
+$\sigma_j\in\mathcal S=\{A,B,C\}$, with $A\prec B\prec C$, origin
+$o_j\in\mathcal D^{\mathrm{in}}$, destination
+$g_j\in\mathcal D^{\mathrm{out}}$, and deterministic service time
+\begin{equation}
+ p_j=p(\sigma_j),\qquad p(A)=5,\quad p(B)=10,\quad p(C)=15.
+ \label{eq:service}
+\end{equation}
+The same duration is required for pickup $\rho_j$ and delivery $\delta_j$,
+and all jobs are available at time zero. Pickup and delivery must be
+performed by the same AMR; transshipment is not allowed.
+
+Each AMR has one rack position of each class. A smaller job may occupy a
+larger position, but not conversely. With $N_s^k(t)$ denoting the number of
+onboard class-$s$ jobs and $Q_s=1$ for every $s\in\mathcal S$, the nested
+capacity constraints are
+\begin{equation}
+ \sum_{s\succeq\varsigma}N_s^k(t)
+ \le \sum_{s\succeq\varsigma}Q_s,\qquad
+ k\in\mathcal M,\ \varsigma\in\mathcal S,\ t\ge0.
+ \label{eq:nested}
+\end{equation}
+Equivalently, $N_C^k\le1$, $N_B^k+N_C^k\le2$, and
+$N_A^k+N_B^k+N_C^k\le3$.
+
+A complete schedule is $x=(\bm a,\pi)$. The vector
+$\bm a\in\mathcal M^n$ assigns each job to one AMR, while $\pi$ is a priority
+list containing the $2n$ pickup and delivery events. It obeys
+$\rho_j\prec_\pi\delta_j$, and every prefix of each robot's induced
+subsequence satisfies~\eqref{eq:nested}. Let $\mathcal X$ denote the set of
+schedules satisfying these assignment, precedence, and rack constraints.
+The list $\pi$ fixes event priority, not physical start times: station service,
+waiting, and routed movement are supplied by an evaluator.
+
+\subsection{Paired Schedule Evaluators}
+\label{sec:evaluators}
+
+We apply two deterministic evaluators to the same $x\in\mathcal X$. For
+robot $k$, let $n_k$ be its number of events and
+$\pi^k=(u_1^k,\ldots,u_{n_k}^k)$ the subsequence induced by $x$. Let
+$\ell(u)$ and $j(u)$ be an event's station and job, respectively, and set
+$\ell(u_0^k)=b_k$. The idealized evaluator $\widetilde\Phi$ assumes
+independent robots, immediate service on arrival, and free-space travel:
+\begin{equation}
+ \begin{aligned}
+ \widetilde C_k(x)
+ &=\sum_{i=1}^{n_k}\!\left[
+   \Delta\!\left(\ell(u_{i-1}^k),\ell(u_i^k)\right)+p_{j(u_i^k)}\right]\\
+ &\quad+\Delta\!\left(\ell(u_{n_k}^k),b_k\right),
+ \qquad
+ \widetilde C(x)=\max_{k\in\mathcal M}\widetilde C_k(x).
+ \end{aligned}
+ \label{eq:ideal}
+\end{equation}
+It therefore ignores inter-robot conflicts, station exclusivity, finite
+waiting space, and delays caused by reservations. Global interleavings with
+the same per-robot subsequences may consequently tie under
+$\widetilde\Phi$.
+
+The deployment evaluator $\Phi$ is a fixed prioritized executor. It processes
+events in $\pi$, routes each leg with space--time A* over a shared reservation
+table, and admits unit moves or waits. A move is rejected if its next cell is
+reserved at the current or next tick; this prevents vertex conflicts,
+head-on exchanges, and immediate following into a vacated cell. Each station
+serves one AMR at a time. If service cannot start on arrival, the executor
+reserves an available cell in $W_d$; when none is available, the AMR remains
+at its upstream location until the next relevant release time. After its
+last event, each AMR is routed back to $b_k$.
+
+The space--time search horizon is $H=100$ ticks. Let $\nu_\Phi(x)$ count
+routing or operation events that the decoder cannot complete within its
+rules, and define the executor-relative routable set
+\begin{equation}
+ \mathcal F_\Phi=\{x\in\mathcal X:\nu_\Phi(x)=0\}.
+ \label{eq:routable-set}
+\end{equation}
+For $x\in\mathcal F_\Phi$, let $F_k^\Phi(x)$ include all movement, waiting,
+service, and the return to $b_k$. The executed makespan and optimization
+objective are
+\begin{equation}
+ C_{\max}^{\Phi}(x)=\max_{k\in\mathcal M}F_k^\Phi(x),
+ \qquad
+ x^*\in\arg\min_{x\in\mathcal F_\Phi}C_{\max}^{\Phi}(x).
+ \label{eq:objective}
+\end{equation}
+Because $\Phi$ is a bounded prioritized planner, $\mathcal F_\Phi$ is
+executor-relative rather than a claim of general MAPF feasibility. A failed
+decode contains a fixed horizon penalty rather than elapsed execution time.
+We therefore report routability separately and compute all execution-time and
+ranking statistics below only on schedules in $\mathcal F_\Phi$.
+
+\subsection{Value and Ranking Error}
+\label{sec:penalty}
+
+For the same executor-routable schedule, the relative value error of the
+idealized evaluator is the execution penalty
+\begin{equation}
+ \Lambda(x)=
+ \frac{C_{\max}^{\Phi}(x)-\widetilde C(x)}{\widetilde C(x)}.
+ \label{eq:penalty}
+\end{equation}
+Value error alone does not show whether the abstraction changes a scheduling
+decision. For test instance $i$, let $\mathcal C_i\subseteq\mathcal F_\Phi$
+be the common set of complete schedules produced by all evaluated methods.
+For every unordered pair $\{x,y\}\subset\mathcal C_i$, define it as concordant
+when
+\begin{equation}
+ [\widetilde C(x)-\widetilde C(y)]
+ [C_{\max}^{\Phi}(x)-C_{\max}^{\Phi}(y)]>0,
+ \label{eq:concordant}
+\end{equation}
+and discordant when the product is negative. Let $P_i$ and $D_i$ be the
+respective counts, and let $T_i^{\widetilde\Phi}$ and $T_i^\Phi$ count pairs
+tied only by the indicated evaluator. Kendall's tie-corrected coefficient is
+\begin{equation}
+ \tau_{b,i}=
+ \frac{P_i-D_i}
+ {\sqrt{(P_i+D_i+T_i^{\widetilde\Phi})
+              (P_i+D_i+T_i^\Phi)}}.
+ \label{eq:kendall}
+\end{equation}
+The directly measured ranking-inversion rate is
+\begin{equation}
+ \mathrm{Inv}_i=\frac{D_i}{P_i+D_i},
+ \label{eq:inversion}
+\end{equation}
+so pairs tied by either evaluator are excluded from its denominator and are
+reported separately. Finally, using a predetermined tie-breaking rule, let
+$\widetilde x_i=\arg\min_{x\in\mathcal C_i}\widetilde C(x)$ and
+$x_i^\Phi=\arg\min_{x\in\mathcal C_i}C_{\max}^{\Phi}(x)$. Their
+executor-relative selection regret is
+\begin{equation}
+ \mathrm{Reg}_i=
+ \frac{C_{\max}^{\Phi}(\widetilde x_i)-C_{\max}^{\Phi}(x_i^\Phi)}
+ {C_{\max}^{\Phi}(x_i^\Phi)}.
+ \label{eq:selection-regret}
+\end{equation}
+The three ranking measures are computed per instance before aggregation, so
+instances with more sampled schedules do not receive unintended extra weight.
+
+\subsection{Constructive Decision Process}
+\label{sec:mdp}
+
+The policy constructs one schedule in $2n$ epochs. At epoch $t$, its state and
+composite action are
+\begin{align}
+ s_t&=(\bm X_t^A,\bm X_t^J,\bm E_t,\pi_{1:t}),
+                                                        \label{eq:state}\\
+ a_t&=(\omega,k,j),\qquad
+ \omega\in\{\textsc{pick},\textsc{del}\}.             \label{eq:action}
+\end{align}
+Here $\bm X_t^A$ and $\bm X_t^J$ describe the projected robot and job states,
+$\bm E_t$ stores committed station service windows, and $\pi_{1:t}$ is the
+current prefix. The action mask allows pickup of an unpicked job only by an
+AMR with compatible rack capacity, and allows delivery only after pickup by
+that job's carrier. It therefore enforces assignment, precedence, and nested
+capacity during construction.
+
+Both training and inference advance a prefix with the calibrated event-based
+surrogate
+\begin{equation}
+ s_{t+1}=\widehat\Psi(s_t,a_t),
+ \label{eq:surrogate-transition}
+\end{equation}
+which supplies inexpensive projected travel, station, and waiting states. It
+does not determine the optimization target. Once a complete schedule has
+been constructed, the fixed executor $\Phi$ evaluates it; PPO receives the
+negative executor-evaluated makespan as its terminal return on routable
+rollouts. Failed rollouts receive the executor's finite training-only score,
+while their returned duration is excluded from reported makespan statistics.
+Section~\ref{sec:architecture} specifies $\widehat\Psi$, the observable
+congestion features, and the policy parameterization.
+
+\subsection{Scope and Assumptions}
+\label{sec:assumptions}
+
+Robots are homogeneous, all jobs are known before construction, and service
+times are deterministic and class-dependent. Here \emph{offline} describes
+the scheduling instance, not offline reinforcement learning. The controlled
+study fixes the layout, the $m=16$ fleet, and the executor, while varying
+workload through $n$. Battery consumption, turning and acceleration costs,
+localization error, transshipment, and online arrivals are excluded.
+Consequently, the results identify workload-dependent evaluator error within
+this controlled system; generalization to other layouts, fleets, and routing
+executors remains outside the present scope.

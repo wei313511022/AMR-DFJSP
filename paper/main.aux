@@ -1,0 +1,147 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{zhang2020l2d,song2023fjsp,moon2024hgs,yuan2026gin,matrans2026}
+\citation{chen2021integrated,li2024hierarchical,wang2026collaborative}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Fixed $20\times 19$ layout used throughout. Five inbound and five outbound stations have single-file, depth-three waiting lines. Sixteen dedicated charging bays occupy four aisle rows. The dashed arrow illustrates one pickup--delivery pair.}}{1}{figure.1}\protected@file@percent }
+\newlabel{fig:layout}{{1}{1}{Fixed $20\times 19$ layout used throughout. Five inbound and five outbound stations have single-file, depth-three waiting lines. Sixteen dedicated charging bays occupy four aisle rows. The dashed arrow illustrates one pickup--delivery pair}{figure.1}{}}
+\citation{zhang2020l2d}
+\citation{song2023fjsp}
+\citation{moon2024hgs}
+\citation{yuan2026gin,yang2026cosched,matrans2026}
+\citation{bilge1995time,ulusoy1997ga}
+\citation{miyamoto2016local}
+\citation{zhong2020integrated}
+\citation{nishida2023jit}
+\citation{chen2021integrated}
+\citation{li2024hierarchical}
+\citation{wang2026collaborative}
+\citation{li2024rlhh}
+\citation{stern2019mapf}
+\citation{ma2017lifelong}
+\citation{rlrhpp2026}
+\citation{noda2026deferral}
+\citation{zang2026buffers}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{II}{2}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-A}Learned Scheduling with Transport Abstractions}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-B}Integrated Assignment, Routing, and Service Resources}{2}{subsection.2.2}\protected@file@percent }
+\citation{williams1992reinforce}
+\citation{schulman2017ppo}
+\citation{kool2019attention}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-C}Learning from Terminal Cost}{3}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Problem Formulation}{3}{section.3}\protected@file@percent }
+\newlabel{sec:problem}{{III}{3}{Problem Formulation}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-A}System, Jobs, and Schedules}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:system}{{III-A}{3}{System, Jobs, and Schedules}{subsection.3.1}{}}
+\newlabel{eq:stations}{{1}{3}{System, Jobs, and Schedules}{equation.1}{}}
+\newlabel{eq:waitset}{{2}{3}{System, Jobs, and Schedules}{equation.2}{}}
+\newlabel{eq:bays}{{3}{3}{System, Jobs, and Schedules}{equation.3}{}}
+\newlabel{eq:service}{{4}{3}{System, Jobs, and Schedules}{equation.4}{}}
+\newlabel{eq:nested}{{5}{3}{System, Jobs, and Schedules}{equation.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-B}Paired Schedule Evaluators}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:evaluators}{{III-B}{3}{Paired Schedule Evaluators}{subsection.3.2}{}}
+\newlabel{eq:ideal}{{6}{3}{Paired Schedule Evaluators}{equation.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Notation.}}{4}{table.1}\protected@file@percent }
+\newlabel{tab:notation}{{I}{4}{Notation}{table.1}{}}
+\newlabel{eq:routable-set}{{7}{4}{Paired Schedule Evaluators}{equation.7}{}}
+\newlabel{eq:objective}{{8}{4}{Paired Schedule Evaluators}{equation.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-C}Value and Ranking Error}{4}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:penalty}{{III-C}{4}{Value and Ranking Error}{subsection.3.3}{}}
+\newlabel{eq:penalty}{{9}{4}{Value and Ranking Error}{equation.9}{}}
+\newlabel{eq:concordant}{{10}{4}{Value and Ranking Error}{equation.10}{}}
+\newlabel{eq:kendall}{{11}{4}{Value and Ranking Error}{equation.11}{}}
+\newlabel{eq:inversion}{{12}{4}{Value and Ranking Error}{equation.12}{}}
+\newlabel{eq:selection-regret}{{13}{5}{Value and Ranking Error}{equation.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-D}Constructive Decision Process}{5}{subsection.3.4}\protected@file@percent }
+\newlabel{sec:mdp}{{III-D}{5}{Constructive Decision Process}{subsection.3.4}{}}
+\newlabel{eq:state}{{14}{5}{Constructive Decision Process}{equation.14}{}}
+\newlabel{eq:action}{{15}{5}{Constructive Decision Process}{equation.15}{}}
+\newlabel{eq:surrogate-transition}{{16}{5}{Constructive Decision Process}{equation.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-E}Scope and Assumptions}{5}{subsection.3.5}\protected@file@percent }
+\newlabel{sec:assumptions}{{III-E}{5}{Scope and Assumptions}{subsection.3.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Execution-Grounded Constructive Policy}{5}{section.4}\protected@file@percent }
+\newlabel{sec:architecture}{{IV}{5}{Execution-Grounded Constructive Policy}{section.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Decision-state features.}}{5}{table.2}\protected@file@percent }
+\newlabel{tab:features}{{II}{5}{Decision-state features}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}Decision State}{5}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:arch-state}{{IV-A}{5}{Decision State}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-B}Calibrated Event Surrogate}{5}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:calibration}{{IV-B}{5}{Calibrated Event Surrogate}{subsection.4.2}{}}
+\newlabel{eq:calibrated-travel}{{17}{5}{Calibrated Event Surrogate}{equation.17}{}}
+\newlabel{eq:calibrated-wait}{{18}{5}{Calibrated Event Surrogate}{equation.18}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Overview of the execution-grounded constructive policy. After each feasible operation--AMR--job decision, the completion check either returns the updated prefix for another decision or passes the complete schedule to the fixed executor. The terminal score and critic baseline provide the dashed PPO training inputs.}}{6}{figure.2}\protected@file@percent }
+\newlabel{fig:architecture}{{2}{6}{Overview of the execution-grounded constructive policy. After each feasible operation--AMR--job decision, the completion check either returns the updated prefix for another decision or passes the complete schedule to the fixed executor. The terminal score and critic baseline provide the dashed PPO training inputs}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-C}Entity Encoders}{6}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:arch-encoders}{{IV-C}{6}{Entity Encoders}{subsection.4.3}{}}
+\newlabel{eq:embed}{{19}{6}{Entity Encoders}{equation.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-D}Robot--Station Interaction}{6}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:arch-interaction}{{IV-D}{6}{Robot--Station Interaction}{subsection.4.4}{}}
+\newlabel{eq:interaction}{{20}{6}{Robot--Station Interaction}{equation.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-E}Job Encoding over the Commitment Graph}{6}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:arch-jobs}{{IV-E}{6}{Job Encoding over the Commitment Graph}{subsection.4.5}{}}
+\newlabel{eq:fusion}{{21}{6}{Job Encoding over the Commitment Graph}{equation.21}{}}
+\newlabel{eq:gin}{{22}{6}{Job Encoding over the Commitment Graph}{equation.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-F}Composite Actor Head}{7}{subsection.4.6}\protected@file@percent }
+\newlabel{sec:arch-actor}{{IV-F}{7}{Composite Actor Head}{subsection.4.6}{}}
+\newlabel{eq:logit}{{23}{7}{Composite Actor Head}{equation.23}{}}
+\newlabel{eq:policy}{{24}{7}{Composite Actor Head}{equation.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-G}Critic}{7}{subsection.4.7}\protected@file@percent }
+\newlabel{sec:arch-critic}{{IV-G}{7}{Critic}{subsection.4.7}{}}
+\newlabel{eq:critic}{{25}{7}{Critic}{equation.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-H}PPO Training}{7}{subsection.4.8}\protected@file@percent }
+\newlabel{sec:training}{{IV-H}{7}{PPO Training}{subsection.4.8}{}}
+\newlabel{eq:return}{{26}{7}{PPO Training}{equation.26}{}}
+\newlabel{eq:ppo}{{27}{7}{PPO Training}{equation.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-I}Cost, Size, and Congestion Channels}{7}{subsection.4.9}\protected@file@percent }
+\newlabel{sec:arch-cost}{{IV-I}{7}{Cost, Size, and Congestion Channels}{subsection.4.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Experiments}{7}{section.5}\protected@file@percent }
+\newlabel{sec:experiments}{{V}{7}{Experiments}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-A}Protocol and Comparison Methods}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-B}Evaluator Fidelity}{8}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:surrogate-results}{{V-B}{8}{Evaluator Fidelity}{subsection.5.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Idealized--executor ranking.}}{8}{table.3}\protected@file@percent }
+\newlabel{tab:ranking}{{III}{8}{Idealized--executor ranking}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-C}Terminal Return and Congestion Observability}{8}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-D}Comparison with Rules and Genetic Search}{8}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-E}Computation Time}{8}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{8}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{VI}{8}{Conclusion}{section.6}{}}
+\bibstyle{IEEEtran}
+\bibdata{references}
+\bibcite{zhang2020l2d}{1}
+\bibcite{song2023fjsp}{2}
+\bibcite{moon2024hgs}{3}
+\bibcite{yuan2026gin}{4}
+\bibcite{matrans2026}{5}
+\bibcite{chen2021integrated}{6}
+\bibcite{li2024hierarchical}{7}
+\bibcite{wang2026collaborative}{8}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Evaluator fidelity and scoring time.}}{9}{table.4}\protected@file@percent }
+\newlabel{tab:surrogate}{{IV}{9}{Evaluator fidelity and scoring time}{table.4}{}}
+\newlabel{tab:evaluator-time}{{IV}{9}{Evaluator fidelity and scoring time}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Best-of-eight factorial results.}}{9}{table.5}\protected@file@percent }
+\newlabel{tab:factorial}{{V}{9}{Best-of-eight factorial results}{table.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Executed makespan and scheduling time.}}{9}{table.6}\protected@file@percent }
+\newlabel{tab:baseline-performance}{{VI}{9}{Executed makespan and scheduling time}{table.6}{}}
+\newlabel{tab:inference-time}{{VI}{9}{Executed makespan and scheduling time}{table.6}{}}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.1}\protected@file@percent }
+\bibcite{yang2026cosched}{9}
+\bibcite{bilge1995time}{10}
+\bibcite{ulusoy1997ga}{11}
+\bibcite{miyamoto2016local}{12}
+\bibcite{zhong2020integrated}{13}
+\bibcite{nishida2023jit}{14}
+\bibcite{li2024rlhh}{15}
+\bibcite{stern2019mapf}{16}
+\bibcite{ma2017lifelong}{17}
+\bibcite{rlrhpp2026}{18}
+\bibcite{noda2026deferral}{19}
+\bibcite{zang2026buffers}{20}
+\bibcite{williams1992reinforce}{21}
+\bibcite{schulman2017ppo}{22}
+\bibcite{kool2019attention}{23}
+\gdef \@abspage@last{10}

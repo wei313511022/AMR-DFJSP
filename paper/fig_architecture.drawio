@@ -1,0 +1,97 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36" version="29.6.1">
+  <diagram id="architecture" name="Page-1">
+    <mxGraphModel dx="1188" dy="719" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="panel_a" parent="1" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingTop=8;spacingLeft=8;fontStyle=1;fontSize=15;fillColor=#FAFAF8;strokeColor=#C8C7C2;arcSize=6;" value="A. Schedule construction" vertex="1">
+          <mxGeometry height="260" width="1002" x="14" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prefix" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#F1F1EF;strokeColor=#77766F;strokeWidth=2;" value="&lt;b&gt;Schedule prefix&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;committed events&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="120" x="36" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="surrogate" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#FFF1CC;strokeColor=#A86200;strokeWidth=2;" value="&lt;b&gt;Calibrated surrogate&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;project clocks&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="140" x="188" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="state" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#F0EAFE;strokeColor=#654EA3;strokeWidth=2;" value="&lt;b&gt;Projected state&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;AMR | station | job | action&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="160" x="360" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="encoder" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#E6F0FA;strokeColor=#185FA5;strokeWidth=2;" value="&lt;b&gt;Heterogeneous encoder&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;robot-station attention |&lt;br&gt;job fusion |&lt;br&gt;commitment GIN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="77" width="202" x="550" y="102.5" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#E8F3EA;strokeColor=#3A7752;strokeWidth=2;" value="&lt;b&gt;Joint actor + mask&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot;&gt;select feasible&lt;br&gt;(operation, AMR, job)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="184" x="800" y="101" as="geometry" />
+        </mxCell>
+        <mxCell id="complete_check" parent="1" style="rhombus;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontStyle=1;spacing=4;fillColor=#F1F1EF;strokeColor=#77766F;strokeWidth=2;" value="&lt;font style=&quot;font-size: 13px;&quot;&gt;Schedule&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 13px;&quot;&gt;complete?&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="104" x="840" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="prefix" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;" target="surrogate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="surrogate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;" target="state">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;" target="encoder">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="encoder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;" target="actor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_to_check" edge="1" parent="1" source="actor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="complete_check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="feedback" edge="1" parent="1" source="complete_check" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" target="prefix">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="96" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="no_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontColor=#5F5E5A;" value="&lt;i&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;No: next decision&lt;/font&gt;&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="150" x="440" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="panel_b" parent="1" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingTop=8;spacingLeft=8;fontStyle=1;fontSize=15;fillColor=#FAFAF8;strokeColor=#C8C7C2;arcSize=6;" value="B. Complete-schedule evaluation and PPO training" vertex="1">
+          <mxGeometry height="130" width="1002" x="14" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="critic" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#E6F0FA;strokeColor=#185FA5;strokeWidth=2;" value="&lt;b&gt;Critic baseline&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;mean-pooled states&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="210" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="executor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#FCE9E5;strokeColor=#A63C2F;strokeWidth=2;" value="&lt;b&gt;Fixed executor&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;routing + service&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="410" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="terminal" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#FCE9E5;strokeColor=#A63C2F;strokeWidth=2;" value="&lt;b&gt;Terminal return&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;negative score&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="610" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="ppo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;spacing=6;arcSize=12;fillColor=#F1EAF7;strokeColor=#69438E;strokeWidth=2;" value="&lt;b&gt;PPO update&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#5F5E5A&quot; style=&quot;font-size: 12px;&quot;&gt;policy + value&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="810" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="yes_label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontColor=#5F5E5A;" value="&lt;i&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Yes&lt;/font&gt;&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="48" x="661" y="278" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="executor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#45443F;endArrow=block;endFill=1;dashed=0;" target="terminal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="terminal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7A4E97;endArrow=block;endFill=1;dashed=1;" target="ppo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="critic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7A4E97;endArrow=block;endFill=1;dashed=1;exitX=1;exitY=0.5;entryX=0.5;entryY=1;" target="ppo">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="385" y="390" />
+              <mxPoint x="385" y="440" />
+              <mxPoint x="885" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5E-h_mEZJZ1iG5cHYCrn-1" edge="1" parent="1" source="complete_check" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=2;" target="executor">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="892" y="300" />
+              <mxPoint x="485" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,120 @@
+% =========================================================================
+% RA-L submission -- master file.
+%
+% BUILD (from this folder):
+%     latexmk -pdf main.tex          <- easiest; runs everything automatically
+% or manually, four times in this order:
+%     pdflatex main
+%     bibtex   main
+%     pdflatex main
+%     pdflatex main
+%
+% Initial RA-L submissions use the RAS conference template and are anonymous.
+% Download ieeeconf.zip from the RA-L Information for Authors page if
+% ieeeconf.cls is not installed with your TeX distribution.
+%
+% Page budget: RA-L allows 6 pages + up to 2 extra at a fee. References count.
+% =========================================================================
+
+\documentclass[letterpaper,10pt,conference]{ieeeconf}
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
+
+% ---- maths ----
+\usepackage{amsmath}     % align, equation, \text
+\usepackage{amssymb}     % \mathcal, \succeq
+\usepackage{bm}          % \bm for bold vectors
+
+% ---- tables and figures ----
+\usepackage{booktabs}    % \toprule \midrule \bottomrule
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}    % \includegraphics
+\usepackage{cite}        % compressed IEEE-style citation ranges
+
+% ---- algorithms (uncomment when you add pseudocode) ----
+% \usepackage{algorithm}
+% \usepackage{algpseudocode}
+
+% ---- links: preserve hyperlinks without colored text or visible boxes ----
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+
+\title{When Idealized Travel Times Misrank Multi-Robot Schedules:
+Execution-Grounded Learning for Capacitated Pickup and Delivery}
+
+% RA-L uses double-anonymous review. Restore names and affiliations only
+% after acceptance, following the final-submission template.
+\author{Anonymous Authors}
+
+\maketitle
+
+\begin{abstract}
+Learned dispatchers often evaluate robot transport with fixed travel times,
+although deployed robots share paths and exclusive stations. We study offline
+capacitated multi-robot pickup and delivery by applying an idealized decoder
+and a fixed collision-aware executor to identical complete schedules. On 100
+instances with 60 jobs and 16 robots, a fixed 17-generator comparison set
+gives a mean per-instance Kendall $\tau_b$ of $0.334\!\pm\!0.026$, a
+$33.0\!\pm\!1.3\%$ inversion rate, and $29.8\!\pm\!3.7\%$ selection regret.
+We then train a constructive graph policy with PPO from executor-evaluated
+terminal makespan while a calibrated event-based surrogate advances partial
+schedules and exposes projected station queues, committed workload, local
+robot density, and action-specific waiting. At 60 jobs the surrogate raises
+$\tau_b$ from $0.446$ to $0.730$, lowers selection regret from $4.1\%$ to
+$1.2\%$, and scores a schedule about $290\times$ faster than the executor. A
+matched $2\times2$ factorial shows that executor-grounded training reduces
+single-rollout makespan by $15.9\%$ relative to the fully observed
+idealized-objective arm; congestion observability adds a further $3.0\%$.
+With eight executor-scored policy rollouts, the three-seed policy improves
+makespan by $5.9\%$ over the test-set best fixed dispatching rule and by
+$3.6\%$ over a genetic baseline. The results separate inexpensive congestion
+projection during construction from the executor that defines solution value.
+\end{abstract}
+
+\begin{keywords}
+Intelligent and Flexible Manufacturing, Planning, Scheduling and
+Coordination, Reinforcement Learning, Multi-Robot Systems
+\end{keywords}
+
+% =========================== SECTIONS ===================================
+% Each \input pulls in one file. Comment a line out to exclude that
+% section while you work on another -- the document still compiles.
+
+\input{introduction}                 % Section I
+
+\input{related_work}                 % Section II
+
+\input{problem_formulation}          % Section III
+
+\input{architecture}                 % Section IV
+\input{experiments}                  % Section V
+
+\section{Conclusion}
+\label{sec:conclusion}
+This paper formulates offline capacitated multi-robot pickup and delivery
+with explicit station contention and evaluation by a fixed
+collision-aware executor. It distinguishes the value error of an idealized
+transport model from its more consequential decision error---changes in the
+ordering of complete schedules---and trains a constructive policy from
+executor-evaluated terminal cost while using a calibrated surrogate for
+intermediate states. The controlled evaluation
+separates improvements due to congestion observability from those due to the
+training objective. The idealized model substantially misranks schedules once
+the candidate set includes policies optimized against it: at the 60-job
+training workload, $38.4\%$ of comparable pairs are inverted and trusting its
+selected schedule loses $30.6\%$ under execution. Executor grounding is the dominant
+causal factor, while projected congestion adds a smaller effect that grows
+with workload. The calibrated surrogate recovers much of the executor's
+ranking at roughly $1/250$ of its scoring time. On the fixed layout, the
+executor-scored eight-rollout policy improves on strong rule and genetic
+baselines, although single-rollout generalization weakens away from its
+60-job training distribution. Extending the study to other layouts, fleets,
+and complete multi-agent routers is the principal direction for future work.
+
+\IEEEtriggeratref{9}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

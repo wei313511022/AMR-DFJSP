@@ -1,0 +1,85 @@
+% =========================================================================
+% Section II -- Related Work.
+% The positioning acknowledges prior routing-aware RL assignment explicitly.
+% The distinction claimed here is the offline service-constrained setting,
+% measurement of evaluator-induced ranking error, and executor-grounded PPO.
+% =========================================================================
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Learned Scheduling with Transport Abstractions}
+
+L2D~\cite{zhang2020l2d} introduced a graph-based constructive policy for job
+shops, using the change in a makespan lower bound as a dense reward. Flexible
+job-shop extensions use heterogeneous operation--machine graphs and composite
+actions~\cite{song2023fjsp}, and subsequent work develops scalable graph-based
+schedulers~\cite{moon2024hgs}. Transport-aware formulations additionally model
+AGV movement and operation--machine--vehicle decisions using graph,
+transformer, or multi-agent architectures
+\cite{yuan2026gin,yang2026cosched,matrans2026}.
+
+The cited transport-aware schedulers principally represent motion with fixed
+travel times between resources. This supports inexpensive partial-schedule
+evaluation but does not reproduce delays from shared-space reservations or
+exclusive pickup and delivery service. We therefore build on established 
+graph-based constructive schedulers and focus on a different question: whether 
+an idealized evaluator accurately predicts executed makespan and preserves 
+schedule rankings under collision-aware execution.
+
+\subsection{Integrated Assignment, Routing, and Service Resources}
+
+Scheduling and material handling have long been recognized as coupled
+decisions~\cite{bilge1995time,ulusoy1997ga}. Conflict-aware methods integrate
+dispatch and route search for capacitated AGVs~\cite{miyamoto2016local},
+container-terminal operations~\cite{zhong2020integrated}, and just-in-time
+delivery~\cite{nishida2023jit}. Integrated MAPD likewise uses routed delivery
+cost to inform assignment and includes a multi-load variant
+\cite{chen2021integrated}. These methods optimize routing-aware solutions per
+instance rather than learning the offline constructive policy considered here.
+
+Learning-based integration is also established. Li \emph{et al.}
+\cite{li2024hierarchical} train a dynamic task-assignment policy whose action
+rewards are evaluated by a lower-level conflict-free path generator. Wang
+\emph{et al.}~\cite{wang2026collaborative} jointly train task-allocation and
+path-planning agents, while a reinforcement-learning hyper-heuristic combines
+task sequencing with conflict-avoidance rules but re-runs search for each
+instance~\cite{li2024rlhh}.
+
+Multi-agent path finding computes collision-free space--time trajectories on
+shared graphs~\cite{stern2019mapf}; lifelong MAPD combines repeated routing
+with online task service~\cite{ma2017lifelong}. Learned components also appear
+inside the planner, for example as priority policies for rolling-horizon
+prioritized planning~\cite{rlrhpp2026}. Commitment timing is also consequential:
+deliberate assignment deferral changes future reservations and deadline
+performance~\cite{noda2026deferral}. Nor are service resources absent from the
+literature; recent multi-subsystem MAPD work explicitly coordinates
+single-dock handover stations with finite buffers~\cite{zang2026buffers}.
+These studies establish that assignment, routing, commitment, and service
+contention can be modeled jointly. The distinction here is the evaluation
+question: we apply an idealized decoder and a fixed deployment executor to a
+common set of complete offline schedules, making evaluator-induced value and
+ranking errors directly measurable.
+
+\subsection{Learning from Terminal Cost}
+
+Policy-gradient methods can optimize sequence-level objectives from a terminal
+return~\cite{williams1992reinforce}, and PPO stabilizes policy updates through a
+clipped surrogate objective~\cite{schulman2017ppo}. In neural combinatorial
+optimization, rollout baselines reduce variance when solution cost is available
+only after construction is complete~\cite{kool2019attention}. These methods
+address learning from delayed solution-level feedback, but they do not by
+themselves determine whether that feedback reflects deployment execution. In
+our method, executor grounding applies to the terminal cost rather than to
+intermediate transitions. Both training and inference advance partial
+schedules with a calibrated surrogate, while the fixed collision-aware
+executor evaluates completed schedules. During training, its makespan supplies
+the terminal cost; the surrogate-projected state does not define the objective.
+
+Taken together, prior work establishes learned schedule construction,
+routing-aware assignment, and explicit treatment of service resources. The
+cited literature does not make evaluator fidelity over a common set of complete
+offline schedules its primary object of study. We quantify both value and
+ranking errors induced by an idealized transport model and train PPO against
+executor-evaluated terminal cost while exposing surrogate-projected congestion
+information during schedule construction.

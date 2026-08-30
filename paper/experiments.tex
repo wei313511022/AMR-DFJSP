@@ -1,0 +1,260 @@
+% =========================================================================
+% Section V -- Experiments.
+% Numerical sources:
+%   C:/Users/rtes/Desktop/AMR-DFJSP/experiments/full_benchmark
+%   C:/Users/rtes/Desktop/AMR-DFJSP/experiments/surrogate_fidelity
+% =========================================================================
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Protocol and Comparison Methods}
+
+We keep the $20\times19$ layout, the homogeneous $m=16$ fleet, the station
+configuration, and the fixed executor $\Phi$ unchanged, and vary workload
+through $n\in\{20,40,60,80,100\}$. Job class, inbound station, and outbound
+station are sampled uniformly, and all jobs are released at zero. Training uses
+5,000 independently generated 60-job instances. Fixed validation and test sets
+are mutually disjoint and are also disjoint from training; the test set contains
+100 instances at each workload. Before test evaluation, every learned policy is
+selected by the same executor-based validation score,
+$C_{\max}^{\Phi}+1000\nu_\Phi$, so failed decodes cannot be preferred to
+completed schedules.
+
+The dispatching-rule library crosses ten job priorities with six AMR rules,
+giving 60 deterministic combinations. The job rules cover FIFO, short- and
+long-processing-time priorities, distance and station workload, predicted
+completion, material matching, milk-run batching, and random choice; the AMR
+rules cover availability, distance, predicted completion, load, material
+matching, and random choice. For the baseline comparison, one combination is
+selected on the validation split separately for each $n$ and frozen before test
+evaluation. The genetic algorithm (GA) uses a population of 200 for 150
+generations followed by collision-aware local improvement.
+
+The learned-policy experiment crosses two observations with three terminal
+returns. The core observation $O_{\mathrm{core}}$ removes the projected
+congestion channels of Section~\ref{sec:arch-cost}, whereas
+$O_{\mathrm{cong}}$ retains them. Completed rollouts are priced by the raw
+idealized makespan $\widetilde C$, the executor makespan $C_{\max}^{\Phi}$, or
+the calibrated surrogate makespan $\hat\Psi$. Configuration names concatenate
+the return and observation; Surr--Cong is the proposed configuration. All six
+arms use the same architecture, data, and 4,000-epoch PPO budget.
+
+All arms use the same executor-based model-selection rule, preventing
+evaluator-specific checkpoint selection.
+
+At inference we report one deterministic greedy rollout and best-of-eight
+sampling, which selects the routable candidate with the lowest executed
+makespan. Primary comparisons average three training seeds within each
+instance. The experimental unit is the instance, method comparisons are paired,
+and 95\% intervals are $1.96s/\sqrt{N}$. Failed decodes receive the finite
+score above during training and model selection and are reported as failures.
+Because that score is not an elapsed completion time, makespan averages include
+completed schedules only.
+
+\subsection{Evaluator Fidelity}
+\label{sec:surrogate-results}
+
+We first test whether $\widetilde\Phi$ preserves schedule order rather than only
+absolute value. This broad comparison uses 19 candidates per instance spanning
+rules, GA, and learned policies; more than 99.6\% are executor-routable.
+Table~\ref{tab:ranking} excludes failed schedules and uses the metrics of
+Section~\ref{sec:evaluators}. Here $n$ is the number of jobs and $\tau_b$ is the
+per-instance, tie-corrected Kendall coefficient with respect to $\Phi$.
+
+\begin{table}[!ht]
+\caption{Idealized--executor ranking.}
+\label{tab:ranking}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$n$ & $\tau_b$ & Inv. (\%) & Reg. (\%) \\
+\midrule
+20  & $0.26\pm0.04$ & $36.25\pm1.93$ & $16.08\pm2.73$ \\
+40  & $0.13\pm0.03$ & $43.22\pm1.54$ & $38.62\pm3.43$ \\
+60  & $0.23\pm0.03$ & $38.40\pm1.27$ & $30.63\pm3.79$ \\
+80  & $0.30\pm0.03$ & $34.96\pm1.30$ & $27.51\pm7.20$ \\
+100 & $\mathbf{0.37\pm0.02}$ & $\mathbf{31.39\pm1.20}$ & $\mathbf{9.41\pm4.04}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The abstraction misranks schedules at every workload. At the 60-job training
+size, $38.4\%$ of comparable pairs are inverted and selecting its minimum
+incurs $30.6\%$ executed regret. Although ranking partially recovers at 100
+jobs, $\tau_b=0.37$ and $9.4\%$ regret show that value calibration alone does
+not guarantee decision fidelity.
+
+We next compare $\widetilde C$ and $\hat\Psi$ with $\Phi$ on the same
+19-candidate field: 12 competitive rules, all six factorial policy cells, and
+GA. The rules combine FIFO, SPT, LPT, milk-run, material-matching, or
+earliest-completion job priority with the earliest-available or
+earliest-completion AMR rule. They occupy mean ranks 3--30 in the full 60-rule
+benchmark; excluding clearly dominated random, nearest-station, and
+least-congested rules prevents mechanical inflation of rank agreement. The
+policies and GA also prevent $\hat\Psi$ from being tested only on schedules
+constructed by rules that already use it. Table~\ref{tab:surrogate} reports
+within-instance decision error and the total time to score all 19 schedules of
+one instance; candidate generation is excluded.
+
+\begin{table*}[!t]
+\caption{Evaluator fidelity and scoring time.}
+\label{tab:surrogate}
+\label{tab:evaluator-time}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{@{}r|c|cccc|cccc@{}}
+\toprule
+& Executor $\Phi$ & \multicolumn{4}{c}{Idealized $\widetilde C$}
+& \multicolumn{4}{c}{Surrogate $\hat\Psi$} \\
+\cmidrule(lr){2-2}\cmidrule(lr){3-6}\cmidrule(lr){7-10}
+$n$ & $t$ (ms) & $\tau_b$ & Inv. (\%) & Reg. (\%) & $t$ (ms)
+    & $\tau_b$ & Inv. (\%) & Reg. (\%) & $t$ (ms) \\
+\midrule
+20  & 664.66 & $0.26\pm0.04$ & 36.25 & 16.08
+    & \textbf{1.18} & $\mathbf{0.69\pm0.03}$
+    & \textbf{14.91} & \textbf{3.62} & 2.79 \\
+40  & 1279.83 & $0.13\pm0.03$ & 43.22 & 38.62
+    & \textbf{2.03} & $\mathbf{0.73\pm0.02}$
+    & \textbf{13.04} & \textbf{2.69} & 5.17 \\
+60  & 1915.73 & $0.23\pm0.03$ & 38.40 & 30.63
+    & \textbf{2.84} & $\mathbf{0.75\pm0.02}$
+    & \textbf{12.28} & \textbf{3.19} & 7.58 \\
+80  & 2636.45 & $0.30\pm0.03$ & 34.96 & 27.51
+    & \textbf{3.65} & $\mathbf{0.77\pm0.02}$
+    & \textbf{11.06} & \textbf{2.65} & 10.01 \\
+100 & 3243.23 & $0.37\pm0.02$ & 31.39 & 9.41
+    & \textbf{4.31} & $\mathbf{0.81\pm0.01}$
+    & \textbf{9.50} & \textbf{1.28} & 12.22 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Decision metrics are computed within each instance before aggregation, so the
+effective sample size is 100 rather than 1,900 schedules. Kendall's $\tau_b$
+and Inv. handle ties as defined in Section~\ref{sec:evaluators}; selection
+regret uses the candidate order fixed before test evaluation. The executor
+rejects 26 of the 9,500 schedules (0.27\%); decision metrics use the common
+executor-routable candidate set, whereas each time observation totals all 19
+evaluator calls for one instance before the mean is computed.
+
+\subsection{Terminal Return and Congestion Observability}
+
+Table~\ref{tab:factorial} gives the single-seed best-of-eight factorial, with
+surrogate configurations in the rightmost block. Both executor and surrogate
+returns substantially improve on the idealized-return controls; the comparison
+of greatest practical interest is therefore Surr--Cong versus Exec--Cong.
+
+\begin{table}[!ht]
+\caption{Best-of-eight factorial results.}
+\label{tab:factorial}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1.8pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}rcc|cc|cc@{}}
+\toprule
+& \multicolumn{2}{c}{Ideal return} & \multicolumn{2}{c}{Executor return}
+& \multicolumn{2}{c}{Surrogate return} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$n$ & Core & Cong & Core & Cong & Core & Cong \\
+\midrule
+20  & $192.70 \pm 3.60$ & $222.72 \pm 4.20$
+    & $160.18 \pm 2.96$ & $161.14 \pm 2.93$
+    & $\mathbf{160.16 \pm 2.65}$ & $162.00 \pm 2.92$ \\
+40  & $378.69 \pm 6.05$ & $325.48 \pm 4.39$
+    & $246.58 \pm 2.57$ & $242.15 \pm 3.08$
+    & $253.51 \pm 3.07$ & $\mathbf{239.23 \pm 3.25}$ \\
+60  & $603.03 \pm 7.03$ & $419.62 \pm 4.74$
+    & $338.48 \pm 2.11$ & $326.07 \pm 3.05$
+    & $351.88 \pm 2.52$ & $\mathbf{319.89 \pm 3.09}$ \\
+80  & $799.95 \pm 6.34$ & $524.35 \pm 4.46$
+    & $436.05 \pm 2.61$ & $416.56 \pm 3.16$
+    & $450.99 \pm 3.21$ & $\mathbf{403.43 \pm 3.83}$ \\
+100 & $968.25 \pm 8.27$ & $630.15 \pm 5.51$
+    & $534.46 \pm 2.49$ & $504.30 \pm 3.47$
+    & $550.14 \pm 3.41$ & $\mathbf{488.50 \pm 3.73}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Under $O_{\mathrm{cong}}$, Surr--Cong is better than Exec--Cong from 40
+through 100 jobs, whereas the same pattern is not observed under
+$O_{\mathrm{core}}$. Best-of-eight strengthens the result: Surr--Cong is
+better at all five workloads by $2.0$--$15.5$ ticks. Thus, a higher-fidelity
+executor return does not automatically yield the better policy under
+surrogate-based state transitions.
+
+\subsection{Comparison with Rules and Genetic Search}
+
+Table~\ref{tab:baseline-performance} compares Surr--Cong with baselines fixed
+without using the test set and reports inference time. Greedy performance is
+mixed, whereas best-of-eight reduces rule makespan by 4.1--9.1\% at every
+workload. It is 3.1\% worse than GA at $n=20$, but 3.6--7.9\% better from
+$n=40$ through 100.
+
+\begin{table}[!ht]
+\caption{Executed makespan and scheduling time.}
+\label{tab:baseline-performance}
+\label{tab:inference-time}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.0pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}rcc|cc|cc|cc@{}}
+\toprule
+& \multicolumn{2}{c}{Rule} & \multicolumn{2}{c}{GA}
+& \multicolumn{2}{c}{Surr-G} & \multicolumn{2}{c}{Surr-8} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+\cmidrule(lr){8-9}
+$n$ & $M$ & $t$ & $M$ & $t$ & $M$ & $t$ & $M$ & $t$ \\
+\midrule
+20  & $166.22 \pm 2.82$ & \textbf{0.03}
+    & $\mathbf{153.95 \pm 2.84}$ & 15.73
+    & $168.65 \pm 3.16$ & 0.10
+    & $158.78 \pm 2.93$ & 1.06 \\
+40  & $258.38 \pm 3.78$ & \textbf{0.10}
+    & $246.34 \pm 3.00$ & 37.21
+    & $249.39 \pm 3.83$ & 0.35
+    & $\mathbf{237.54 \pm 3.14}$ & 3.17 \\
+60  & $349.61 \pm 3.57$ & \textbf{0.23}
+    & $338.68 \pm 2.98$ & 65.85
+    & $334.75 \pm 3.34$ & 0.77
+    & $\mathbf{317.95 \pm 2.65}$ & 6.63 \\
+80  & $426.24 \pm 7.22$ & \textbf{0.57}
+    & $435.85 \pm 4.02$ & 101.86
+    & $422.39 \pm 3.94$ & 1.36
+    & $\mathbf{401.38 \pm 3.40}$ & 11.83 \\
+100 & $505.98 \pm 8.02$ & \textbf{0.89}
+    & $525.85 \pm 4.07$ & 144.93
+    & $513.23 \pm 4.46$ & 2.15
+    & $\mathbf{485.11 \pm 3.11}$ & 18.70 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Best-of-eight produces no routing failures in the reported Surr--Cong results;
+greedy decoding fails in 7 of 1,500 seed--instance evaluations. As specified in
+the protocol, these failures are not treated as completed makespans.
+
+\subsection{Computation Time}
+
+We separate evaluator cost from end-to-end scheduling cost.
+Table~\ref{tab:evaluator-time} reports the mean elapsed time
+per test instance for scoring its 19 candidates; it excludes candidate
+generation.
+
+The scheduling-time columns of Table~\ref{tab:inference-time} report serial,
+single-process results on an NVIDIA GeForce RTX 5080. The common final
+reporting call to $\Phi$ is excluded, while executor calls used for
+best-of-$K$ selection are included.
+
+Training required approximately 55--74 hours per run under shared GPU load.
+Because contention differed and validation still invokes $\Phi$, these values
+document resource use but do not support a controlled whole-training speedup
+claim.
